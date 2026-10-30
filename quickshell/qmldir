@@ -56,3 +56,7 @@ SettingButton 1.0 SettingButton.qml
 SettingPage 1.0 SettingPage.qml
 SettingsPanel 1.0 SettingsPanel.qml
 NotifCard 1.0 NotifCard.qml
+singleton SysMon SysMon.qml
+Sparkline 1.0 Sparkline.qml
+SysMonPanel 1.0 SysMonPanel.qml
+singleton Recorder Recorder.qml

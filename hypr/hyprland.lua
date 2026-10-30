@@ -325,6 +325,7 @@ hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("record region"))   -- start/
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nightlight"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle capture"))   -- screenshot / recording options
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call shell toggle sysmon"))   -- system monitor
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only

@@ -10,13 +10,7 @@ Panel {
     panelWidth: 420
 
     property int delay: 0              // seconds before the shot is taken
-    property bool recording: false
-    Process {
-        id: rec
-        command: ["sh", "-c", "pgrep -x wf-recorder >/dev/null && echo yes; true"]
-        stdout: StdioCollector { onStreamFinished: root.recording = text.includes("yes") }
-    }
-    Timer { interval: 1500; repeat: true; running: root.shown; triggeredOnStart: true; onTriggered: rec.running = true }
+    readonly property bool recording: Recorder.recording
 
     // The panel fades out first, so it is not in the picture and slurp can take the pointer.
     function shoot(mode) {

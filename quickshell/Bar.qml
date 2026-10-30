@@ -184,7 +184,17 @@ PanelWindow {
                     }
                 }
             }
+            Icon { id: monIcon; name: "monitor_heart"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("sysmon", monIcon) } }
             Icon { id: setIcon; name: "settings"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("settings", setIcon) } }
+            // a recording must never run unnoticed: red, pulsing, click to stop
+            Rectangle {
+                visible: Recorder.recording
+                Layout.preferredWidth: 22; Layout.preferredHeight: 22; radius: 11; color: Qt.alpha(Theme.error, 0.25)
+                Rectangle { anchors.centerIn: parent; width: 10; height: 10; radius: 5; color: Theme.error
+                            SequentialAnimation on opacity { running: Recorder.recording; loops: Animation.Infinite
+                                NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } } }
+                MouseArea { anchors.fill: parent; onClicked: Recorder.stop() }
+            }
             Icon { id: capIcon; name: "photo_camera"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("capture", capIcon) } }
             Icon { id: dispIcon; name: "desktop_windows"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("display", dispIcon) } }
             Icon { id: timeIcon; name: "hourglass_top"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("screentime", timeIcon) } }

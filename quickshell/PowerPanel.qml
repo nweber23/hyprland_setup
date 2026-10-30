@@ -122,8 +122,8 @@ Panel {
                          onToggled: Popups.dnd = !Popups.dnd }
             ToggleTile { Layout.fillWidth: true; icon: root.micMuted ? "mic_off" : "mic"; label: "Mic"; on: root.micMuted
                          onToggled: { const a = Pipewire.defaultAudioSource; if (a && a.audio) a.audio.muted = !a.audio.muted } }
-            ToggleTile { Layout.fillWidth: true; icon: "fiber_manual_record"; label: "Record"; on: root.recOn; available: root.hasRec
-                         onToggled: { Quickshell.execDetached(["record", "full"]); root.recOn = !root.recOn } }
+            ToggleTile { Layout.fillWidth: true; icon: "fiber_manual_record"; label: "Record"; on: Recorder.recording; available: root.hasRec
+                         onToggled: Quickshell.execDetached(["record", "full"]) }
         }
     }
 
