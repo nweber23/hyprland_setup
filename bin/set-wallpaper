@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-# Usage: set-wallpaper <image>   -- remember the wallpaper and regenerate the colour theme from it.
+# Usage: set-wallpaper <image or video>   -- remember the wallpaper and regenerate the colour theme from it.
 # Quickshell watches ~/.cache/quickshell/{wallpaper.txt,colors.json} and updates live;
 # Hyprland borders and open kitty windows are refreshed here.
+# For a video the colours come from one frame, kept as a still image for the lock screen.
 set -euo pipefail
 img=$(realpath "$1"); out="$HOME/.cache/quickshell"; mkdir -p "$out"
-matugen image "$img" -m "${THEME_MODE:-dark}" --prefer saturation >/dev/null   # colours first, so the UI never shows a stale palette
+case "${img,,}" in
+    *.mp4|*.mkv|*.webm|*.mov)
+        still="$out/wallpaper-still.jpg"
+        ffmpeg -v error -y -ss 2 -i "$img" -frames:v 1 -vf scale=1920:-2 -q:v 3 "$still" 2>/dev/null \
+            || ffmpeg -v error -y -i "$img" -frames:v 1 -vf scale=1920:-2 -q:v 3 "$still"   # clips shorter than 2 s
+        ;;
+    *) still="$img" ;;
+esac
+matugen image "$still" -m "${THEME_MODE:-dark}" --prefer saturation >/dev/null   # colours first, so the UI never shows a stale palette
+printf '%s\n' "$still" > "$out/wallpaper-still.txt"
 printf '%s\n' "$img" > "$out/wallpaper.txt"
 hyprctl eval "$(grep -v "^--" "$HOME/.cache/hypr-colors.lua")" >/dev/null 2>&1 || true   # no-op outside Hyprland (comment lines would parse as options)
 pkill -USR1 -x kitty 2>/dev/null || true                                       # kitty re-reads its config on SIGUSR1

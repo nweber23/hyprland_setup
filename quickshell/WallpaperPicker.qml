@@ -107,6 +107,13 @@ PanelWindow {
                     Icon { anchors.centerIn: parent; name: "grid_view"; size: 16; color: win.filter === "all" ? Theme.panelBg : Theme.on_surface }
                     MouseArea { anchors.fill: parent; onClicked: win.filter = "all" }
                 }
+                Rectangle {   // animated wallpapers only
+                    width: 28; height: 28; radius: 8; anchors.verticalCenter: parent.verticalCenter
+                    color: win.filter === "animated" ? Theme.accent : Theme.card
+                    Behavior on color { ColorAnimation { duration: 160 } }
+                    Icon { anchors.centerIn: parent; name: "play_arrow"; size: 18; fill: 1; color: win.filter === "animated" ? Theme.panelBg : Theme.on_surface }
+                    MouseArea { anchors.fill: parent; onClicked: win.filter = win.filter === "animated" ? "all" : "animated" }
+                }
                 Repeater {
                     model: win.dots
                     delegate: Item {
@@ -174,11 +181,13 @@ PanelWindow {
 
                     Image {
                         anchors.fill: parent
-                        source: card.isCurrent ? "file://" + card.modelData.path : "file://" + card.modelData.thumb
+                        source: card.isCurrent && !card.modelData.video ? "file://" + card.modelData.path : "file://" + card.modelData.thumb
                         sourceSize: card.isCurrent ? Qt.size(1040, 600) : Qt.size(300, 500)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                     }
+                    Icon { visible: card.modelData.video === true; anchors { right: parent.right; top: parent.top; margins: 8 }
+                           name: "play_circle"; size: 22; color: "white"; opacity: 0.9 }   // marks an animated wallpaper
                     Rectangle { anchors.fill: parent; color: "#000"; opacity: card.isCurrent ? 0 : 0.3
                                 Behavior on opacity { NumberAnimation { duration: 300 } } }
                     Rectangle {

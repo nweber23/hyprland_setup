@@ -11,6 +11,7 @@ import QtQuick.Layouts
 Scope {
     id: root
     property bool locked: false
+    onLockedChanged: Popups.locked = locked
     property bool checking: false
     property string error: ""
     signal failed()
@@ -56,7 +57,7 @@ Scope {
     }
 
     property string wallpaper: ""
-    FileView { path: Quickshell.env("HOME") + "/.cache/quickshell/wallpaper.txt"; watchChanges: true; onFileChanged: reload()
+    FileView { path: Quickshell.env("HOME") + "/.cache/quickshell/wallpaper-still.txt"; watchChanges: true; onFileChanged: reload()   // a still image, also for video wallpapers
                onLoaded: root.wallpaper = text().trim() }
 
     WlSessionLock {

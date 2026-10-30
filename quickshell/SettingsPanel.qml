@@ -120,6 +120,9 @@ Panel {
                         SettingChips { model: [{ label: "Dark", value: "dark" }, { label: "Light", value: "light" }]; current: Settings.themeMode; onPicked: v => root.applyTheme(v) } }
                     SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
                         SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
+                    SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."
+                        SettingChips { chipW: 110; model: [{ label: "Pause on battery", value: false }, { label: "Always play", value: true }]
+                                       current: Settings.liveOnBattery; onPicked: v => Settings.set("liveOnBattery", v) } }
                 }
                 SettingPage { idx: 1; current: root.page; title: "Display"
                     SettingRow { title: "Resolution, refresh rate and scale"; hint: "Applies at once and is remembered"

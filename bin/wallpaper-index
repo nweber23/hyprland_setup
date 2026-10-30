@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Index ~/Pictures/Wallpapers for the wallpaper picker.
+"""Index the wallpaper folders for the picker: images in ~/Pictures/Wallpapers, videos (animated wallpapers) in
+~/Videos/Wallpapers and ~/Videos/Hidamari.
 
 Writes a 480x270 thumbnail per image to ~/.cache/quickshell/thumbs and prints a JSON list
-[{path, name, thumb, tags}] on stdout. tags are colour classes (red..pink, mono) plus "dark".
+[{path, name, thumb, tags, video}] on stdout. tags are colour classes (red..pink, mono), "dark" and
+"animated" for videos.
 Results are cached by file mtime, so only new or changed images are decoded again.
 """
-import colorsys, hashlib, json, sys
+import colorsys, hashlib, json, subprocess, sys
 from pathlib import Path
 from PIL import Image, ImageOps
 
-SRC = Path.home() / "Pictures" / "Wallpapers"
+SRCS = [Path.home() / "Pictures" / "Wallpapers", Path.home() / "Videos" / "Wallpapers", Path.home() / "Videos" / "Hidamari"]
 CACHE = Path.home() / ".cache" / "quickshell"
 THUMBS = CACHE / "thumbs"
 INDEX = CACHE / "wallpapers.json"
 EXT = {".jpg", ".jpeg", ".png", ".webp"}
+VIDEO = {".mp4", ".mkv", ".webm", ".mov"}
 HUES = [(15, "red"), (45, "orange"), (70, "yellow"), (165, "green"), (200, "cyan"),
         (255, "blue"), (300, "purple"), (345, "pink"), (361, "red")]
 
@@ -45,9 +48,8 @@ def main():
     except (OSError, ValueError):
         pass
     out = []
-    for f in sorted(SRC.iterdir(), key=lambda p: p.name.lower()) if SRC.is_dir() else []:
-        if f.suffix.lower() not in EXT:
-            continue
+    files = [f for d in SRCS if d.is_dir() for f in d.iterdir() if f.suffix.lower() in EXT | VIDEO]
+    for f in sorted(files, key=lambda p: p.name.lower()):
         path, mtime = str(f), f.stat().st_mtime
         thumb = THUMBS / (hashlib.sha1(path.encode()).hexdigest()[:16] + ".jpg")
         e = old.get(path)
@@ -55,11 +57,22 @@ def main():
             out.append(e)
             continue
         try:
-            with Image.open(f) as im:
-                im.draft("RGB", (960, 540))   # JPEG: decode at reduced size
-                im = ImageOps.fit(im.convert("RGB"), (480, 270))
-                im.save(thumb, quality=85)
-                out.append({"path": path, "mtime": mtime, "name": f.stem, "thumb": str(thumb), "tags": tags_for(im)})
+            video = f.suffix.lower() in VIDEO
+            if video:   # one frame, small: a 4K clip takes well under a second
+                for t in ("2", "0"):
+                    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", t, "-i", path, "-frames:v", "1",
+                                    "-vf", "scale=480:270:force_original_aspect_ratio=increase,crop=480:270", "-q:v", "4", str(thumb)],
+                                   check=False, timeout=60)
+                    if thumb.exists() and thumb.stat().st_size > 0:
+                        break
+                im = Image.open(thumb).convert("RGB")
+            else:
+                with Image.open(f) as im0:
+                    im0.draft("RGB", (960, 540))   # JPEG: decode at reduced size
+                    im = ImageOps.fit(im0.convert("RGB"), (480, 270))
+                    im.save(thumb, quality=85)
+            tags = tags_for(im) + (["animated"] if video else [])
+            out.append({"path": path, "mtime": mtime, "name": f.stem, "thumb": str(thumb), "tags": tags, "video": video})
         except Exception as ex:   # unreadable or huge file: skip it, keep going
             print(f"skip {f.name}: {ex}", file=sys.stderr)
     INDEX.write_text(json.dumps(out))
