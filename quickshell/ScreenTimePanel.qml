@@ -11,6 +11,7 @@ Panel {
     panelWidth: 780
     centered: true
     pad: 22
+    animateHeight: false
 
     property string mode: "day"          // "day" | "week"
     property int offset: 0               // days back (day view) or weeks back (week view)
@@ -18,6 +19,12 @@ Panel {
     property real grow: 0                // bars and cells grow from 0 after the panel opened
     property real dip: 1                 // brief dip when the data changes
     property real totalShown: 0
+    property real blend: mode === "week" ? 1 : 0     // 0 = day view, 1 = week view
+    Behavior on blend { NumberAnimation { duration: 720; easing.type: Easing.OutCubic } }
+    readonly property real dayA: Math.max(0, Math.min(1, 1 - blend / 0.45))     // the day view leaves during the first 45 %
+    readonly property real weekA: Math.max(0, Math.min(1, (blend - 0.40) / 0.60)) // the week view arrives from 40 % on (slight overlap)
+    readonly property real gd: Math.min(grow, dayA)                             // bars grow again when the day view returns
+    readonly property real gw: Math.min(grow, weekA)                            // heat cells appear in a wave
     Behavior on totalShown { NumberAnimation { duration: 800; easing.type: Easing.OutCubic } }
 
     function dateFor(off) {
@@ -36,7 +43,6 @@ Panel {
         return Qt.formatDate(new Date(g[0].date + "T12:00:00"), "MMM d") + " - " + Qt.formatDate(new Date(g[6].date + "T12:00:00"), "MMM d")
     }
     function load() { if (!query.running) query.running = true }
-    onModeChanged: { offset = 0; load() }
     onOffsetChanged: { dipAnim.restart(); load() }
     onShownChanged: if (shown) { mode = "day"; offset = 0; grow = 0; growAnim.restart(); load() }
     SequentialAnimation { id: growAnim; PauseAnimation { duration: 450 }
@@ -47,7 +53,7 @@ Panel {
 
     Process {
         id: query
-        command: ["screentime-query", root.dateFor(root.mode === "week" ? root.offset * 7 : root.offset)]
+        command: ["screentime-query", root.dateFor(root.offset)]
         stdout: StdioCollector { onStreamFinished: { try { root.stats = JSON.parse(text); root.totalShown = root.stats.total } catch (e) {} } }
     }
 
@@ -63,10 +69,10 @@ Panel {
                        rotation: root.mode === "day" ? 0 : 360; Behavior on rotation { NumberAnimation { duration: 450; easing.type: Easing.OutBack } } }
                 MouseArea { id: swArea; anchors.fill: parent; hoverEnabled: true; onClicked: root.mode = root.mode === "day" ? "week" : "day" }
             }
-            Arrow { act: () => root.offset++; name: "chevron_left" }
+            Arrow { act: () => root.offset += (root.mode === "week" ? 7 : 1); name: "chevron_left" }
             Text { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; textFormat: Text.PlainText; opacity: root.dip
                    text: root.title(); color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
-            Arrow { act: () => { if (root.offset > 0) root.offset-- }; name: "chevron_right"; opacity: root.offset > 0 ? 1 : 0.25 }
+            Arrow { act: () => { root.offset = Math.max(0, root.offset - (root.mode === "week" ? 7 : 1)) }; name: "chevron_right"; opacity: root.offset > 0 ? 1 : 0.25 }
             Item { implicitWidth: 34 }
         }
     }
@@ -74,17 +80,14 @@ Panel {
     // ================= views (they slide past each other) =================
     Item {
         Layout.fillWidth: true
-        implicitHeight: root.mode === "day" ? dayView.implicitHeight : weekView.implicitHeight
-        Behavior on implicitHeight { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
+        implicitHeight: dayView.implicitHeight * (1 - root.blend) + weekView.implicitHeight * root.blend
 
         // ---------- day ----------
         ColumnLayout {
             id: dayView
             width: parent.width; spacing: 12
-            opacity: root.mode === "day" ? 1 : 0; visible: opacity > 0.01
-            x: root.mode === "day" ? 0 : -50
-            Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-            Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+            opacity: root.dayA; visible: opacity > 0.01
+            x: -60 * (1 - root.dayA)
 
             Reveal {
                 p: root; index: 1; dy: 12; back: true
@@ -120,9 +123,9 @@ Panel {
                                     Rectangle {
                                         anchors { bottom: lbl.top; bottomMargin: 6; horizontalCenter: parent.horizontalCenter }
                                         width: parent.width * 0.8; radius: 6
-                                        height: Math.max(4, modelData.total / parent.peak * (parent.height - 30) * Math.max(0, Math.min(1, root.grow * 1.4 - index * 0.06)))
+                                        height: Math.max(4, modelData.total / parent.peak * (parent.height - 30) * Math.max(0, Math.min(1, root.gd * 1.4 - index * 0.06)))
                                         color: index === 6 ? Theme.accent : Theme.cardHigh
-                                        Behavior on height { enabled: root.grow >= 1; NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+                                        Behavior on height { enabled: root.gd >= 1; NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
                                     }
                                     Text { id: lbl; anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter } textFormat: Text.PlainText
                                            text: Qt.locale("en_US").dayName(new Date(modelData.date + "T12:00:00").getDay(), Locale.ShortFormat)
@@ -148,9 +151,9 @@ Panel {
                                     width: (hrow.width - 23 * 3) / 24; height: hrow.height
                                     Rectangle {
                                         anchors.bottom: parent.bottom; width: parent.width; radius: 2
-                                        height: (secs > 0 ? Math.max(3, secs / peak * parent.height) : 2) * Math.max(0, Math.min(1, root.grow * 1.6 - index * 0.025))
+                                        height: (secs > 0 ? Math.max(3, secs / peak * parent.height) : 2) * Math.max(0, Math.min(1, root.gd * 1.6 - index * 0.025))
                                         color: secs > 0 ? Theme.accent : Theme.cardHigh
-                                        Behavior on height { enabled: root.grow >= 1; NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+                                        Behavior on height { enabled: root.gd >= 1; NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
                                     }
                                 }
                             }
@@ -191,8 +194,8 @@ Panel {
                                     Layout.fillWidth: true; height: 8; radius: 4; color: Theme.cardHigh
                                     Rectangle {
                                         height: parent.height; radius: 4; color: Theme.accent
-                                        width: Math.max(8, parent.width * modelData.seconds / root.stats.apps[0].seconds * Math.max(0, Math.min(1, root.grow * 1.5 - index * 0.12)))
-                                        Behavior on width { enabled: root.grow >= 1; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+                                        width: Math.max(8, parent.width * modelData.seconds / root.stats.apps[0].seconds * Math.max(0, Math.min(1, root.gd * 1.5 - index * 0.12)))
+                                        Behavior on width { enabled: root.gd >= 1; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
                                     }
                                 }
                             }
@@ -206,10 +209,8 @@ Panel {
         Item {
             id: weekView
             width: parent.width; implicitHeight: 300
-            opacity: root.mode === "week" ? 1 : 0; visible: opacity > 0.01
-            x: root.mode === "week" ? 0 : 50
-            Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-            Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+            opacity: root.weekA; visible: opacity > 0.01
+            x: 60 * (1 - root.weekA)
 
             Rectangle {
                 id: heatCard
@@ -236,7 +237,7 @@ Panel {
                                         required property int index
                                         readonly property real secs: drow.modelData.hours[index]
                                         // cells appear in a diagonal wave
-                                        readonly property real a: Math.max(0, Math.min(1, root.grow * 2.2 - (index * 0.025 + drow.index * 0.07)))
+                                        readonly property real a: Math.max(0, Math.min(1, root.gw * 2.2 - (index * 0.025 + drow.index * 0.07)))
                                         width: heatCard.cellW; height: 28; radius: 4
                                         color: secs > 0 ? Qt.alpha(Theme.accent, 0.22 + 0.78 * Math.min(1, secs / 3600)) : Theme.cardHigh
                                         opacity: a * (secs > 0 ? 1 : 0.55); scale: 0.6 + 0.4 * a

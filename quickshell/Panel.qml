@@ -24,6 +24,7 @@ PanelWindow {
     property real panelWidth: 380
     property bool centered: false           // true: centre on the screen instead of hanging under the chip
     property real pad: 20
+    property bool animateHeight: true       // false when the content animates its own height
     default property alias content: body.data
     readonly property bool shown: Popups.current === name && Popups.screenName === screenName
 
@@ -55,7 +56,7 @@ PanelWindow {
     // content height, eased so a panel that gains rows does not jump
     readonly property real fullH: body.implicitHeight + pad * 2
     property real smoothH: fullH
-    Behavior on smoothH { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+    Behavior on smoothH { enabled: win.animateHeight; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
     visible: shown || intro > 0.004
     anchors { top: true; left: true }
