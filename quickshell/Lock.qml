@@ -41,8 +41,8 @@ Scope {
     }
 
     // Idle: lock after 5 minutes without input (apps that inhibit idle, e.g. video playback, are respected).
-    // Off until unlocking with the real password has been confirmed once.
-    property bool autoLock: false
+    // Enabled after unlocking with the real password was confirmed.
+    property bool autoLock: true
     IdleMonitor { enabled: root.autoLock; timeout: 300; respectInhibitors: true; onIsIdleChanged: if (isIdle) root.lock() }
 
     property string wallpaper: ""
