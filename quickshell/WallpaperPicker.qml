@@ -11,19 +11,31 @@ PanelWindow {
     property string screenName: ""
     readonly property bool shown: Popups.current === "wallpaper" && Popups.screenName === screenName
 
-    readonly property real cardW: 300
-    readonly property real cardH: 170
+    readonly property real curW: 520         // the chosen card is wide, the others are narrow slants
+    readonly property real curH: 300
+    readonly property real sideW: 150
+    readonly property real sideH: 250
     readonly property real skew: 0.22        // horizontal shear of the cards
-    readonly property var filters: ["all", "dark", "red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "mono"]
+    // colour filters as dots (tag in the index, dot colour)
+    readonly property var dots: [
+        { tag: "red", c: "#e8492b" }, { tag: "orange", c: "#f29a1f" }, { tag: "yellow", c: "#f1d12c" },
+        { tag: "green", c: "#3fb549" }, { tag: "cyan", c: "#2fb4d6" }, { tag: "blue", c: "#3f7df0" },
+        { tag: "purple", c: "#8b45e0" }, { tag: "pink", c: "#ee5fa5" }, { tag: "mono", c: "#9b9b9b" }, { tag: "dark", c: "#2a2a2a" }
+    ]
     property string filter: "all"
     property var items: []                   // everything the indexer found
     property bool indexing: false
     property string current: ""              // wallpaper in use
     readonly property var visibleItems: filter === "all" ? items : items.filter(i => i.tags.indexOf(filter) >= 0)
 
-    visible: shown || strip.opacity > 0.01
+    // intro: filter bar drops in, cards rise one after the other starting at the middle
+    property real intro: 0
+    NumberAnimation { id: introAnim; target: win; property: "intro"; to: 1; duration: 900; easing.type: Easing.OutQuart }
+    SequentialAnimation { id: outAnim; NumberAnimation { target: win; property: "intro"; to: 0; duration: 200; easing.type: Easing.InQuart } }
+
+    visible: shown || intro > 0.004
     anchors { left: true; right: true }
-    implicitHeight: 330
+    implicitHeight: 440
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-panel"
@@ -63,120 +75,135 @@ PanelWindow {
         indexing = true       // re-run every time: picks up new files, cached ones are cheap
         indexer.running = true
         keys.forceActiveFocus()
-    }
+        outAnim.stop(); introAnim.restart()
+    } else { introAnim.stop(); outAnim.restart() }
 
-    Rectangle {
-        id: strip
+    FocusScope {
+        id: keys
         anchors.fill: parent
-        color: Qt.alpha(Theme.surface, 0.82)
-        opacity: win.shown ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        focus: true
+        Keys.onEscapePressed: Popups.close()
+        Keys.onReturnPressed: win.apply(win.visibleItems[list.currentIndex])
+        Keys.onEnterPressed: win.apply(win.visibleItems[list.currentIndex])
+        Keys.onLeftPressed: list.currentIndex = Math.max(0, list.currentIndex - 1)
+        Keys.onRightPressed: list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
 
-        FocusScope {
-            id: keys
-            anchors.fill: parent
-            focus: true
-            Keys.onEscapePressed: Popups.close()
-            Keys.onReturnPressed: win.apply(win.visibleItems[list.currentIndex])
-            Keys.onEnterPressed: win.apply(win.visibleItems[list.currentIndex])
-            Keys.onLeftPressed: list.currentIndex = Math.max(0, list.currentIndex - 1)
-            Keys.onRightPressed: list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
-
-            // ---- colour filter chips ----
+        // ---- floating filter bar ----
+        Rectangle {
+            id: bar
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 4 - 24 * (1 - win.intro)
+            opacity: win.intro
+            implicitHeight: 40; implicitWidth: barRow.implicitWidth + 20; radius: 12
+            color: Qt.alpha(Theme.panelBg, 0.94)
             Row {
-                id: chips
-                anchors { top: parent.top; topMargin: 18; horizontalCenter: parent.horizontalCenter }
-                spacing: 6
+                id: barRow
+                anchors.centerIn: parent
+                spacing: 10
+                Rectangle {   // "all"
+                    width: 28; height: 28; radius: 8; anchors.verticalCenter: parent.verticalCenter
+                    color: win.filter === "all" ? Theme.accent : Theme.card
+                    Behavior on color { ColorAnimation { duration: 160 } }
+                    Icon { anchors.centerIn: parent; name: "grid_view"; size: 16; color: win.filter === "all" ? Theme.panelBg : Theme.on_surface }
+                    MouseArea { anchors.fill: parent; onClicked: win.filter = "all" }
+                }
                 Repeater {
-                    model: win.filters
-                    delegate: Rectangle {
-                        required property string modelData
-                        readonly property bool active: win.filter === modelData
-                        width: label.implicitWidth + 24; height: 28; radius: 14
-                        color: active ? Theme.primary_container : Qt.alpha(Theme.surface_container_high, 0.8)
-                        Behavior on color { ColorAnimation { duration: 160 } }
-                        Text { id: label; anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData
-                               color: active ? Theme.on_primary_container : Theme.on_surface_variant
-                               font.family: "JetBrains Mono"; font.pixelSize: 11 }
-                        MouseArea { anchors.fill: parent; onClicked: win.filter = modelData }
-                    }
-                }
-            }
-
-            ListView {
-                id: list
-                anchors { left: parent.left; right: parent.right; top: chips.bottom; topMargin: 14; bottom: nameLabel.top }
-                orientation: ListView.Horizontal
-                model: win.visibleItems
-                spacing: 0
-                clip: false
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                preferredHighlightBegin: width / 2 - win.cardW / 2
-                preferredHighlightEnd: width / 2 + win.cardW / 2
-                highlightMoveDuration: 320
-                highlightMoveVelocity: -1
-                cacheBuffer: 1200
-                // Wheel steps one card
-                WheelHandler {
-                    onWheel: event => {
-                        const d = (event.angleDelta.y + event.angleDelta.x) > 0 ? -1 : 1
-                        list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex + d))
-                    }
-                }
-                delegate: Item {
-                    id: card
-                    required property var modelData
-                    required property int index
-                    readonly property bool isCurrent: ListView.isCurrentItem
-                    readonly property bool inUse: modelData.path === win.current
-                    z: isCurrent ? 2 : 1   // the chosen card overlaps its neighbours, not the other way round
-                    width: win.cardW * 0.78 + 34; height: ListView.view.height
-
-                    // The slanted card: a shear matrix turns the rectangle into a parallelogram.
-                    Item {
-                        id: shape
-                        anchors.centerIn: parent
-                        width: win.cardW; height: win.cardH
-                        scale: card.isCurrent ? 1.0 : 0.78
-                        opacity: card.isCurrent ? 1.0 : 0.65
-                        Behavior on scale { NumberAnimation { duration: 280; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
-                        Behavior on opacity { NumberAnimation { duration: 200 } }
-                        transform: Matrix4x4 { matrix: Qt.matrix4x4(1, -win.skew, 0, win.skew * shape.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1) }
-                        layer.enabled: true
-                        layer.smooth: true
-                        layer.samples: 4
-
-                        Image {
-                            anchors.fill: parent
-                            source: "file://" + card.modelData.thumb
-                            sourceSize: Qt.size(480, 270)
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                        }
+                    model: win.dots
+                    delegate: Item {
+                        required property var modelData
+                        readonly property bool on: win.filter === modelData.tag
+                        width: 22; height: 28; anchors.verticalCenter: parent.verticalCenter
                         Rectangle {
-                            anchors.fill: parent
-                            color: "transparent"
-                            border.width: card.isCurrent ? 3 : (card.inUse ? 2 : 0)
-                            border.color: card.isCurrent ? Theme.primary : Theme.tertiary
+                            anchors.centerIn: parent
+                            width: on ? 22 : 18; height: width; radius: width / 2
+                            color: modelData.c
+                            border.width: on ? 2 : 0; border.color: Theme.on_surface
+                            scale: dotArea.containsMouse ? 1.15 : 1
+                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                            Behavior on scale { NumberAnimation { duration: 120 } }
                         }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: card.isCurrent ? win.apply(card.modelData) : list.currentIndex = card.index
+                        MouseArea { id: dotArea; anchors.fill: parent; hoverEnabled: true; onClicked: win.filter = on ? "all" : modelData.tag }
                     }
                 }
             }
+        }
 
-            Text {
-                id: nameLabel
-                anchors { bottom: parent.bottom; bottomMargin: 14; horizontalCenter: parent.horizontalCenter }
-                textFormat: Text.PlainText
-                text: win.indexing && win.items.length === 0 ? "Indexing wallpapers…"
-                    : win.visibleItems.length === 0 ? "No wallpapers in ~/Pictures/Wallpapers"
-                    : win.visibleItems[list.currentIndex] ? win.visibleItems[list.currentIndex].name + "   (" + (list.currentIndex + 1) + "/" + win.visibleItems.length + ")" : ""
-                color: Theme.on_surface_variant
-                font.family: "JetBrains Mono"; font.pixelSize: 12
+        ListView {
+            id: list
+            anchors { left: parent.left; right: parent.right; top: bar.bottom; topMargin: 30; bottom: nameLabel.top }
+            orientation: ListView.Horizontal
+            model: win.visibleItems
+            spacing: 0
+            clip: false
+            highlightRangeMode: ListView.StrictlyEnforceRange
+            preferredHighlightBegin: width / 2 - win.curW / 2
+            preferredHighlightEnd: width / 2 + win.curW / 2
+            highlightMoveDuration: 420
+            highlightMoveVelocity: -1
+            cacheBuffer: 1600
+            WheelHandler {
+                onWheel: event => {
+                    const d = (event.angleDelta.y + event.angleDelta.x) > 0 ? -1 : 1
+                    list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex + d))
+                }
             }
+            delegate: Item {
+                id: card
+                required property var modelData
+                required property int index
+                readonly property bool isCurrent: ListView.isCurrentItem
+                readonly property bool inUse: modelData.path === win.current
+                // staggered rise: the further from the middle card, the later it starts
+                readonly property real rise: Math.max(0, Math.min(1, win.intro * 1.6 - Math.min(5, Math.abs(index - list.currentIndex)) * 0.12))
+                z: isCurrent ? 2 : 1
+                width: (isCurrent ? win.curW : win.sideW) + 14
+                height: ListView.view.height
+                Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+
+                Item {
+                    id: shape
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width - 14
+                    height: card.isCurrent ? win.curH : win.sideH
+                    y: (parent.height - height) / 2 + 70 * (1 - card.rise)
+                    opacity: card.rise            // side cards are dimmed by the dark overlay, not by transparency
+                    Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    transform: Matrix4x4 { matrix: Qt.matrix4x4(1, -win.skew, 0, win.skew * shape.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1) }
+                    layer.enabled: true; layer.smooth: true; layer.samples: 4
+
+                    Image {
+                        anchors.fill: parent
+                        source: card.isCurrent ? "file://" + card.modelData.path : "file://" + card.modelData.thumb
+                        sourceSize: card.isCurrent ? Qt.size(1040, 600) : Qt.size(300, 500)
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+                    Rectangle { anchors.fill: parent; color: "#000"; opacity: card.isCurrent ? 0 : 0.3
+                                Behavior on opacity { NumberAnimation { duration: 300 } } }
+                    Rectangle {
+                        anchors.fill: parent; color: "transparent"
+                        border.width: card.isCurrent ? 3 : (card.inUse ? 2 : 0)
+                        border.color: card.isCurrent ? Theme.accent2 : Theme.accent
+                    }
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: card.isCurrent ? win.apply(card.modelData) : list.currentIndex = card.index
+                }
+            }
+        }
+
+        Text {
+            id: nameLabel
+            anchors { bottom: parent.bottom; bottomMargin: 6; horizontalCenter: parent.horizontalCenter }
+            opacity: win.intro
+            textFormat: Text.PlainText
+            text: win.indexing && win.items.length === 0 ? "Indexing wallpapers…"
+                : win.visibleItems.length === 0 ? "No wallpapers match"
+                : win.visibleItems[list.currentIndex] ? win.visibleItems[list.currentIndex].name + "   " + (list.currentIndex + 1) + "/" + win.visibleItems.length : ""
+            color: Theme.on_surface; style: Text.Outline; styleColor: Qt.alpha("#000", 0.6)
+            font.family: Theme.mono; font.pixelSize: 12
         }
     }
 }
