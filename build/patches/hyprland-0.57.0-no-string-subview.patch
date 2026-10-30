@@ -1,0 +1,11 @@
+--- a/src/ipc/s1/S1.cpp	2026-10-30 11:33:22.869504377 +0100
++++ b/src/ipc/s1/S1.cpp	2026-10-30 11:33:22.871447911 +0100
+@@ -145,7 +145,7 @@
+             if (i < request.size() && (request[i + 1] == '\\' || request[i + 1] == ';'))
+                 ++i;
+             else
+-                LOG(Log::ERR, "Malformed socket1 request: invalid escape sequence {} at position {}, using it verbatim", request.subview(i, 2), i);
++                LOG(Log::ERR, "Malformed socket1 request: invalid escape sequence {} at position {}, using it verbatim", std::string_view{request}.substr(i, 2), i);
+         }
+         parsedCommand << request[i];
+     }
