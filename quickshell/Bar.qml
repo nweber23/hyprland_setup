@@ -117,6 +117,7 @@ PanelWindow {
                 color: Theme.on_surface_variant
                 font: bar.textFont
                 elide: Text.ElideRight
+                MouseArea { anchors.fill: parent; onClicked: bar.openPanel("music", parent) }
             }
         }
     }
