@@ -1,0 +1,6 @@
+singleton Theme Theme.qml
+singleton Weather Weather.qml
+Icon 1.0 Icon.qml
+Chip 1.0 Chip.qml
+Bar 1.0 Bar.qml
+Wallpaper 1.0 Wallpaper.qml

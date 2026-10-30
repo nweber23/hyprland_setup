@@ -417,3 +417,21 @@ hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized"
 -- Screenshots: region to clipboard, or region saved to ~/Pictures
 hl.bind("Print", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd([[mkdir -p ~/Pictures && grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%F-%H%M%S).png]]))
+
+
+------------------------------
+---- QUICKSHELL (bar, UI) ----
+------------------------------
+
+-- Quickshell draws the wallpaper, the bar and all panels; config lives in ~/dotfiles/quickshell.
+hl.on("hyprland.start", function()
+    hl.exec_cmd("quickshell")
+end)
+
+-- Blur what is behind the bar pills; ignore_alpha keeps fully transparent gaps unblurred.
+hl.layer_rule({
+    name        = "qs-bar-blur",
+    match       = { namespace = "qs-bar" },
+    blur        = true,
+    ignore_alpha = 0.3,
+})

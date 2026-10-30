@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Usage: set-wallpaper <image>   -- remember the wallpaper and regenerate the colour theme from it.
+# Quickshell watches ~/.cache/quickshell/{wallpaper.txt,colors.json} and updates live.
+set -euo pipefail
+img=$(realpath "$1"); out="$HOME/.cache/quickshell"; mkdir -p "$out"
+matugen image "$img" -m "${THEME_MODE:-dark}" --prefer saturation >/dev/null   # colours first, so the UI never shows a stale palette
+printf '%s\n' "$img" > "$out/wallpaper.txt"

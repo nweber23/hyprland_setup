@@ -3,6 +3,8 @@
 # It (1) copies the compositor log from tmpfs to disk, so it survives a reboot, and
 # (2) records the devices and monitors Hyprland sees. Logs: ~/.cache/hyprland-session/
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+# Quickshell modules and the prebuilt Qt live under ~/.local
+export QML2_IMPORT_PATH="$HOME/.local/lib/qt6/qml"
 LOGDIR="$HOME/.cache/hyprland-session"; mkdir -p "$LOGDIR"
 RUN="/run/user/$(id -u)/hypr"
 
