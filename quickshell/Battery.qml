@@ -16,6 +16,17 @@ Singleton {
     property int health: 0        // % of the design capacity the battery still holds, 0 = unknown
     property int cycles: 0
     property int warned: 0        // 1 low (20), 2 very low (10), 3 critical (5); reset when charging
+    property bool ready: false    // the remembered warned level is loaded
+    onWarnedChanged: if (ready) stateFile.setText(String(warned))
+
+    // Remembered across restarts of the shell and reboots, so a warning is not repeated at the next login.
+    FileView {
+        id: stateFile
+        path: Quickshell.env("HOME") + "/.cache/quickshell/battery-warned"
+        printErrors: false
+        onLoaded: { root.warned = parseInt(text()) || 0; root.ready = true; root.check() }
+        onLoadFailed: { root.ready = true; root.check() }
+    }
     property string before: ""    // power profile to restore after charging, "" = we changed nothing
 
     function init() {}            // referencing the singleton is what starts it
@@ -24,6 +35,7 @@ Singleton {
         Quickshell.execDetached(["notify-send", "-u", "critical", "-a", "Battery", "-i", "battery-caution", title, body])
     }
     function check() {
+        if (!ready) return
         if (!onBattery) {
             warned = 0
             if (before !== "") { Quickshell.execDetached(["powerprofilesctl", "set", before]); before = "" }
