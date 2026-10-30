@@ -115,7 +115,7 @@ Panel {
                         text: Tools.notes
                         onTextChanged: if (activeFocus) save.restart()
                         Timer { id: save; interval: 500; onTriggered: Tools.saveNotes(notes.text) }
-                        Text { visible: notes.text === ""; textFormat: Text.PlainText; text: "Jot something down. It is saved as you type."; color: Theme.outline; font: notes.font }
+                        Text { visible: notes.text === ""; textFormat: Text.PlainText; text: "Write something down. It is saved as you type."; color: Theme.outline; font: notes.font }
                     }
                 }
             }
