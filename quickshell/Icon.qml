@@ -1,7 +1,7 @@
 import QtQuick
 
 // Material Symbols glyph: Icon { name: "wifi" }. Names are ligatures of the icon font.
-Text {
+Text { textFormat: Text.PlainText;
     property string name
     property real size: 20
     property real fill: 0

@@ -111,7 +111,7 @@ PanelWindow {
             Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 22; fill: 1; color: Theme.primary
                    MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
             Icon { name: "skip_next"; size: 20; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
-            Text {
+            Text { textFormat: Text.PlainText;
                 Layout.maximumWidth: 240
                 text: bar.player ? (bar.player.trackArtist ? bar.player.trackArtist + " – " : "") + bar.player.trackTitle : ""
                 color: Theme.on_surface_variant
@@ -128,10 +128,10 @@ PanelWindow {
         height: parent.height
         highlighted: Popups.current === "calendar" && Popups.screenName === bar.screen.name
         onClicked: bar.openPanel("calendar", clockChip)
-        Text { text: Qt.formatDateTime(clock.date, "ddd d MMM"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface_variant; font: bar.textFont }
-        Text { text: Qt.formatDateTime(clock.date, "HH:mm"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 15; font.bold: true }
+        Text { textFormat: Text.PlainText; text: Qt.formatDateTime(clock.date, "ddd d MMM"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface_variant; font: bar.textFont }
+        Text { textFormat: Text.PlainText; text: Qt.formatDateTime(clock.date, "HH:mm"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 15; font.bold: true }
         Icon { visible: Weather.temp !== ""; name: Weather.icon; size: 18; fill: 1; color: Theme.primary }
-        Text { visible: Weather.temp !== ""; text: Weather.temp; color: Theme.primary; font: bar.textFont }
+        Text { textFormat: Text.PlainText; visible: Weather.temp !== ""; text: Weather.temp; color: Theme.primary; font: bar.textFont }
     }
 
     // ---- right: tray + status chips ------------------------------------------------
@@ -161,7 +161,7 @@ PanelWindow {
         Chip {
             Layout.fillHeight: true
             Icon { name: "keyboard"; size: 18 }
-            Text { text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
+            Text { textFormat: Text.PlainText; text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
         }
 
         Chip {
@@ -170,7 +170,7 @@ PanelWindow {
             highlighted: Popups.current === "network" && Popups.screenName === bar.screen.name
             onClicked: bar.openPanel("network", wifiChip)
             Icon { name: Net.wifiNetwork ? "wifi" : "wifi_off"; size: 18; fill: 1; color: Net.wifiNetwork ? Theme.primary : Theme.outline }
-            Text { visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""; color: Theme.on_surface; font: bar.textFont
+            Text { textFormat: Text.PlainText; visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""; color: Theme.on_surface; font: bar.textFont
                    Layout.maximumWidth: 120; elide: Text.ElideRight }
         }
 
@@ -180,7 +180,7 @@ PanelWindow {
             highlighted: Popups.current === "network" && Popups.screenName === bar.screen.name
             onClicked: bar.openPanel("network", btChip)
             Icon { name: Net.btDevice ? "bluetooth_connected" : "bluetooth"; size: 18; fill: 1; color: Net.btDevice ? Theme.primary : Theme.outline }
-            Text { visible: Net.btDevice !== null; color: Theme.on_surface; font: bar.textFont; Layout.maximumWidth: 120; elide: Text.ElideRight
+            Text { textFormat: Text.PlainText; visible: Net.btDevice !== null; color: Theme.on_surface; font: bar.textFont; Layout.maximumWidth: 120; elide: Text.ElideRight
                    text: Net.btDevice ? Net.btDevice.name + (Net.btDevice.batteryAvailable ? " " + Math.round(Net.btDevice.battery * (Net.btDevice.battery > 1 ? 1 : 100)) + "%" : "") : "" }
         }
 
@@ -188,7 +188,7 @@ PanelWindow {
             id: volChip
             Layout.fillHeight: true
             Icon { name: bar.volumeIcon(); size: 18; fill: 1; color: bar.muted ? Theme.outline : Theme.on_surface }
-            Text { text: Math.round(bar.volume * 100) + "%"; color: Theme.on_surface; font: bar.textFont }
+            Text { textFormat: Text.PlainText; text: Math.round(bar.volume * 100) + "%"; color: Theme.on_surface; font: bar.textFont }
             onClicked: mouse => {
                 if (mouse.button === Qt.MiddleButton) { if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted }
                 else bar.openPanel("power", volChip)
@@ -208,7 +208,7 @@ PanelWindow {
             onClicked: bar.openPanel("power", batChip)
             Icon { name: bar.batteryIcon(); size: 18; fill: 1
                    color: bar.charging ? Theme.primary : bar.batteryPct <= 15 ? Theme.error : Theme.on_surface }
-            Text { text: Math.round(bar.batteryPct) + "%"; color: Theme.on_surface; font: bar.textFont }
+            Text { textFormat: Text.PlainText; text: Math.round(bar.batteryPct) + "%"; color: Theme.on_surface; font: bar.textFont }
         }
     }
 }

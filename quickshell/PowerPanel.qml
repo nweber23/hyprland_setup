@@ -42,8 +42,8 @@ Panel {
                color: root.charging ? Theme.primary : root.pct <= 15 ? Theme.error : Theme.on_surface }
         ColumnLayout {
             spacing: 0
-            Text { text: Math.round(root.pct) + "%"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 22; font.bold: true }
-            Text { text: root.charging ? "Charging" : (root.battery && root.battery.state === UPowerDeviceState.FullyCharged ? "Fully charged" : "On battery")
+            Text { textFormat: Text.PlainText; text: Math.round(root.pct) + "%"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 22; font.bold: true }
+            Text { textFormat: Text.PlainText; text: root.charging ? "Charging" : (root.battery && root.battery.state === UPowerDeviceState.FullyCharged ? "Fully charged" : "On battery")
                    color: Theme.on_surface_variant; font.family: "JetBrains Mono"; font.pixelSize: 11 }
         }
     }
@@ -53,7 +53,7 @@ Panel {
         Layout.fillWidth: true; spacing: 10
         Icon { name: "light_mode"; size: 20; color: Theme.on_surface_variant }
         MSlider { Layout.fillWidth: true; value: root.brightness; onMoved: v => root.setBrightness(v) }
-        Text { Layout.preferredWidth: 36; horizontalAlignment: Text.AlignRight; text: Math.round(root.brightness * 100) + "%"
+        Text { textFormat: Text.PlainText; Layout.preferredWidth: 36; horizontalAlignment: Text.AlignRight; text: Math.round(root.brightness * 100) + "%"
                color: Theme.on_surface_variant; font.family: "JetBrains Mono"; font.pixelSize: 11 }
     }
     RowLayout {
@@ -62,14 +62,14 @@ Panel {
                MouseArea { anchors.fill: parent; onClicked: if (root.hasAudio) root.sink.audio.muted = !root.sink.audio.muted } }
         MSlider { Layout.fillWidth: true; value: root.hasAudio ? root.sink.audio.volume : 0
                   onMoved: v => { if (root.hasAudio) root.sink.audio.volume = v } }
-        Text { Layout.preferredWidth: 36; horizontalAlignment: Text.AlignRight; text: root.hasAudio ? Math.round(root.sink.audio.volume * 100) + "%" : "--"
+        Text { textFormat: Text.PlainText; Layout.preferredWidth: 36; horizontalAlignment: Text.AlignRight; text: root.hasAudio ? Math.round(root.sink.audio.volume * 100) + "%" : "--"
                color: Theme.on_surface_variant; font.family: "JetBrains Mono"; font.pixelSize: 11 }
     }
 
     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.outline_variant; opacity: 0.6 }
 
     // ---- power profile ----
-    Text { text: "Power profile"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 13; font.bold: true }
+    Text { textFormat: Text.PlainText; text: "Power profile"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 13; font.bold: true }
     RowLayout {
         Layout.fillWidth: true; spacing: 8
         Repeater {
@@ -90,7 +90,7 @@ Panel {
                     anchors.centerIn: parent; spacing: 2
                     Icon { Layout.alignment: Qt.AlignHCenter; name: modelData.icon; size: 22; fill: active ? 1 : 0
                            color: active ? Theme.on_primary_container : Theme.on_surface_variant }
-                    Text { Layout.alignment: Qt.AlignHCenter; text: modelData.label; font.family: "JetBrains Mono"; font.pixelSize: 10
+                    Text { textFormat: Text.PlainText; Layout.alignment: Qt.AlignHCenter; text: modelData.label; font.family: "JetBrains Mono"; font.pixelSize: 10
                            color: active ? Theme.on_primary_container : Theme.on_surface_variant }
                 }
                 MouseArea { anchors.fill: parent; onClicked: PowerProfiles.profile = modelData.profile }
@@ -122,7 +122,7 @@ Panel {
                 ColumnLayout {
                     anchors.centerIn: parent; spacing: 2
                     Icon { Layout.alignment: Qt.AlignHCenter; name: btn.modelData.icon; size: 22; color: btn.armed ? Theme.surface : Theme.on_surface_variant }
-                    Text { Layout.alignment: Qt.AlignHCenter; text: btn.armed ? "Sure?" : btn.modelData.label
+                    Text { textFormat: Text.PlainText; Layout.alignment: Qt.AlignHCenter; text: btn.armed ? "Sure?" : btn.modelData.label
                            font.family: "JetBrains Mono"; font.pixelSize: 10; color: btn.armed ? Theme.surface : Theme.on_surface_variant }
                 }
                 MouseArea {
