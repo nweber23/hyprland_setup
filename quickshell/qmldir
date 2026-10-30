@@ -37,3 +37,4 @@ NetNode 1.0 NetNode.qml
 NetChip 1.0 NetChip.qml
 NetView 1.0 NetView.qml
 NetworkPanel 1.0 NetworkPanel.qml
+ChargeOsd 1.0 ChargeOsd.qml

@@ -13,6 +13,7 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
+        function charge(plugged: bool): void { chargeOsd.play(plugged) }   // preview: quickshell ipc call shell charge true
     }
     Process { running: true; command: ["screentime-daemon"] }
     // Feeds the clipboard history: clip-store runs once per newly copied text.
@@ -20,6 +21,7 @@ ShellRoot {
     Notifications {}
     Lock { id: lockScreen }
     Osd {}
+    ChargeOsd { id: chargeOsd }
     PolkitDialog {}
     Variants {
         model: Quickshell.screens

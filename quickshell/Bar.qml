@@ -234,6 +234,12 @@ PanelWindow {
             BarChip {
                 id: batChip
                 visible: bar.battery !== null && bar.battery.isLaptopBattery
+                // while charging the chip breathes softly in the accent colour
+                property real glow: 0.12
+                fillColor: bar.charging ? Qt.alpha(Theme.accent, glow) : "transparent"
+                SequentialAnimation on glow { running: bar.charging; loops: Animation.Infinite
+                    NumberAnimation { to: 0.34; duration: 1400; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 0.12; duration: 1400; easing.type: Easing.InOutSine } }
                 active: Popups.current === "power" && Popups.screenName === bar.screen.name
                 onClicked: bar.openPanel("power", batChip)
                 Icon { name: bar.batteryIcon(); size: 16; fill: 1; color: bar.charging ? Theme.accent : bar.batteryPct <= 15 ? Theme.error : Theme.on_surface }
