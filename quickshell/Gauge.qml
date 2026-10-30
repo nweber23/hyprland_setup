@@ -13,7 +13,7 @@ Item {
 
     Shape {
         anchors.fill: parent
-        layer.enabled: true; layer.samples: 4
+        preferredRendererType: Shape.CurveRenderer   // analytic anti-aliasing, no blurry MSAA layer
         ShapePath {
             strokeColor: root.trackColor; strokeWidth: root.thickness; fillColor: "transparent"; capStyle: ShapePath.RoundCap
             PathAngleArc { centerX: root.width / 2; centerY: root.height / 2; radiusX: root.r; radiusY: root.r; startAngle: 0; sweepAngle: 360 }

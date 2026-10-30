@@ -26,13 +26,18 @@ Panel {
 
     function shiftMonth(d) { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + d, 1); monthTick++ }
     function shiftDay(d) {
-        const n = Math.max(0, Math.min(2, weatherView + d)); if (n === weatherView) return
+        const n = Math.max(0, Math.min(Weather.days.length - 1, weatherView + d)); if (n === weatherView) return
         weatherView = n; spinAnim.restart(); tempFlash.restart()
     }
     NumberAnimation { id: spinAnim; target: root; property: "spin"; from: 140; to: 0; duration: 800; easing.type: Easing.OutCubic }
     // the orbit of the other days turns once a minute, today's slots only sway a little
     NumberAnimation on orbitAngle { from: 0; to: -360; duration: 60000; loops: Animation.Infinite; running: root.shown }
     NumberAnimation on osc { from: 0; to: Math.PI * 2; duration: 9000; loops: Animation.Infinite; running: root.shown }
+    // gauge values: right now for today, the day's own values for the others
+    readonly property real gWind: isToday || !day || day.wind === undefined ? Weather.wind : day.wind
+    readonly property real gHumid: isToday || !day || day.humidity === undefined ? Weather.humidity : day.humidity
+    readonly property real gRain: isToday || !day || day.rain === undefined ? Weather.rain : day.rain
+    readonly property real gFeels: isToday || !day || day.feels === undefined ? Weather.feelsNum : day.feels
     readonly property int activeSlot: Math.min(7, Math.floor(clock.date.getHours() / 3))
 
     // the big temperature counts to its value, the gauges sweep
@@ -183,9 +188,10 @@ Panel {
                     Layout.fillWidth: true
                     Arrow { act: () => root.shiftDay(-1); name: "chevron_left"; opacity: root.weatherView > 0 ? 1 : 0.25 }
                     Text { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; textFormat: Text.PlainText
-                           text: root.day ? (root.isToday ? Qt.formatDate(clock.date, "dddd") : root.day.name).toUpperCase() : "—"
+                           text: !root.day ? "—" : root.isToday ? Qt.formatDate(clock.date, "dddd").toUpperCase()
+                         : (root.day.date ? Qt.formatDate(new Date(root.day.date + "T12:00:00"), "ddd d MMM") : root.day.name).toUpperCase()
                            color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 13; font.bold: true }
-                    Arrow { act: () => root.shiftDay(1); name: "chevron_right"; opacity: root.weatherView < 2 ? 1 : 0.25 }
+                    Arrow { act: () => root.shiftDay(1); name: "chevron_right"; opacity: root.weatherView < Weather.days.length - 1 ? 1 : 0.25 }
                 }
                 Text { Layout.alignment: Qt.AlignRight; textFormat: Text.PlainText; opacity: root.tempFlashV
                        text: Math.round(root.tempShown) + "°"; color: Theme.accent2
@@ -197,10 +203,10 @@ Panel {
                     Layout.fillWidth: true; spacing: 8
                     Repeater {
                         model: [
-                            { v: Weather.wind / 40, t: Math.round(Weather.wind) + "", l: "WIND", i: "air" },
-                            { v: Weather.humidity / 100, t: Math.round(Weather.humidity) + "%", l: "HUMID", i: "water_drop" },
-                            { v: Weather.rain / 100, t: Math.round(Weather.rain) + "%", l: "RAIN", i: "umbrella" },
-                            { v: (Weather.feelsNum + 10) / 45, t: Math.round(Weather.feelsNum) + "°", l: "FEELS", i: "thermostat" }
+                            { v: root.gWind / 40, t: Math.round(root.gWind) + "", l: "WIND", i: "air" },
+                            { v: root.gHumid / 100, t: Math.round(root.gHumid) + "%", l: "HUMID", i: "water_drop" },
+                            { v: root.gRain / 100, t: Math.round(root.gRain) + "%", l: "RAIN", i: "umbrella" },
+                            { v: (root.gFeels + 10) / 45, t: Math.round(root.gFeels) + "°", l: "FEELS", i: "thermostat" }
                         ]
                         delegate: ColumnLayout {
                             required property var modelData
@@ -209,11 +215,12 @@ Panel {
                                 Layout.alignment: Qt.AlignHCenter; implicitWidth: 56; implicitHeight: 56
                                 Gauge { anchors.fill: parent; value: root.shown ? modelData.v : 0; thickness: 4; color: Theme.accent
                                         Behavior on value { NumberAnimation { duration: 1100; easing.type: Easing.OutCubic } } }
-                                Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData.t; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
+                                Text { x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
+                                       renderType: Text.NativeRendering; textFormat: Text.PlainText; text: modelData.t; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
                             }
                             RowLayout { Layout.alignment: Qt.AlignHCenter; spacing: 3
                                 Icon { name: modelData.i; size: 11; color: Theme.on_surface_variant }
-                                Text { textFormat: Text.PlainText; text: modelData.l; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 } }
+                                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: modelData.l; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 } }
                         }
                     }
                 }
