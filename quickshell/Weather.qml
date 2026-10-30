@@ -3,19 +3,45 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Current weather from wttr.in (location is guessed from the IP address). Refreshed every 15 min.
+// Weather from wttr.in (location is guessed from the IP address), refreshed every 15 min.
 Singleton {
     id: root
-    property string text: ""
+    property string temp: ""        // e.g. "12°"
+    property string icon: "cloud"   // Material Symbols name
+    property string desc: ""
+    property string feelsLike: ""
+    property var forecast: []       // [{ label, icon, max, min }] for today + 2 days
+
+    function iconFor(code) {
+        code = parseInt(code)
+        if (code === 113) return "sunny"
+        if (code === 116) return "partly_cloudy_day"
+        if (code === 119 || code === 122) return "cloud"
+        if ([143, 248, 260].includes(code)) return "foggy"
+        if ([200, 386, 389, 392, 395].includes(code)) return "thunderstorm"
+        if ([179, 182, 185, 227, 230, 323, 326, 329, 332, 335, 338, 350, 362, 365, 368, 371, 374, 377].includes(code)) return "weather_snowy"
+        return "rainy"
+    }
 
     Process {
         id: fetch
-        command: ["curl", "-s", "--max-time", "10", "https://wttr.in/?format=%c%t"]
+        command: ["curl", "-s", "--max-time", "10", "https://wttr.in/?format=j1"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const t = text.trim()
-                // wttr.in answers with an HTML/plain error page when it is unreachable; keep the old value then.
-                if (t.length > 0 && t.length < 24 && !t.includes("<")) root.text = t
+                try {
+                    const j = JSON.parse(text)
+                    const cur = j.current_condition[0]
+                    root.temp = cur.temp_C + "°"
+                    root.icon = root.iconFor(cur.weatherCode)
+                    root.desc = cur.weatherDesc[0].value
+                    root.feelsLike = cur.FeelsLikeC + "°"
+                    const days = ["Today", "Tomorrow"]
+                    root.forecast = j.weather.map((d, i) => ({
+                        label: i < 2 ? days[i] : Qt.formatDate(new Date(d.date), "ddd"),
+                        icon: root.iconFor(d.hourly[4].weatherCode),   // midday slot
+                        max: d.maxtempC + "°", min: d.mintempC + "°"
+                    }))
+                } catch (e) { /* offline or error page: keep the previous values */ }
             }
         }
     }

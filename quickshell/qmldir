@@ -4,3 +4,12 @@ Icon 1.0 Icon.qml
 Chip 1.0 Chip.qml
 Bar 1.0 Bar.qml
 Wallpaper 1.0 Wallpaper.qml
+singleton Popups Popups.qml
+singleton Net Net.qml
+Panel 1.0 Panel.qml
+MSlider 1.0 MSlider.qml
+singleton Events Events.qml
+Toggle 1.0 Toggle.qml
+CalendarPanel 1.0 CalendarPanel.qml
+NetworkPanel 1.0 NetworkPanel.qml
+PowerPanel 1.0 PowerPanel.qml

@@ -435,3 +435,12 @@ hl.layer_rule({
     blur        = true,
     ignore_alpha = 0.3,
 })
+
+-- Popup panels: blurred, and no compositor animation (Quickshell animates them itself).
+hl.layer_rule({
+    name         = "qs-panel",
+    match        = { namespace = "qs-panel" },
+    blur         = true,
+    ignore_alpha = 0.3,
+    no_anim      = true,
+})
