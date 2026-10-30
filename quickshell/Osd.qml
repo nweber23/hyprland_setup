@@ -64,7 +64,7 @@ Scope {
             id: pill
             anchors.fill: parent
             radius: 28
-            color: Qt.alpha(Theme.surface_container, 0.92)
+            color: Qt.alpha(Theme.surface_container, 0.96)
             border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
             opacity: root.shown ? 1 : 0
             scale: root.shown ? 1 : 0.9

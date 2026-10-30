@@ -61,7 +61,7 @@ Scope {
                 width: ListView.view.width
                 height: col.implicitHeight + 28
                 radius: 20
-                color: Qt.alpha(Theme.surface_container, 0.92)
+                color: Qt.alpha(Theme.surface_container, 0.96)
                 border.width: critical ? 2 : 1
                 border.color: critical ? Theme.error : Qt.alpha(Theme.outline_variant, 0.6)
 

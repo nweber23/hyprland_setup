@@ -40,7 +40,7 @@ PanelWindow {
         width: parent.width
         height: body.implicitHeight + 32
         radius: 24
-        color: Qt.alpha(Theme.surface_container, 0.9)
+        color: Qt.alpha(Theme.surface_container, 0.96)
         border.width: 1
         border.color: Qt.alpha(Theme.outline_variant, 0.6)
         opacity: win.shown ? 1 : 0

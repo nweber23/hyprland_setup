@@ -23,8 +23,9 @@ Panel {
     }
     readonly property var paired: Bluetooth.devices.values.filter(d => d.paired || d.connected)
         .sort((a, b) => (b.connected - a.connected) || a.name.localeCompare(b.name))
-    // Nearby: unpaired devices that announce a name (anonymous ones are just radio noise).
-    readonly property var nearby: Bluetooth.devices.values.filter(d => !d.paired && !d.connected && d.name !== "")
+    // Nearby: unpaired devices with a real name. Ones named after their own MAC address are radio noise.
+    readonly property var nearby: Bluetooth.devices.values.filter(d => !d.paired && !d.connected && d.name !== ""
+                                                                      && !/^[0-9A-Fa-f]{2}([-:][0-9A-Fa-f]{2}){5}$/.test(d.name))
         .sort((a, b) => a.name.localeCompare(b.name))
 
     RowLayout {
