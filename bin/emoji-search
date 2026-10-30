@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""emoji-search <words...> -- print up to 40 "emoji<TAB>name" lines whose Unicode name contains every word."""
+import sys, unicodedata
+words = [w.lower() for w in sys.argv[1:]]
+n = 0
+for lo, hi in ((0x1F300, 0x1FAFF), (0x2600, 0x27BF), (0x1F000, 0x1F2FF)):
+    for cp in range(lo, hi + 1):
+        name = unicodedata.name(chr(cp), "").lower()
+        if name and all(w in name for w in words):
+            print(f"{chr(cp)}\t{name}")
+            n += 1
+            if n >= 40:
+                sys.exit()

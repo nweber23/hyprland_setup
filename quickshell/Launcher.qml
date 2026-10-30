@@ -1,10 +1,12 @@
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 
 // App launcher: type to filter, Up/Down to choose, Enter to start, Esc to close.
+// Extras: "2+2*3" calculates (Enter copies the result), ":cat" searches emoji (Enter copies), and any text offers a web search.
 PanelWindow {
     id: win
     property string screenName: ""
@@ -25,8 +27,33 @@ PanelWindow {
 
     // Rank: name prefix > name contains > keywords/comment contains. Empty query lists everything by name.
     property var results: []
+    property var emojis: []   // [{name, comment, icon, execute}] for the current ":" query
+    function copyEntry(text, label, icon) {
+        return { name: label, comment: "Enter copies it", icon: icon, execute: () => Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" | wl-copy", "sh", text]) }
+    }
+    // Plain arithmetic only: the regex keeps everything but digits, operators and brackets out of eval.
+    function calc(q) {
+        if (!/^[0-9+\-*\/().,%^ ]+$/.test(q) || !/[+\-*\/%^]/.test(q) || !/[0-9]/.test(q)) return null
+        try {
+            const v = eval(q.replace(/,/g, ".").replace(/\^/g, "**"))
+            return typeof v === "number" && isFinite(v) ? String(Math.round(v * 1e10) / 1e10) : null
+        } catch (e) { return null }
+    }
+    Process {
+        id: emojiSearch
+        stdout: StdioCollector { onStreamFinished: {
+            win.emojis = text.split("\n").filter(l => l).map(l => { const p = l.split("\t"); return win.copyEntry(p[0], p[0] + "  " + p[1], "face-smile") })
+            win.refresh()
+        } }
+    }
+    Timer { id: emojiDelay; interval: 120; onTriggered: { emojiSearch.command = ["emoji-search"].concat(input.text.trim().slice(1).split(/\s+/).filter(w => w)); emojiSearch.running = true } }
     function refresh() {
-        const q = input.text.trim().toLowerCase()
+        const raw = input.text.trim(), q = raw.toLowerCase()
+        if (raw.startsWith(":") && raw.length > 1) {
+            results = emojis
+            list.currentIndex = 0
+            return
+        }
         const out = []
         const apps = DesktopEntries.applications.values
         for (let i = 0; i < apps.length; i++) {
@@ -41,7 +68,13 @@ PanelWindow {
             if (score > 0) out.push({ entry: a, score: score })
         }
         out.sort((x, y) => y.score - x.score || x.entry.name.localeCompare(y.entry.name))
-        results = out.slice(0, 60).map(o => o.entry)
+        let list_ = out.slice(0, 60).map(o => o.entry)
+        const c = calc(raw)
+        if (c !== null) list_.unshift(copyEntry(c, "= " + c, "accessories-calculator"))
+        if (raw !== "")
+            list_.push({ name: "Search the web for \u201c" + raw + "\u201d", comment: "DuckDuckGo", icon: "web-browser",
+                         execute: () => Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(raw)]) })
+        results = list_
         list.currentIndex = 0
     }
     function launch(entry) { if (!entry) return; entry.execute(); Popups.close() }
@@ -80,7 +113,7 @@ PanelWindow {
                     font.family: "JetBrains Mono"; font.pixelSize: 16
                     selectionColor: Theme.primary
                     clip: true
-                    onTextChanged: win.refresh()
+                    onTextChanged: { if (text.startsWith(":")) { win.emojis = []; emojiDelay.restart() } win.refresh() }
                     Keys.onEscapePressed: Popups.close()
                     Keys.onReturnPressed: win.launch(win.results[list.currentIndex])
                     Keys.onEnterPressed: win.launch(win.results[list.currentIndex])

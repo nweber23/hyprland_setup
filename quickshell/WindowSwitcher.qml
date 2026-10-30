@@ -52,7 +52,7 @@ PanelWindow {
     visible: shown || card.opacity > 0.01
     anchors { top: true }
     margins.top: 160
-    implicitWidth: Math.min(1000, Math.max(420, windows.length * 190 + 40))
+    implicitWidth: windows.length === 0 ? 220 : Math.min(1000, windows.length * 184 + 20)   // cards 176 + spacing 8, margins 2x14, minus the last gap
     implicitHeight: card.height
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
