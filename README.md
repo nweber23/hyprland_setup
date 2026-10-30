@@ -5,6 +5,18 @@ with matugen. Hyprland, Quickshell and their libraries are built from source int
 GNOME stays installed as a fallback session. The look and the panels follow the *Serpantinum* desktop by ilyamiro
 (<https://github.com/ilyamiro/serpantinum>, AGPL-3.0); this repository contains no code copied from it.
 
+## Install
+
+On a fresh Ubuntu 24.04 (needs `sudo` for the packages and the login-screen entry):
+
+```sh
+git clone <this repo> ~/dotfiles && cd ~/dotfiles
+./install.sh            # packages, tools, build (1-2 h), links, session entry, first theme
+./install.sh links      # later: only re-create the symlinks (never overwrites; backs up to ~/backups)
+```
+
+The build must not run inside Hyprland; run it from a TTY or the GNOME session. See `./install.sh --help` for the steps.
+
 ## Layout
 
 | Path | What |
@@ -34,7 +46,8 @@ Local, never committed: `~/.config/quickshell-local/calendar.ics` or `calendar-u
 | `Super+L` | lock |
 | `Super+Space`, `Alt+Shift` | next keyboard layout (us, de) |
 | `Super+1..9`, `Super+Shift+1..9` | workspace / move window there |
-| `Super+Tab`, `Super+Shift+Tab` | next / previous workspace |
+| `Alt+Tab`, `Super+Tab` (+Shift) | window switcher: hold the key, Tab moves on, release picks, Del closes |
+| `Super+Ctrl+Tab` (+Shift) | next / previous workspace |
 | `Super+Arrows`, `Super+Shift+Arrows`, `Super+Ctrl+Arrows` | focus / move / resize |
 | `Print`, `Shift+Print`, `Super+Print` | screenshot region / full / window (saved and copied) |
 | `Super+Shift+R` | start/stop a region recording |

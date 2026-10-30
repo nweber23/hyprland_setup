@@ -6,7 +6,7 @@
 set -euo pipefail
 QT=${1:-6.12.0} QS=${2:-v0.3.2}
 python3 -m venv "$HOME/.local/opt/aqt-venv"; "$HOME/.local/opt/aqt-venv/bin/pip" install -q --upgrade aqtinstall
-"$HOME/.local/opt/aqt-venv/bin/aqt" install-qt linux desktop "$QT" linux_gcc_64 -O "$HOME/.local/opt/Qt" -m qtshadertools
+"$HOME/.local/opt/aqt-venv/bin/aqt" install-qt linux desktop "$QT" linux_gcc_64 -O "$HOME/.local/opt/Qt" -m qtshadertools qtmultimedia   # multimedia: animated wallpapers
 Q="$HOME/.local/opt/Qt/$QT/gcc_64"; export PATH="$Q/bin:$PATH"
 src="$HOME/.cache/hypr-build/quickshell"; rm -rf "$src"
 git clone -q -c advice.detachedHead=false --depth 1 --branch "$QS" https://github.com/quickshell-mirror/quickshell.git "$src"
