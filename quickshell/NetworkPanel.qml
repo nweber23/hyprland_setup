@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Networking
+import Quickshell.Services.SystemTray
 import QtQuick
 import QtQuick.Layouts
 
@@ -17,6 +18,8 @@ Panel {
     onShownChanged: if (!shown) listMode = false
 
     readonly property var adapter: Bluetooth.defaultAdapter
+    // nm-applet's tray menu has everything NetworkManager offers (hidden networks, VPN, edit connections)
+    readonly property var nmItem: SystemTray.items.values.find(i => i.id === "nm-applet") ?? null
     readonly property var wnet: Net.wifiNetwork
     readonly property var bdev: Net.btDevice
     function pct(v) { return Math.round(v > 1 ? v : v * 100) }
@@ -153,7 +156,21 @@ Panel {
         p: root; index: 1; dy: 14; back: true
         RowLayout {
             Layout.fillWidth: true
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+                Rectangle {   // all NetworkManager options
+                    visible: root.nmItem !== null
+                    anchors.left: parent.left
+                    implicitWidth: allRow.implicitWidth + 24; implicitHeight: 46; radius: 15
+                    color: allArea.containsMouse ? Theme.cardHigh : Theme.card
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    RowLayout { id: allRow; anchors.centerIn: parent; spacing: 8
+                        Icon { name: "tune"; size: 18; color: Theme.accent }
+                        Text { textFormat: Text.PlainText; text: "All options"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12; font.bold: true } }
+                    MouseArea { id: allArea; anchors.fill: parent; hoverEnabled: true
+                                onClicked: { Popups.trayItem = root.nmItem; Popups.toggle("traymenu", Popups.screenName, Popups.anchorX) } }
+                }
+            }
             Rectangle {
                 implicitWidth: 320; implicitHeight: 46; radius: 15; color: Theme.card
                 Rectangle {   // sliding highlight

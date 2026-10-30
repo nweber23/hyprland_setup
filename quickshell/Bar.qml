@@ -173,7 +173,9 @@ PanelWindow {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                         onClicked: m => {
                             // right click (or left click on menu-only items) opens the menu; left click activates
-                            if (m.button === Qt.RightButton || (m.button === Qt.LeftButton && trayIcon.modelData.onlyMenu)) {
+                            // Applets like nm-applet have a menu but ignore Activate, so their left click opens the menu too
+                            const menuFirst = trayIcon.modelData.onlyMenu || trayIcon.modelData.id === "nm-applet" || trayIcon.modelData.id.endsWith("-applet")
+                            if (m.button === Qt.RightButton || (m.button === Qt.LeftButton && menuFirst)) {
                                 if (trayIcon.modelData.hasMenu) { Popups.trayItem = trayIcon.modelData; bar.openPanel("traymenu", trayIcon) }
                                 else trayIcon.modelData.secondaryActivate()
                             } else if (m.button === Qt.MiddleButton) trayIcon.modelData.secondaryActivate()
