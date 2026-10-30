@@ -14,6 +14,8 @@ ShellRoot {
         }
     }
     Process { running: true; command: ["screentime-daemon"] }
+    // Feeds the clipboard history: clip-store runs once per newly copied text.
+    Process { running: true; command: ["wl-paste", "--type", "text", "--watch", "clip-store"] }
     Notifications {}
     Osd {}
     Variants {
@@ -34,6 +36,7 @@ ShellRoot {
             WallpaperPicker { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             ScreenTimePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             DisplayPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
+            ClipboardPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             Launcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             PowerPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             MusicPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

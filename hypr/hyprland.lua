@@ -314,6 +314,7 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("quickshell ipc call shell toggle wallpaper"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call shell toggle screentime"))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call shell toggle clipboard"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
