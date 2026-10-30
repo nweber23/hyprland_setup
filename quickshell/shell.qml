@@ -14,6 +14,10 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
+        function switcher(dir: int): void {   // Alt+Tab / Super+Tab: open the window switcher, or move on while it is open
+            if (Popups.current === "switcher") Popups.switchStep(dir)
+            else { const m = Hyprland.focusedMonitor; if (m) Popups.toggle("switcher", m.name, 0) }
+        }
         function tray(index: int): void {   // open the menu of tray item <index> (for testing without a mouse)
             const it = SystemTray.items.values[index]; const m = Hyprland.focusedMonitor
             if (it && m) { Popups.trayItem = it; Popups.toggle("traymenu", m.name, m.width / m.scale - 120) }
@@ -47,6 +51,7 @@ ShellRoot {
             ScreenTimePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             DisplayPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             ClipboardPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            WindowSwitcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NotificationCenter { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             VolumePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

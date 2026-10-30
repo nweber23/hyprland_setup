@@ -349,8 +349,13 @@ hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + Tab",         hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + CTRL + Tab",         hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mainMod .. " + CTRL + SHIFT + Tab", hl.dsp.focus({ workspace = "e-1" }))
+-- Window switcher (hold the modifier, Tab moves on, release picks)
+for _, mod in ipairs({ "ALT", mainMod }) do
+    hl.bind(mod .. " + Tab",         hl.dsp.exec_cmd("quickshell ipc call shell switcher 1"))
+    hl.bind(mod .. " + SHIFT + Tab", hl.dsp.exec_cmd("quickshell ipc call shell switcher -1"))
+end
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 

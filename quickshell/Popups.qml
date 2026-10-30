@@ -4,6 +4,7 @@ import QtQuick
 
 // Which panel is open, on which screen, and where it should hang (x in screen coordinates).
 Singleton {
+    signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
     property bool dnd: false          // do not disturb: notification popups hidden
     property var trayItem: null       // SystemTrayItem whose menu the "traymenu" panel shows
