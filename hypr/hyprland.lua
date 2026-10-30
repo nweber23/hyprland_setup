@@ -376,6 +376,26 @@ hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = tr
 
 -- Example window rules that are useful
 
+-- Small utility windows and file dialogs float, centred, instead of tiling.
+hl.window_rule({
+    name  = "float-utilities",
+    match = { class = "^(nm-connection-editor|pavucontrol|org.gnome.Calculator|gnome-calculator|blueman-manager|nm-openvpn-auth-dialog|org.gnome.NautilusPreviewer|xdg-desktop-portal-gtk)$" },
+    float = true,
+    center = true,
+})
+hl.window_rule({
+    name  = "float-file-dialogs",
+    match = { title = "^(Open File|Open Files|Open Folder|Save As|Save File|Save Image|File Upload|Select .*|Choose .*)$" },
+    float = true,
+    center = true,
+})
+hl.window_rule({
+    name  = "picture-in-picture",
+    match = { title = "^(Picture-in-Picture|Picture in picture)$" },
+    float = true,
+    pin   = true,
+})
+
 local suppressMaximizeRule = hl.window_rule({
     -- Ignore maximize requests from all apps. You'll probably like this.
     name  = "suppress-maximize-events",

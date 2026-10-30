@@ -45,6 +45,15 @@ Scope {
     property bool autoLock: true
     IdleMonitor { enabled: root.autoLock; timeout: 300; respectInhibitors: true; onIsIdleChanged: if (isIdle) root.lock() }
 
+    // Screen off after 6 minutes without input while locked; any input switches it back on.
+    IdleMonitor {
+        timeout: 360; respectInhibitors: true
+        onIsIdleChanged: {
+            if (isIdle && root.locked) Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "off" })'])
+            else if (!isIdle) Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "on" })'])
+        }
+    }
+
     property string wallpaper: ""
     FileView { path: Quickshell.env("HOME") + "/.cache/quickshell/wallpaper.txt"; watchChanges: true; onFileChanged: reload()
                onLoaded: root.wallpaper = text().trim() }
