@@ -25,6 +25,10 @@ PanelWindow {
     property bool loading: false
     property string recent: ""       // address of the window picked last
     property real recentAt: 0
+    // Hover only selects after the pointer really moved: tiles animating under a resting pointer also produce
+    // position events, and those used to override the keyboard selection.
+    property real mx: -1
+    property real my: -1
     function refresh() { if (!listing.running) { loading = true; listing.running = true } }
     function monitorName(id) {
         const m = Hyprland.monitors.values.find(x => x.id === id)
@@ -87,7 +91,7 @@ PanelWindow {
     }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
     Timer { id: late; interval: 80; onTriggered: win.pick() }
-    onShownChanged: if (shown) { pendingPick = false; queued = Popups.initSteps; windows = []; refresh(); keys.forceActiveFocus() }
+    onShownChanged: if (shown) { mx = -1; pendingPick = false; queued = Popups.initSteps; windows = []; refresh(); keys.forceActiveFocus() }
 
     // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
     readonly property real areaW: width - 160
@@ -231,7 +235,11 @@ PanelWindow {
                 MouseArea {
                     id: hover
                     anchors.fill: parent; hoverEnabled: true; z: -1
-                    onPositionChanged: grid.currentIndex = cell.index
+                    onPositionChanged: mouse => {
+                        const g = mapToItem(null, mouse.x, mouse.y)
+                        if (win.mx < 0) { win.mx = g.x; win.my = g.y; return }   // first event: remember where the pointer rests
+                        if (Math.abs(g.x - win.mx) + Math.abs(g.y - win.my) > 4) { win.mx = g.x; win.my = g.y; grid.currentIndex = cell.index }
+                    }
                     onClicked: { grid.currentIndex = cell.index; win.pick() }
                 }
             }
