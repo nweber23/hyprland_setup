@@ -490,7 +490,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=Hyprland")
     hl.exec_cmd("xdpi")
     hl.exec_cmd("nm-applet --indicator")   -- tray icon with the full network menu (hidden networks, VPN, edit connections)
-    hl.exec_cmd("quickshell")
+    hl.exec_cmd("env QS_ICON_THEME=Papirus quickshell")   -- Papirus covers Steam games, calculator, drivers...; candy-icons (the GNOME theme) lacks them
 end)
 
 -- Blur what is behind the bar pills; ignore_alpha keeps fully transparent gaps unblurred.
