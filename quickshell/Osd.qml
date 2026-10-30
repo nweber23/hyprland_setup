@@ -9,12 +9,18 @@ import QtQuick.Layouts
 Scope {
     id: root
     property string icon: "volume_up"
+    property string label: ""        // text instead of a bar (keyboard layout)
     property real value: 0
     property bool shown: false
 
     function show(icon, value) {
-        root.icon = icon; root.value = value; root.shown = true; hide.restart()
+        root.label = ""; root.icon = icon; root.value = value; root.shown = true; hide.restart()
     }
+    function showText(icon, text) {
+        root.label = text; root.icon = icon; root.shown = true; hide.restart()
+    }
+    // keyboard layout switched
+    Connections { target: Keyboard; function onLayoutChanged() { if (root.ready) root.showText("keyboard", Keyboard.name !== "" ? Keyboard.name : Keyboard.layout) } }
     Timer { id: hide; interval: 1400; onTriggered: root.shown = false }
 
     // ---- volume / mute ----
@@ -74,12 +80,15 @@ Scope {
                 anchors { fill: parent; leftMargin: 18; rightMargin: 18 }
                 spacing: 12
                 Icon { name: root.icon; size: 26; color: Theme.primary }   // fill 1 garbles some glyphs (light_mode)
+                Text { visible: root.label !== ""; Layout.fillWidth: true; textFormat: Text.PlainText; text: root.label
+                       color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
                 Rectangle {
+                    visible: root.label === ""
                     Layout.fillWidth: true; height: 8; radius: 4; color: Theme.surface_container_high
                     Rectangle { width: parent.width * Math.min(1, root.value); height: parent.height; radius: 4; color: Theme.primary
                                 Behavior on width { NumberAnimation { duration: 120 } } }
                 }
-                Text { textFormat: Text.PlainText; Layout.preferredWidth: 38; horizontalAlignment: Text.AlignRight
+                Text { visible: root.label === ""; textFormat: Text.PlainText; Layout.preferredWidth: 38; horizontalAlignment: Text.AlignRight
                        text: Math.round(root.value * 100) + "%"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 12 }
             }
         }

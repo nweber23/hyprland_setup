@@ -44,3 +44,4 @@ TrayMenuList 1.0 TrayMenuList.qml
 TrayMenu 1.0 TrayMenu.qml
 singleton NotifHistory NotifHistory.qml
 NotificationCenter 1.0 NotificationCenter.qml
+singleton Keyboard Keyboard.qml

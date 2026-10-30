@@ -267,10 +267,10 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout  = "us",
+        kb_layout  = "us,de",
         kb_variant = "",
         kb_model   = "",
-        kb_options = "",
+        kb_options = "grp:alt_shift_toggle",   -- Alt+Shift also switches the layout
         kb_rules   = "",
 
         follow_mouse = 1,
@@ -320,6 +320,7 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("quickshell ipc call shell toggle wal
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call shell toggle screentime"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call shell toggle clipboard"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call shell lock"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))   -- next keyboard layout
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
@@ -438,8 +439,9 @@ hl.bind(mainMod .. " + F",         hl.dsp.window.fullscreen({ mode = "fullscreen
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized" }))
 
 -- Screenshots: region to clipboard, or region saved to ~/Pictures
-hl.bind("Print", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd([[mkdir -p ~/Pictures && grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%F-%H%M%S).png]]))
+hl.bind("Print",                 hl.dsp.exec_cmd("screenshot region"))
+hl.bind("SHIFT + Print",         hl.dsp.exec_cmd("screenshot full"))
+hl.bind(mainMod .. " + Print",   hl.dsp.exec_cmd("screenshot window"))
 
 
 ------------------------------
@@ -452,6 +454,7 @@ pcall(dofile, os.getenv("HOME") .. "/.cache/hypr-colors.lua")
 -- Quickshell draws the wallpaper, the bar and all panels; config lives in ~/dotfiles/quickshell.
 hl.on("hyprland.start", function()
     hl.exec_cmd("xdpi")
+    hl.exec_cmd("nm-applet --indicator")   -- tray icon with the full network menu (hidden networks, VPN, edit connections)
     hl.exec_cmd("quickshell")
 end)
 

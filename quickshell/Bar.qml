@@ -38,24 +38,6 @@ PanelWindow {
     readonly property real batteryPct: battery ? (battery.percentage > 1 ? battery.percentage : battery.percentage * 100) : 0
     readonly property bool charging: battery && (battery.state === UPowerDeviceState.Charging || battery.state === UPowerDeviceState.FullyCharged)
 
-    property string keymap: "--"
-    Process {
-        id: kbQuery
-        command: ["hyprctl", "-j", "devices"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const kbs = JSON.parse(text).keyboards
-                    const main = kbs.find(k => k.main) ?? kbs[0]
-                    const names = { "English": "EN", "German": "DE", "French": "FR", "Spanish": "ES" }
-                    const lang = main.active_keymap.split(" ")[0]
-                    bar.keymap = names[lang] ?? lang.slice(0, 2).toUpperCase()
-                } catch (e) {}
-            }
-        }
-    }
-    Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: kbQuery.running = true }
-
     SystemClock { id: clock; precision: SystemClock.Seconds }
 
     function volumeIcon() {
@@ -207,8 +189,11 @@ PanelWindow {
         BarGroup {
             spacing: 4
             BarChip {
+                // click or scroll: next layout (Super+Space and Alt+Shift also switch)
+                onClicked: Keyboard.cycle()
+                onScrolled: Keyboard.cycle()
                 Icon { name: "keyboard"; size: 16 }
-                Text { textFormat: Text.PlainText; text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
+                Text { textFormat: Text.PlainText; text: Keyboard.layout; color: Theme.on_surface; font: bar.textFont }
             }
             BarChip {
                 id: wifiChip

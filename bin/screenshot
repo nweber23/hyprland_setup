@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Usage: screenshot [region|full|window]
+# Saves to ~/Pictures/Screenshots, copies the image to the clipboard and shows a notification with a preview.
+set -euo pipefail
+dir="$HOME/Pictures/Screenshots"; mkdir -p "$dir"
+file="$dir/screenshot-$(date +%F-%H%M%S).png"
+case "${1:-region}" in
+    region) geo=$(slurp -d) || exit 0            # Esc / right click cancels
+            grim -g "$geo" "$file" ;;
+    full)   grim "$file" ;;
+    window) geo=$(hyprctl -j activewindow | jq -r 'select(.size != null) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+            [ -n "$geo" ] || exit 0
+            grim -g "$geo" "$file" ;;
+    *) echo "usage: screenshot [region|full|window]" >&2; exit 2 ;;
+esac
+wl-copy -t image/png < "$file"
+notify-send -a Screenshot -i "$file" "Screenshot saved" "$(basename "$file") - also in the clipboard"
