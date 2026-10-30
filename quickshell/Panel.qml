@@ -56,7 +56,10 @@ PanelWindow {
         }
         ScriptAction { script: win.grow = 0 }
     }
-    onShownChanged: if (shown) { outAnim.stop(); inAnim.restart() } else { inAnim.stop(); outAnim.restart() }
+    onShownChanged: {
+        if (shown) { if (fullH > winH) winH = fullH; outAnim.stop(); inAnim.restart() }
+        else { inAnim.stop(); outAnim.restart() }
+    }
 
     // content height, eased so a panel that gains rows does not jump
     readonly property real fullH: body.implicitHeight + pad * 2
@@ -71,7 +74,12 @@ PanelWindow {
                        : Math.max(12, Math.min(screenWidth - panelWidth - 12, Popups.anchorX - panelWidth / 2))
     }
     implicitWidth: panelWidth
-    implicitHeight: fixedH > 0 ? fixedH : smoothH + extraH
+    // The window only ever grows, and at once (one resize); the card inside animates to the content height.
+    // Shrinking or growing the window every frame made panels with changing content run at 30 fps.
+    property real winH: 0
+    onFullHChanged: if (fullH > winH) winH = fullH
+    onVisibleChanged: if (!visible) winH = fullH
+    implicitHeight: fixedH > 0 ? fixedH : Math.max(winH, smoothH) + extraH
     mask: Region { item: card }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore

@@ -8,6 +8,7 @@ Panel {
     name: "notifications"
     panelWidth: 420
     centered: false
+    fixedH: 560       // the list grows and shrinks; the window keeps one size
     onShownChanged: if (shown) NotifHistory.markRead()
 
     function ago(ms, tickDate) {      // tickDate only makes the binding re-evaluate every minute
