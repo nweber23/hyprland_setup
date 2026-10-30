@@ -17,3 +17,4 @@ singleton Eq Eq.qml
 EqBand 1.0 EqBand.qml
 MusicPanel 1.0 MusicPanel.qml
 Launcher 1.0 Launcher.qml
+WallpaperPicker 1.0 WallpaperPicker.qml

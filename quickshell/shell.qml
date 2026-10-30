@@ -28,6 +28,7 @@ ShellRoot {
             Bar { screen: perScreen.modelData }
             CalendarPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NetworkPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
+            WallpaperPicker { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             Launcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             PowerPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             MusicPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

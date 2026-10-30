@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Index ~/Pictures/Wallpapers for the wallpaper picker.
+
+Writes a 480x270 thumbnail per image to ~/.cache/quickshell/thumbs and prints a JSON list
+[{path, name, thumb, tags}] on stdout. tags are colour classes (red..pink, mono) plus "dark".
+Results are cached by file mtime, so only new or changed images are decoded again.
+"""
+import colorsys, hashlib, json, sys
+from pathlib import Path
+from PIL import Image, ImageOps
+
+SRC = Path.home() / "Pictures" / "Wallpapers"
+CACHE = Path.home() / ".cache" / "quickshell"
+THUMBS = CACHE / "thumbs"
+INDEX = CACHE / "wallpapers.json"
+EXT = {".jpg", ".jpeg", ".png", ".webp"}
+HUES = [(15, "red"), (45, "orange"), (70, "yellow"), (165, "green"), (200, "cyan"),
+        (255, "blue"), (300, "purple"), (345, "pink"), (361, "red")]
+
+
+def tags_for(im):
+    px = list(im.resize((32, 32)).getdata())
+    hsv = [colorsys.rgb_to_hsv(r / 255, g / 255, b / 255) for r, g, b in px]
+    tags = []
+    if sum(v for _, _, v in hsv) / len(hsv) < 0.25:
+        tags.append("dark")
+    vivid = [(h, s * v) for h, s, v in hsv if s > 0.25 and v > 0.2]
+    if len(vivid) < len(hsv) * 0.15:
+        tags.append("mono")
+        return tags
+    # Hue is an angle: average it as a vector, weighted by how vivid each pixel is.
+    import math
+    x = sum(w * math.cos(h * 2 * math.pi) for h, w in vivid)
+    y = sum(w * math.sin(h * 2 * math.pi) for h, w in vivid)
+    deg = (math.degrees(math.atan2(y, x)) + 360) % 360
+    tags.insert(0, next(name for limit, name in HUES if deg < limit))
+    return tags
+
+
+def main():
+    THUMBS.mkdir(parents=True, exist_ok=True)
+    old = {}
+    try:
+        old = {e["path"]: e for e in json.loads(INDEX.read_text())}
+    except (OSError, ValueError):
+        pass
+    out = []
+    for f in sorted(SRC.iterdir(), key=lambda p: p.name.lower()) if SRC.is_dir() else []:
+        if f.suffix.lower() not in EXT:
+            continue
+        path, mtime = str(f), f.stat().st_mtime
+        thumb = THUMBS / (hashlib.sha1(path.encode()).hexdigest()[:16] + ".jpg")
+        e = old.get(path)
+        if e and e.get("mtime") == mtime and thumb.exists():
+            out.append(e)
+            continue
+        try:
+            with Image.open(f) as im:
+                im.draft("RGB", (960, 540))   # JPEG: decode at reduced size
+                im = ImageOps.fit(im.convert("RGB"), (480, 270))
+                im.save(thumb, quality=85)
+                out.append({"path": path, "mtime": mtime, "name": f.stem, "thumb": str(thumb), "tags": tags_for(im)})
+        except Exception as ex:   # unreadable or huge file: skip it, keep going
+            print(f"skip {f.name}: {ex}", file=sys.stderr)
+    INDEX.write_text(json.dumps(out))
+    json.dump(out, sys.stdout)
+
+
+main()
