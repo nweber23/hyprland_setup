@@ -1,146 +1,206 @@
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 
-// Alt+Tab / Super+Tab window switcher. Tab or Down moves on, Shift+Tab or Up back, releasing Alt/Super or
-// Enter focuses the window, Delete closes it, Escape cancels. Starts on the previous window, like Alt+Tab elsewhere.
+// Alt+Tab / Super+Tab overview: every window as a live-looking tile in a grid over a dimmed, blurred screen.
+// Tab / Shift+Tab or the arrows move, releasing Alt/Super or Enter switches, Delete closes, Escape cancels.
+// The grid appears on the focused screen; other screens are only dimmed. Starts on the previous window.
 PanelWindow {
     id: win
     property string screenName: ""
-    readonly property bool shown: Popups.current === "switcher" && Popups.screenName === screenName
+    readonly property bool active: Popups.current === "switcher"
+    readonly property bool shown: active && Popups.screenName === screenName   // this screen holds the grid and the keys
 
     property var windows: []
-    function refresh() {
-        Hyprland.refreshToplevels()
-        collect.restart()   // lastIpcObject is filled asynchronously
+    readonly property int count: windows.length
+    readonly property bool manyScreens: Hyprland.monitors.values.length > 1
+
+    // ---- window list ----
+    function refresh() { Hyprland.refreshToplevels(); collect.restart() }   // lastIpcObject arrives asynchronously
+    function monitorName(id) {
+        const m = Hyprland.monitors.values.find(x => x.id === id)
+        return m ? m.name : ""
     }
     function collectNow() {
         const out = []
         for (const t of Hyprland.toplevels.values) {
             const o = t.lastIpcObject
             if (!o || !o.mapped || o.hidden || !o.address) continue
-            out.push({ address: o.address, cls: o.class || "", title: o.title || o.class || "Window",
-                       ws: o.workspace ? o.workspace.name : "", order: o.focusHistoryID })
+            out.push({ top: t, address: o.address, cls: o.class || "", title: o.title || o.class || "Window",
+                       ws: o.workspace ? o.workspace.name : "", mon: monitorName(o.monitor),
+                       ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID })
         }
         out.sort((a, b) => a.order - b.order)   // most recently used first
         const first = windows.length === 0
         windows = out
-        if (first) list.currentIndex = out.length > 1 ? 1 : 0
-        else list.currentIndex = Math.min(list.currentIndex, out.length - 1)
+        grid.currentIndex = first ? (out.length > 1 ? 1 : 0) : Math.min(grid.currentIndex, out.length - 1)
     }
     function pick() {
-        const w = windows[list.currentIndex]
+        const w = windows[grid.currentIndex]
         if (w) Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + w.address + "\" })"])
         Popups.close()
     }
     function closeWindow() {
-        const w = windows[list.currentIndex]
+        const w = windows[grid.currentIndex]
         if (!w) return
         Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.close({ window = \"address:" + w.address + "\" })"])
         windows = windows.filter(x => x !== w)
     }
-    function step(d) {
-        if (windows.length === 0) return
-        list.currentIndex = (list.currentIndex + d + windows.length) % windows.length
-    }
-
+    function step(d) { if (count > 0) grid.currentIndex = (grid.currentIndex + d + count) % count }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
     Timer { id: collect; interval: 60; onTriggered: win.collectNow() }
-
-    visible: shown || card.opacity > 0.01
-    anchors { top: true }
-    margins.top: 160
-    implicitWidth: windows.length === 0 ? 220 : Math.min(1000, windows.length * 184 + 20)   // cards 176 + spacing 8, margins 2x14, minus the last gap
-    implicitHeight: card.height
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "qs-panel"
-    WlrLayershell.keyboardFocus: shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    HyprlandFocusGrab { windows: [win]; active: win.shown; onCleared: Popups.close() }
-
     onShownChanged: if (shown) { windows = []; refresh(); keys.forceActiveFocus() }
 
+    // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
+    readonly property real areaW: width - 160
+    readonly property real areaH: height - 170
+    readonly property real minCell: 300
+    readonly property int cols: {
+        const n = Math.max(1, count)
+        for (let c = 1; c <= n; c++) {
+            const cw = areaW / c
+            if (Math.ceil(n / c) * (cw / 1.6 + 44) <= areaH) return c
+        }
+        return Math.max(1, Math.floor(areaW / minCell))
+    }
+    readonly property real cellW: Math.min(areaW / cols, 520)
+    readonly property real cellH: cellW / 1.6 + 44
+
+    visible: active || scrim.opacity > 0.01
+    anchors { top: true; bottom: true; left: true; right: true }
+    exclusionMode: ExclusionMode.Ignore
+    color: "transparent"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "qs-overview"
+    WlrLayershell.keyboardFocus: shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
     Rectangle {
-        id: card
-        width: parent.width
-        height: 150
-        radius: 24
-        color: Qt.alpha(Theme.surface_container, 0.96)
-        border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
-        opacity: win.shown ? 1 : 0
-        scale: win.shown ? 1 : 0.95
-        transformOrigin: Item.Top
-        Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        id: scrim
+        anchors.fill: parent
+        color: Qt.alpha(Theme.surface, 0.62)
+        opacity: win.active ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        MouseArea { anchors.fill: parent; onClicked: Popups.close() }
+    }
 
-        FocusScope {
-            id: keys
-            anchors.fill: parent
-            Keys.onPressed: event => {
-                if (event.key === Qt.Key_Tab) win.step(1)
-                else if (event.key === Qt.Key_Backtab) win.step(-1)
-                else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down) win.step(1)
-                else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up) win.step(-1)
-                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) win.pick()
-                else if (event.key === Qt.Key_Delete) win.closeWindow()
-                else if (event.key === Qt.Key_Escape) Popups.close()
-                else return
-                event.accepted = true
+    FocusScope {
+        id: keys
+        anchors.fill: parent
+        visible: win.shown
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Tab) win.step(1)
+            else if (event.key === Qt.Key_Backtab) win.step(-1)
+            else if (event.key === Qt.Key_Right) grid.moveCurrentIndexRight()
+            else if (event.key === Qt.Key_Left) grid.moveCurrentIndexLeft()
+            else if (event.key === Qt.Key_Down) grid.moveCurrentIndexDown()
+            else if (event.key === Qt.Key_Up) grid.moveCurrentIndexUp()
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) win.pick()
+            else if (event.key === Qt.Key_Delete) win.closeWindow()
+            else if (event.key === Qt.Key_Escape) Popups.close()
+            else return
+            event.accepted = true
+        }
+        // letting go of the modifier that opened the overview confirms, as in every Alt+Tab
+        Keys.onReleased: event => { if (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta || event.key === Qt.Key_Super_L) { win.pick(); event.accepted = true } }
+
+        Text {
+            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 52 }
+            textFormat: Text.PlainText
+            text: win.count + (win.count === 1 ? " window" : " windows") + "   ·   Tab to move   ·   Enter or release to switch   ·   Del to close"
+            color: Qt.alpha(Theme.on_surface, 0.6); font.family: Theme.mono; font.pixelSize: 12
+            opacity: win.shown ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 300 } }
+        }
+        Text {
+            visible: win.count === 0; anchors.centerIn: parent; textFormat: Text.PlainText
+            text: "No open windows"; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 16
+        }
+
+        GridView {
+            id: grid
+            width: win.cols * win.cellW
+            height: Math.min(Math.ceil(win.count / win.cols) * win.cellH, win.areaH)
+            anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: 10 }
+            cellWidth: win.cellW; cellHeight: win.cellH
+            clip: true; model: win.windows
+            boundsBehavior: Flickable.StopAtBounds
+            highlightFollowsCurrentItem: false
+            // keyboard moves scroll smoothly instead of jumping
+            onCurrentIndexChanged: {
+                const top = Math.floor(currentIndex / win.cols) * win.cellH
+                let y = contentY
+                if (top < y) y = top
+                else if (top + win.cellH > y + height) y = top + win.cellH - height
+                scroll.to = y; scroll.restart()
             }
-            // letting go of the modifier that opened the switcher confirms, as in every Alt+Tab
-            Keys.onReleased: event => { if (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta || event.key === Qt.Key_Super_L) { win.pick(); event.accepted = true } }
+            NumberAnimation { id: scroll; target: grid; property: "contentY"; duration: 300; easing.type: Easing.OutCubic }
 
-            ListView {
-                id: list
-                anchors { fill: parent; margins: 14 }
-                orientation: ListView.Horizontal
-                spacing: 8; clip: true
-                model: win.windows
-                highlightMoveDuration: 120
-                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-                delegate: Rectangle {
-                    required property var modelData
-                    required property int index
-                    width: 176; height: ListView.view.height; radius: 18
-                    color: ListView.isCurrentItem ? Theme.primary_container : (hover.containsMouse ? Theme.surface_container_high : "transparent")
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    ColumnLayout {
-                        anchors { fill: parent; margins: 10 }
-                        spacing: 6
-                        Image {
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 44; Layout.preferredHeight: 44
-                            sourceSize: Qt.size(88, 88)
-                            source: Quickshell.iconPath(modelData.cls.toLowerCase(), "application-x-executable")
-                        }
-                        Text {
-                            Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.Wrap; textFormat: Text.PlainText
-                            text: modelData.title
-                            color: ListView.isCurrentItem ? Theme.on_primary_container : Theme.on_surface
-                            font.family: "JetBrains Mono"; font.pixelSize: 11
-                        }
-                        Text {
-                            Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; textFormat: Text.PlainText
-                            text: modelData.cls + (modelData.ws !== "" ? "  ·  " + modelData.ws : "")
-                            elide: Text.ElideRight; color: Theme.outline; font.family: "JetBrains Mono"; font.pixelSize: 9
-                        }
+            delegate: Item {
+                id: cell
+                required property var modelData
+                required property int index
+                width: win.cellW; height: win.cellH
+                readonly property bool current: GridView.isCurrentItem
+                property real reveal: 0
+                opacity: reveal
+                transform: Translate { y: 22 * (1 - cell.reveal) }
+                SequentialAnimation {   // tiles come in one after the other
+                    running: true
+                    PauseAnimation { duration: Math.min(cell.index, 10) * 32 }
+                    NumberAnimation { target: cell; property: "reveal"; to: 1; duration: 380; easing.type: Easing.OutCubic }
+                }
+
+                ClippingRectangle {
+                    id: tile
+                    x: 12; y: 6; width: parent.width - 24; height: width / 1.6
+                    radius: 16; color: Theme.card
+                    border.width: cell.current ? 3 : 1; border.color: cell.current ? Theme.accent : Qt.alpha(Theme.outline_variant, 0.7)
+                    Behavior on border.color { ColorAnimation { duration: 160 } }
+                    scale: (cell.current ? 1.035 : (hover.containsMouse ? 1.015 : 1)) * (0.94 + 0.06 * cell.reveal)
+                    Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+
+                    Image {   // shown until the first frame arrives
+                        anchors.centerIn: parent; width: 56; height: 56; visible: !shot.hasContent
+                        source: Quickshell.iconPath(cell.modelData.cls.toLowerCase(), "application-x-executable"); sourceSize: Qt.size(112, 112)
                     }
-                    Icon { name: "close"; size: 18; color: Theme.on_surface_variant; opacity: hover.containsMouse ? 1 : 0
-                           anchors { top: parent.top; right: parent.right; margins: 6 }
-                           MouseArea { anchors.fill: parent; onClicked: { list.currentIndex = index; win.closeWindow() } } }
-                    MouseArea {
-                        id: hover
-                        anchors.fill: parent; hoverEnabled: true; z: -1
-                        onEntered: list.currentIndex = index
-                        onClicked: { list.currentIndex = index; win.pick() }
+                    ScreencopyView {   // one frame at open, not a stream: cheap on a small laptop
+                        id: shot
+                        anchors.centerIn: parent
+                        width: Math.min(tile.width, tile.height * cell.modelData.ratio)
+                        height: width / cell.modelData.ratio
+                        captureSource: cell.modelData.top ? cell.modelData.top.wayland : null
+                        live: false; paintCursor: false
+                    }
+                    Rectangle {   // close button
+                        anchors { top: parent.top; right: parent.right; margins: 8 }
+                        width: 28; height: 28; radius: 14
+                        color: closeMa.containsMouse ? Theme.error : Qt.alpha(Theme.surface, 0.8)
+                        opacity: hover.containsMouse || cell.current ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 140 } }
+                        Icon { anchors.centerIn: parent; name: "close"; size: 16; color: closeMa.containsMouse ? Theme.panelBg : Theme.on_surface }
+                        MouseArea { id: closeMa; anchors.fill: parent; hoverEnabled: true
+                                    onClicked: { grid.currentIndex = cell.index; win.closeWindow() } }
                     }
                 }
+                RowLayout {   // icon, title, workspace
+                    x: 18; y: tile.y + tile.height + 10; width: parent.width - 36; spacing: 8
+                    Image { Layout.preferredWidth: 20; Layout.preferredHeight: 20; sourceSize: Qt.size(40, 40)
+                            source: Quickshell.iconPath(cell.modelData.cls.toLowerCase(), "application-x-executable") }
+                    Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: cell.modelData.title
+                           color: cell.current ? Theme.on_surface : Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12; font.bold: cell.current
+                           Behavior on color { ColorAnimation { duration: 160 } } }
+                    Text { textFormat: Text.PlainText; color: Theme.outline; font.family: Theme.mono; font.pixelSize: 11
+                           text: cell.modelData.ws + (win.manyScreens && cell.modelData.mon !== "" ? " · " + cell.modelData.mon : "") }
+                }
+                MouseArea {
+                    id: hover
+                    anchors.fill: parent; hoverEnabled: true; z: -1
+                    onPositionChanged: grid.currentIndex = cell.index
+                    onClicked: { grid.currentIndex = cell.index; win.pick() }
+                }
             }
-            Text { visible: win.windows.length === 0; anchors.centerIn: parent; textFormat: Text.PlainText
-                   text: "No open windows"; color: Theme.outline; font.family: "JetBrains Mono"; font.pixelSize: 12 }
         }
     }
 }

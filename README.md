@@ -47,7 +47,7 @@ Local, never committed: `~/.config/quickshell-local/calendar.ics` or `calendar-u
 | `Super+L` | lock |
 | `Super+Space`, `Alt+Shift` | next keyboard layout (us, de) |
 | `Super+1..9`, `Super+Shift+1..9` | workspace / move window there |
-| `Alt+Tab`, `Super+Tab` (+Shift) | window switcher: hold the key, Tab moves on, release picks, Del closes |
+| `Alt+Tab`, `Super+Tab` (+Shift) | window overview (grid of live previews): hold the key, Tab moves on, release picks, Del closes |
 | `Super+Ctrl+Tab` (+Shift) | next / previous workspace |
 | `Super+Arrows`, `Super+Shift+Arrows`, `Super+Ctrl+Arrows` | focus / move / resize |
 | `Print`, `Shift+Print`, `Super+Print` | screenshot region / full / window (saved and copied) |

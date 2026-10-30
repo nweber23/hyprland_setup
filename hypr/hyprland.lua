@@ -510,3 +510,12 @@ hl.layer_rule({
     ignore_alpha = 0.3,
     no_anim      = true,
 })
+
+-- Window overview (Alt+Tab): blur the screen behind its dimming layer; Quickshell animates it itself.
+hl.layer_rule({
+    name         = "qs-overview",
+    match        = { namespace = "qs-overview" },
+    blur         = true,
+    ignore_alpha = 0.1,
+    no_anim      = true,
+})
