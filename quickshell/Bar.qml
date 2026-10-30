@@ -161,6 +161,14 @@ PanelWindow {
         }
 
         Chip {
+            id: displayChip
+            Layout.fillHeight: true
+            highlighted: Popups.current === "display" && Popups.screenName === bar.screen.name
+            onClicked: bar.openPanel("display", displayChip)
+            Icon { name: "desktop_windows"; size: 18; color: displayChip.highlighted ? Theme.on_primary_container : Theme.on_surface }
+        }
+
+        Chip {
             id: timeChip
             Layout.fillHeight: true
             highlighted: Popups.current === "screentime" && Popups.screenName === bar.screen.name

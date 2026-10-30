@@ -19,3 +19,4 @@ MusicPanel 1.0 MusicPanel.qml
 Launcher 1.0 Launcher.qml
 WallpaperPicker 1.0 WallpaperPicker.qml
 ScreenTimePanel 1.0 ScreenTimePanel.qml
+DisplayPanel 1.0 DisplayPanel.qml

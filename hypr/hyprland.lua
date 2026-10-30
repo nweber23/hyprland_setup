@@ -40,6 +40,9 @@ hl.monitor({
     scale    = "auto",
 })
 
+-- Per-machine overrides written by the shell's display panel (absent until used).
+pcall(dofile, os.getenv("HOME") .. "/.config/hypr/monitors-local.lua")
+
 
 ---------------------
 ---- MY PROGRAMS ----
