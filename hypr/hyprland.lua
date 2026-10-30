@@ -75,6 +75,7 @@ local menu        = "quickshell ipc call shell toggle launcher"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")   -- Electron apps (VS Code, Discord, ...) render natively instead of via blurry XWayland
 
 
 -----------------------
