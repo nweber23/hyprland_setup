@@ -76,6 +76,6 @@ BackGrid 1.0 BackGrid.qml
 BackBars 1.0 BackBars.qml
 BackBubbles 1.0 BackBubbles.qml
 BackParticles 1.0 BackParticles.qml
-BackGears 1.0 BackGears.qml
+BackOrbits 1.0 BackOrbits.qml
 BackViewfinder 1.0 BackViewfinder.qml
-BackPixels 1.0 BackPixels.qml
+BackAurora 1.0 BackAurora.qml
