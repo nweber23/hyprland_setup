@@ -25,9 +25,10 @@ PanelWindow {
         Popups.close()
     }
     function remove(text) {
-        all = all.filter(t => t !== text)
-        store.setText(JSON.stringify(all))
-        refresh()
+        // keep the timestamps: rewrite from the file's own entries
+        let raw = []
+        try { raw = JSON.parse(store.text()) } catch (e) {}
+        store.setText(JSON.stringify(raw.filter(i => i.t !== text)))   // the file watcher reloads the list
     }
 
     visible: shown || card.opacity > 0.01
@@ -47,7 +48,7 @@ PanelWindow {
         printErrors: false
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: { try { win.all = JSON.parse(text()) } catch (e) { win.all = [] } win.refresh() }
+        onLoaded: { try { win.all = JSON.parse(text()).map(i => i.t) } catch (e) { win.all = [] } win.refresh() }
     }
     onShownChanged: if (shown) { input.text = ""; store.reload(); refresh(); input.forceActiveFocus() }
 

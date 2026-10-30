@@ -18,6 +18,7 @@ ShellRoot {
     Process { running: true; command: ["wl-paste", "--type", "text", "--watch", "clip-store"] }
     Notifications {}
     Osd {}
+    PolkitDialog {}
     Variants {
         model: Quickshell.screens
         Wallpaper {
