@@ -8,6 +8,8 @@ import QtQuick
 // changes band gains live through pw-cli and, when enabled, makes that sink the default output.
 Singleton {
     id: root
+    // Test instances (QS_TEST=1) must not start or kill the equalizer engine or touch any volume.
+    readonly property bool testMode: !!Quickshell.env("QS_TEST")
     readonly property var freqLabels: ["31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"]
     readonly property real range: 12   // dB, +/-
     readonly property var presets: ({
@@ -52,7 +54,7 @@ Singleton {
     property double born: 0
     function handOver() {
         const n = root.node, h = root.hardware
-        if (!n || !n.audio || !h || !h.audio || !enabled) return
+        if (testMode || !n || !n.audio || !h || !h.audio || !enabled) return
         if (Date.now() - born < 2000) { if (n.audio.volume !== 1) n.audio.volume = 1; return }
         // exactly 0 is what a node that is being torn down reports, not a wish; the keys go through bin/volume anyway
         if (n.audio.volume > 0 && Math.abs(n.audio.volume - 1) > 0.002) { h.audio.volume = n.audio.volume; n.audio.volume = 1 }
@@ -104,7 +106,7 @@ Singleton {
     // A fresh node starts flat: push the saved gains as soon as it shows up, and set it to 100% (see handOver).
     onNodeChanged: { born = Date.now(); pin.restart(); if (node) apply() }
     // set up once the node is bound (setting it earlier is an error), and keep the id of the real output for bin/volume
-    Timer { id: pin; interval: 500; running: true
+    Timer { id: pin; interval: 500; running: !root.testMode
         onTriggered: { if (root.node && root.node.ready && root.node.audio) root.node.audio.volume = 1; if (root.hardware) hwFile.setText(String(root.hardware.id)) } }
 
     FileView {
@@ -121,9 +123,9 @@ Singleton {
     // Clears a leftover engine from a previous run. The pattern is anchored so it cannot match this sh itself.
     Process {
         id: engine
-        running: true
+        running: !root.testMode
         command: ["sh", "-c", "pkill -f '^(/usr/bin/)?pipewire -c .*qs-eq\\.conf$'; exec pipewire -c \"$HOME/dotfiles/pipewire/qs-eq.conf\""]
-        onRunningChanged: if (!running) respawn.start()
+        onRunningChanged: if (!running && !root.testMode) respawn.start()
     }
     Timer { id: respawn; interval: 1500; onTriggered: engine.running = true }   // the engine comes back if it dies
 }
