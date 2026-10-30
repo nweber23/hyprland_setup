@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Tell X11 apps how big to draw: Xft.dpi = 96 * scale of the primary (left-most) monitor.
+# With xwayland.force_zero_scaling Hyprland no longer stretches X windows, so they must scale themselves.
+# Running X apps pick it up on their next start.
+set -euo pipefail
+scale=$(hyprctl -j monitors | jq -r 'sort_by(.x, .y) | .[0].scale')
+echo "Xft.dpi: $(awk -v s="$scale" 'BEGIN { printf "%d", 96 * s + 0.5 }')" | xrdb -merge

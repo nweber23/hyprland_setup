@@ -205,6 +205,14 @@ hl.animation({ leaf = "zoomFactor",    enabled = true, speed = 7,   bezier = "st
 --     rounding    = 0,
 -- })
 
+-- Do not stretch X11 windows (that is what makes them blurry at fractional scale). They scale
+-- themselves from Xft.dpi instead, which bin/xdpi sets from the monitor scale.
+hl.config({
+    xwayland = {
+        force_zero_scaling = true,
+    },
+})
+
 -- See https://wiki.hypr.land/configuring/layouts/dwindle-layout/ for more
 hl.config({
     dwindle = {
@@ -434,6 +442,7 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd([[mkdir -p ~/Pictures && grim -g 
 
 -- Quickshell draws the wallpaper, the bar and all panels; config lives in ~/dotfiles/quickshell.
 hl.on("hyprland.start", function()
+    hl.exec_cmd("xdpi")
     hl.exec_cmd("quickshell")
 end)
 

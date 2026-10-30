@@ -50,7 +50,8 @@ Panel {
         luaFile.setText(lua)
     }
 
-    Timer { id: reload; interval: 700; onTriggered: root.load() }   // give Hyprland a moment to apply
+    // Give Hyprland a moment to apply, then refresh the panel and the X11 DPI (follows the scale).
+    Timer { id: reload; interval: 700; onTriggered: { Quickshell.execDetached(["xdpi"]); root.load() } }
     function load() { if (!q.running) q.running = true }
     onShownChanged: if (shown) load()
 
