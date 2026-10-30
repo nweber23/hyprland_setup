@@ -39,3 +39,8 @@ step cmake hyprgraphics $H/hyprgraphics.git v0.5.1 -DBUILD_TESTING=OFF
 step cmake hyprcursor $H/hyprcursor.git v0.1.13 -DBUILD_TESTING=OFF
 step cmake hyprwire $H/hyprwire.git v0.3.1 -DBUILD_TESTING=OFF
 step cmake aquamarine $H/aquamarine.git v0.15.1 -DBUILD_TESTING=OFF
+# --- GUI helpers (hyprland-dialog, welcome, update screen); silences Hyprland's "guiutils missing" warning ---
+step cmake iniparser https://github.com/ndevilla/iniparser.git v4.3.2 -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_DOCS=OFF
+# hyprtoolkit 0.6.0 needs Pango >= 1.56 (glib 2.88, harfbuzz 11, ...); 0.5.4 is the newest that builds on noble
+step cmake hyprtoolkit $H/hyprtoolkit.git v0.5.4 -DBUILD_TESTING=OFF
+step cmake hyprland-guiutils $H/hyprland-guiutils.git v0.2.2
