@@ -6,6 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "tools"
+    backdrop: "Gears"
     panelWidth: 400
     fixedH: 430
     animateHeight: false

@@ -10,6 +10,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "network"
+    backdrop: "Rings"
     panelWidth: 760
     pad: 24
 

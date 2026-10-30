@@ -9,6 +9,7 @@ import QtQuick.Shapes
 Panel {
     id: root
     name: "calendar"
+    backdrop: "Dots"
     panelWidth: 1080
     centered: true
     pad: 22

@@ -7,6 +7,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "volume"
+    backdrop: "Bars"
     panelWidth: 440
 
     // everything that has volume controls; the tracker makes node.audio available

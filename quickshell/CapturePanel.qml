@@ -7,6 +7,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "capture"
+    backdrop: "Viewfinder"
     panelWidth: 420
 
     property int delay: 0              // seconds before the shot is taken

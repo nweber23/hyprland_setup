@@ -8,6 +8,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "screentime"
+    backdrop: "Grid"
     panelWidth: 780
     centered: true
     pad: 22

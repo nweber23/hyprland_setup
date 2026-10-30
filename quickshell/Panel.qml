@@ -24,6 +24,7 @@ PanelWindow {
     property real panelWidth: 380
     property bool centered: false           // true: centre on the screen instead of hanging under the chip
     property real pad: 20
+    property string backdrop: ""              // animated background: Waves, Rings, Dots, Grid, Bars, Bubbles, Particles, Gears, Viewfinder, Pixels; empty = the drifting circles
     property bool animateHeight: true       // false when the content animates its own height
     // Resizing the window costs a compositor round trip per frame (measured: 30 fps while it animated).
     // A panel whose content height animates reserves its largest height here so the window size stays constant;
@@ -107,7 +108,12 @@ PanelWindow {
             id: wrapper
             width: win.width; height: win.smoothH
             x: (card.width - width) / 2
-            Decor { shown: win.shown }
+            Loader {
+                anchors.fill: parent
+                active: win.visible
+                source: win.backdrop === "" ? "Decor.qml" : "Back" + win.backdrop + ".qml"
+                onLoaded: item.shown = Qt.binding(() => win.shown)
+            }
             ColumnLayout {
                 id: body
                 x: win.pad; y: win.pad

@@ -9,6 +9,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "display"
+    backdrop: "Pixels"
     panelWidth: 700
     centered: true
 

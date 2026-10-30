@@ -6,6 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "notifications"
+    backdrop: "Particles"
     panelWidth: 420
     centered: false
     fixedH: 560       // the list grows and shrinks; the window keeps one size

@@ -69,3 +69,13 @@ ToolRound 1.0 ToolRound.qml
 DesktopWidgets 1.0 DesktopWidgets.qml
 ToolChip 1.0 ToolChip.qml
 singleton Audio Audio.qml
+BackWaves 1.0 BackWaves.qml
+BackRings 1.0 BackRings.qml
+BackDots 1.0 BackDots.qml
+BackGrid 1.0 BackGrid.qml
+BackBars 1.0 BackBars.qml
+BackBubbles 1.0 BackBubbles.qml
+BackParticles 1.0 BackParticles.qml
+BackGears 1.0 BackGears.qml
+BackViewfinder 1.0 BackViewfinder.qml
+BackPixels 1.0 BackPixels.qml
