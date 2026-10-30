@@ -1,15 +1,12 @@
 [Desktop Entry]
-X-SnapInstanceName=code
 Name=Visual Studio Code
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
-X-SnapAppName=code
-X-SnapCommonID=code.desktop
-Exec=/snap/bin/code --enable-features=UseOzonePlatform --ozone-platform=wayland --force-user-env %F
-Icon=/snap/code/current/meta/gui/vscode.png
+Exec=/usr/share/code/code --enable-features=UseOzonePlatform --ozone-platform=wayland %F
+Icon=vscode
 Type=Application
 StartupNotify=false
-StartupWMClass=code_code
+StartupWMClass=com.microsoft.VSCode
 Categories=TextEditor;Development;IDE;
 MimeType=application/x-code-workspace;
 Actions=new-empty-window;
@@ -27,7 +24,5 @@ Name[ko]=새 빈 창
 Name[ru]=Новое пустое окно
 Name[zh_CN]=新建空窗口
 Name[zh_TW]=開新空視窗
-X-SnapAppName=code
-X-SnapCommonID=code.desktop
-Exec=/snap/bin/code --enable-features=UseOzonePlatform --ozone-platform=wayland --force-user-env --new-window %F
-Icon=/snap/code/current/meta/gui/vscode.png
+Exec=/usr/share/code/code --enable-features=UseOzonePlatform --ozone-platform=wayland --new-window %F
+Icon=vscode
