@@ -365,17 +365,3 @@ hl.window_rule({
     float = true,
 })
 
-
------------------------
----- DEBUG (input) ----
------------------------
--- Temporary: log every key event Hyprland receives, to tell "keys never arrive"
--- apart from "keys arrive but binds do not fire". Remove once input is confirmed working.
-local keylog = (os.getenv("HOME") or "") .. "/.cache/hyprland-session/keys.log"
-hl.on("input.keyboard.key", function(code, ms, state)
-    local ok, f = pcall(io.open, keylog, "a")
-    if ok and f then
-        f:write(ms, " keycode=", code, " state=", state, "\n")
-        f:close()
-    end
-end)
