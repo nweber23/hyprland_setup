@@ -63,4 +63,8 @@ Sparkline 1.0 Sparkline.qml
 SysMonPanel 1.0 SysMonPanel.qml
 singleton Recorder Recorder.qml
 singleton Battery 1.0 Battery.qml
+singleton Tools 1.0 Tools.qml
+ToolsPanel 1.0 ToolsPanel.qml
+ToolRound 1.0 ToolRound.qml
+ToolChip 1.0 ToolChip.qml
 singleton Audio Audio.qml

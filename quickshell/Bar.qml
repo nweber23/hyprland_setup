@@ -194,6 +194,13 @@ PanelWindow {
                                 NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } } }
                 MouseArea { anchors.fill: parent; onClicked: Recorder.stop() }
             }
+            Item {   // tools: timer, stopwatch, notes, calculator; shows the running time
+                implicitWidth: toolsRow.implicitWidth; implicitHeight: 22
+                RowLayout { id: toolsRow; anchors.centerIn: parent; spacing: 4
+                    Icon { id: toolsIcon; name: "timer"; size: 17; color: Tools.barText !== "" ? Theme.accent : Theme.on_surface }
+                    Text { visible: Tools.barText !== ""; textFormat: Text.PlainText; text: Tools.barText; color: Theme.accent; font.family: Theme.mono; font.pixelSize: 11; font.bold: true } }
+                MouseArea { anchors.fill: parent; onClicked: bar.openPanel("tools", toolsIcon) }
+            }
             Icon { id: capIcon; name: "photo_camera"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("capture", capIcon) } }
             Icon { id: dispIcon; name: "desktop_windows"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("display", dispIcon) } }
             Icon { id: timeIcon; name: "hourglass_top"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("screentime", timeIcon) } }

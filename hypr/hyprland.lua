@@ -324,6 +324,7 @@ hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("hyprctl switchxkblayout all next
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("record region"))   -- start/stop a region recording
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nightlight"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle capture"))   -- screenshot / recording options
+hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("quickshell ipc call shell toggle tools"))   -- timer, stopwatch, notes, calculator
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call shell toggle sysmon"))   -- system monitor
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))

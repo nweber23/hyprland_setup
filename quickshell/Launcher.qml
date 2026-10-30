@@ -31,14 +31,6 @@ PanelWindow {
     function copyEntry(text, label, icon) {
         return { name: label, comment: "Enter copies it", icon: icon, execute: () => Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" | wl-copy", "sh", text]) }
     }
-    // Plain arithmetic only: the regex keeps everything but digits, operators and brackets out of eval.
-    function calc(q) {
-        if (!/^[0-9+\-*\/().,%^ ]+$/.test(q) || !/[+\-*\/%^]/.test(q) || !/[0-9]/.test(q)) return null
-        try {
-            const v = eval(q.replace(/,/g, ".").replace(/\^/g, "**"))
-            return typeof v === "number" && isFinite(v) ? String(Math.round(v * 1e10) / 1e10) : null
-        } catch (e) { return null }
-    }
     Process {
         id: emojiSearch
         stdout: StdioCollector { onStreamFinished: {
@@ -69,7 +61,7 @@ PanelWindow {
         }
         out.sort((x, y) => y.score - x.score || x.entry.name.localeCompare(y.entry.name))
         let list_ = out.slice(0, 60).map(o => o.entry)
-        const c = calc(raw)
+        const c = Tools.calc(raw)
         if (c !== null) list_.unshift(copyEntry(c, "= " + c, "accessories-calculator"))
         if (raw !== "")
             list_.push({ name: "Search the web for \u201c" + raw + "\u201d", comment: "DuckDuckGo", icon: "web-browser",

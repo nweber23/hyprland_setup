@@ -42,6 +42,7 @@ Local, never committed: `~/.config/quickshell-local/calendar.ics` or `calendar-u
 | `Super+B` | browser |
 | `Super+W` | wallpaper carousel |
 | `Super+T` | screen time |
+| `Super+Y` | tools: timer / pomodoro, stopwatch, notes, calculator |
 | `Super+Shift+V` | clipboard history |
 | `Super+L` | lock |
 | `Super+Space`, `Alt+Shift` | next keyboard layout (us, de) |
