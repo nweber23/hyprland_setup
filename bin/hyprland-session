@@ -15,7 +15,7 @@ RUN="/run/user/$(id -u)/hypr"
   sig=$(ls -t "$RUN" 2>/dev/null | head -1); export HYPRLAND_INSTANCE_SIGNATURE="$sig"
   { echo "sig=$sig"; hyprctl version; echo; hyprctl devices; echo; hyprctl monitors; } > "$LOGDIR/state.txt" 2>&1
   hyprctl dispatch 'hl.dsp.exec_cmd("kitty")' >> "$LOGDIR/state.txt" 2>&1
-  sleep "${HYPR_TEST_SECONDS:-90}"
+  sleep "${HYPR_TEST_SECONDS:-120}"
   hyprctl dispatch 'hl.dsp.exit()' >> "$LOGDIR/state.txt" 2>&1
 ) &
 
