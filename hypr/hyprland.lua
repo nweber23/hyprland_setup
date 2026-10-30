@@ -321,6 +321,8 @@ hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call shell toggle scr
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call shell toggle clipboard"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call shell lock"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))   -- next keyboard layout
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("record region"))   -- start/stop a region recording
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nightlight"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
@@ -473,6 +475,8 @@ pcall(dofile, os.getenv("HOME") .. "/.cache/hypr-colors.lua")
 
 -- Quickshell draws the wallpaper, the bar and all panels; config lives in ~/dotfiles/quickshell.
 hl.on("hyprland.start", function()
+    -- portals and systemd user services need to know the Wayland display
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=Hyprland")
     hl.exec_cmd("xdpi")
     hl.exec_cmd("nm-applet --indicator")   -- tray icon with the full network menu (hidden networks, VPN, edit connections)
     hl.exec_cmd("quickshell")

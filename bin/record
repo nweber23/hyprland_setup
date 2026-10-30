@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Toggle screen recording. Usage: record [full|region]. Needs the package wf-recorder; stops with a second call.
+if pgrep -x wf-recorder >/dev/null; then
+    pkill -INT -x wf-recorder
+    notify-send -a "Recording" "Recording saved" "$(cat "$HOME/.cache/last-recording" 2>/dev/null)"
+    exit 0
+fi
+command -v wf-recorder >/dev/null || { notify-send -a "Recording" "wf-recorder is not installed"; exit 1; }
+mkdir -p "$HOME/Videos"; file="$HOME/Videos/recording-$(date +%F-%H%M%S).mp4"
+echo "$file" > "$HOME/.cache/last-recording"
+if [ "${1:-full}" = region ]; then
+    geo=$(slurp) || exit 0
+    setsid wf-recorder -g "$geo" -f "$file" >/dev/null 2>&1 &
+else
+    setsid wf-recorder -f "$file" >/dev/null 2>&1 &
+fi
+notify-send -a "Recording" "Recording started" "Run the same command again to stop"

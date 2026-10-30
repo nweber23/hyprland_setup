@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Toggle the night light (warm screen colour). Needs the package wlsunset.
+if pgrep -x wlsunset >/dev/null; then
+    pkill -x wlsunset
+    notify-send -a "Night light" "Night light off"
+else
+    command -v wlsunset >/dev/null || { notify-send -a "Night light" "wlsunset is not installed"; exit 1; }
+    # equal day and night temperature = a fixed warm colour until it is switched off
+    setsid wlsunset -S 06:00 -s 18:00 -t 3800 -T 3800 >/dev/null 2>&1 &
+    notify-send -a "Night light" "Night light on"
+fi

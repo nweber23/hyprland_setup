@@ -37,6 +37,20 @@ Panel {
 
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
+    // quick toggles: which helper processes run, and which tools are installed
+    property bool nightOn: false
+    property bool recOn: false
+    property bool hasNight: false
+    property bool hasRec: false
+    Process {
+        id: tgl
+        command: ["sh", "-c", 'pgrep -x wlsunset >/dev/null && echo night; pgrep -x wf-recorder >/dev/null && echo rec; command -v wlsunset >/dev/null && echo hasnight; command -v wf-recorder >/dev/null && echo hasrec; true']
+        stdout: StdioCollector { onStreamFinished: { root.nightOn = text.includes("night\n"); root.recOn = text.includes("rec\n"); root.hasNight = text.includes("hasnight"); root.hasRec = text.includes("hasrec") } }
+    }
+    Timer { interval: 2000; repeat: true; running: root.shown; triggeredOnStart: true; onTriggered: tgl.running = true }
+    readonly property bool micMuted: Pipewire.defaultAudioSource !== null && Pipewire.defaultAudioSource.audio !== null && Pipewire.defaultAudioSource.audio.muted
+    PwObjectTracker { objects: [Pipewire.defaultAudioSource] }
+
     // ---- clock boxes + logout ----
     Reveal { p: root; index: 0; dx: -16; dy: 8
     RowLayout {
@@ -99,6 +113,21 @@ Panel {
 
     // ---- session ----
     Reveal { p: root; index: 3; dy: 14; back: true
+        // ---- quick toggles ----
+        RowLayout {
+            Layout.fillWidth: true; spacing: 10
+            ToggleTile { Layout.fillWidth: true; icon: "nightlight"; label: "Night light"; on: root.nightOn; available: root.hasNight
+                         onToggled: { Quickshell.execDetached(["nightlight"]); root.nightOn = !root.nightOn } }
+            ToggleTile { Layout.fillWidth: true; icon: Popups.dnd ? "notifications_off" : "notifications"; label: "Silent"; on: Popups.dnd
+                         onToggled: Popups.dnd = !Popups.dnd }
+            ToggleTile { Layout.fillWidth: true; icon: root.micMuted ? "mic_off" : "mic"; label: "Mic"; on: root.micMuted
+                         onToggled: { const a = Pipewire.defaultAudioSource; if (a && a.audio) a.audio.muted = !a.audio.muted } }
+            ToggleTile { Layout.fillWidth: true; icon: "fiber_manual_record"; label: "Record"; on: root.recOn; available: root.hasRec
+                         onToggled: { Quickshell.execDetached(["record", "full"]); root.recOn = !root.recOn } }
+        }
+    }
+
+    Reveal { p: root; index: 4; dy: 14; back: true
     RowLayout {
         Layout.fillWidth: true; spacing: 10
         ActionTile { Layout.fillWidth: true; icon: "lock"; onActivated: { Popups.close(); Quickshell.execDetached(["quickshell", "ipc", "call", "shell", "lock"]) } }
@@ -109,7 +138,7 @@ Panel {
     }
 
     // ---- power profile ----
-    Reveal { p: root; index: 4; dy: 14; back: true
+    Reveal { p: root; index: 5; dy: 14; back: true
     Rectangle {
         Layout.fillWidth: true; implicitHeight: 52; radius: 12; color: Theme.card
         RowLayout {

@@ -1,0 +1,4 @@
+# Screen sharing asks for the monitor with slurp (a click on the screen to share).
+[screencast]
+chooser_type=simple
+chooser_cmd=slurp -f %o -or
