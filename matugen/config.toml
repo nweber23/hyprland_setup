@@ -3,3 +3,11 @@
 [templates.quickshell]
 input_path = "~/dotfiles/matugen/templates/colors.json"
 output_path = "~/.cache/quickshell/colors.json"
+
+[templates.hyprland]
+input_path = "~/dotfiles/matugen/templates/hypr-colors.lua"
+output_path = "~/.cache/hypr-colors.lua"
+
+[templates.kitty]
+input_path = "~/dotfiles/matugen/templates/kitty-colors.conf"
+output_path = "~/.cache/kitty-colors.conf"
