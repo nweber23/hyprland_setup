@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Count how long each app has focus. Listens to Hyprland's event socket and adds seconds per
+(day, hour, app) to ~/.local/share/screentime/usage.db. Started by the shell; only one runs at a time.
+
+Time only accrues in short ticks (max 10 s each), so suspend or a stalled daemon never books a
+long gap. Idle time with the screen on still counts as the focused app.
+"""
+import datetime, fcntl, os, select, socket, sqlite3, subprocess, sys, time
+from pathlib import Path
+
+DATA = Path.home() / ".local" / "share" / "screentime"
+TICK = 5.0          # seconds between flushes
+MAX_STEP = 10.0     # never book more than this per tick
+
+
+def active_class():
+    try:
+        out = subprocess.run(["hyprctl", "-j", "activewindow"], capture_output=True, text=True, timeout=3).stdout
+        import json
+        return json.loads(out).get("class") or "Desktop"
+    except Exception:
+        return "Desktop"
+
+
+def main():
+    DATA.mkdir(parents=True, exist_ok=True)
+    lock = open(DATA / "daemon.lock", "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return   # another daemon already runs
+
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+    if not sig:
+        sys.exit("HYPRLAND_INSTANCE_SIGNATURE not set")
+    sock = socket.socket(socket.AF_UNIX)
+    sock.connect(f"{os.environ['XDG_RUNTIME_DIR']}/hypr/{sig}/.socket2.sock")
+
+    db = sqlite3.connect(DATA / "usage.db")
+    db.execute("CREATE TABLE IF NOT EXISTS usage(day TEXT, hour INT, app TEXT, seconds REAL, PRIMARY KEY(day, hour, app))")
+
+    app, last, buf = active_class(), time.monotonic(), b""
+
+    def tick():
+        nonlocal last
+        now = time.monotonic()
+        dt, last = min(now - last, MAX_STEP), now
+        t = datetime.datetime.now()
+        db.execute("INSERT INTO usage VALUES(?,?,?,?) ON CONFLICT(day,hour,app) DO UPDATE SET seconds=seconds+?",
+                   (t.strftime("%Y-%m-%d"), t.hour, app, dt, dt))
+        db.commit()
+
+    while True:
+        ready, _, _ = select.select([sock], [], [], TICK)
+        if ready:
+            data = sock.recv(65536)
+            if not data:
+                return   # compositor went away
+            buf += data
+            *lines, buf = buf.split(b"\n")
+            for line in lines:
+                name, _, arg = line.decode(errors="replace").partition(">>")
+                if name == "activewindow":
+                    tick()   # book the time to the app that just lost focus
+                    app = arg.split(",", 1)[0] or "Desktop"
+        else:
+            tick()
+
+
+main()

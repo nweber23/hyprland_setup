@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Print screen-time stats as JSON for one day: screentime-query [YYYY-MM-DD].
+{date, total, hours[24], apps[{name, seconds}], week[{date, total}] (7 days ending that day), avg}
+"""
+import datetime, json, sqlite3, sys
+from pathlib import Path
+
+DB = Path.home() / ".local" / "share" / "screentime" / "usage.db"
+
+
+def pretty(cls):
+    # com.microsoft.VSCode -> VSCode, google-chrome -> Google chrome
+    name = cls.split(".")[-1].replace("-", " ").replace("_", " ")
+    return name[:1].upper() + name[1:]
+
+
+def main():
+    day = datetime.date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else datetime.date.today()
+    db = sqlite3.connect(DB) if DB.exists() else sqlite3.connect(":memory:")
+    db.execute("CREATE TABLE IF NOT EXISTS usage(day TEXT, hour INT, app TEXT, seconds REAL)")
+
+    hours = [0.0] * 24
+    apps = {}
+    for hour, app, secs in db.execute("SELECT hour, app, seconds FROM usage WHERE day=?", (day.isoformat(),)):
+        hours[hour] += secs
+        apps[pretty(app)] = apps.get(pretty(app), 0) + secs
+
+    week = []
+    for i in range(6, -1, -1):
+        d = day - datetime.timedelta(days=i)
+        total = db.execute("SELECT COALESCE(SUM(seconds),0) FROM usage WHERE day=?", (d.isoformat(),)).fetchone()[0]
+        week.append({"date": d.isoformat(), "total": total})
+    active = [w["total"] for w in week if w["total"] > 0]
+    print(json.dumps({
+        "date": day.isoformat(),
+        "total": sum(hours),
+        "hours": hours,
+        "apps": [{"name": n, "seconds": s} for n, s in sorted(apps.items(), key=lambda x: -x[1])],
+        "week": week,
+        "avg": sum(active) / len(active) if active else 0,
+    }))
+
+
+main()

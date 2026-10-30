@@ -161,6 +161,14 @@ PanelWindow {
         }
 
         Chip {
+            id: timeChip
+            Layout.fillHeight: true
+            highlighted: Popups.current === "screentime" && Popups.screenName === bar.screen.name
+            onClicked: bar.openPanel("screentime", timeChip)
+            Icon { name: "hourglass_top"; size: 18; color: timeChip.highlighted ? Theme.on_primary_container : Theme.on_surface }
+        }
+
+        Chip {
             Layout.fillHeight: true
             Icon { name: "keyboard"; size: 18 }
             Text { textFormat: Text.PlainText; text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
