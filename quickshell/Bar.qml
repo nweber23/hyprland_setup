@@ -28,8 +28,7 @@ PanelWindow {
         return ps.length > 0 ? ps[0] : null
     }
 
-    readonly property var sink: Pipewire.defaultAudioSink
-    PwObjectTracker { objects: [bar.sink] }
+    readonly property var sink: Audio.sink       // the real output, also while the equalizer is on
     readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
 

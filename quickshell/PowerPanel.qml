@@ -31,8 +31,7 @@ Panel {
         Quickshell.execDetached(["brightnessctl", "set", Math.max(1, Math.round(v * 100)) + "%"])   // never 0: black screen
     }
 
-    readonly property var sink: Pipewire.defaultAudioSink
-    PwObjectTracker { objects: [root.sink] }
+    readonly property var sink: Audio.sink
     readonly property bool hasAudio: sink !== null && sink.audio !== null
 
     SystemClock { id: clock; precision: SystemClock.Minutes }

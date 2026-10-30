@@ -11,12 +11,13 @@ Panel {
 
     // everything that has volume controls; the tracker makes node.audio available
     readonly property var all: Pipewire.nodes.values.filter(n => n.audio)
-    readonly property var sinks: all.filter(n => n.isSink && !n.isStream)
+    // the equalizer is not a device: it is an effect in front of the chosen output
+    readonly property var sinks: all.filter(n => n.isSink && !n.isStream && n.name !== "qs_eq")
     readonly property var sources: all.filter(n => !n.isSink && !n.isStream && !n.name.endsWith(".monitor"))
     // the equalizer's own playback stream is plumbing, not an app
     readonly property var streams: all.filter(n => n.isSink && n.isStream && !n.name.startsWith("qs_eq"))
     PwObjectTracker { objects: root.all }
-    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property var sink: Audio.sink
     readonly property var source: Pipewire.defaultAudioSource
 
     function label(n) { return n.nickname !== "" ? n.nickname : (n.description !== "" ? n.description : n.name) }
@@ -50,7 +51,7 @@ Panel {
                     Behavior on color { ColorAnimation { duration: 160 } }
                     Text { id: nm; anchors.centerIn: parent; textFormat: Text.PlainText; text: root.label(modelData)
                            color: parent.on ? Theme.panelBg : Theme.on_surface; font.family: Theme.mono; font.pixelSize: 10; font.bold: true }
-                    MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: Pipewire.preferredDefaultAudioSink = modelData }
+                    MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: Audio.pick(modelData) }
                 }
             }
         }

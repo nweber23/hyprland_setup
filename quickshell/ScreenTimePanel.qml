@@ -45,8 +45,15 @@ Panel {
         if (!g || g.length < 7) return "This week"
         return Qt.formatDate(new Date(g[0].date + "T12:00:00"), "MMM d") + " - " + Qt.formatDate(new Date(g[6].date + "T12:00:00"), "MMM d")
     }
-    function load() { if (!query.running) query.running = true }
-    Component.onCompleted: load()   // build the bars and cells at startup, not in the middle of the opening animation
+    // The date goes into the command at the moment of starting. (A binding on `command` is re-evaluated only after
+    // the handler that called load() has run, so every query used the previous day: one click behind.)
+    // A request that arrives while a query still runs is repeated afterwards.
+    property bool again: false
+    function load() {
+        if (query.running) { again = true; return }
+        query.command = ["screentime-query", dateFor(offset)]
+        query.running = true
+    }
     onOffsetChanged: { dipAnim.restart(); load() }
     onShownChanged: if (shown) { mode = "day"; offset = 0; grow = 0; growAnim.restart(); load() }
     SequentialAnimation { id: growAnim; PauseAnimation { duration: 450 }
@@ -57,13 +64,17 @@ Panel {
 
     Process {
         id: query
-        command: ["screentime-query", root.dateFor(root.offset)]
         // Only replace `stats` when something changed: a new value rebuilds every bar and heat cell (168 items).
         property string last: ""
+        onRunningChanged: if (!running && root.again) { root.again = false; root.load() }
         stdout: StdioCollector { onStreamFinished: {
             if (text === query.last) return
-            query.last = text
-            try { root.stats = JSON.parse(text); root.totalShown = root.stats.total } catch (e) {}
+            try {
+                const d = JSON.parse(text)
+                if (d.date !== root.dateFor(root.offset)) { root.again = true; return }   // stale: another day was asked for meanwhile
+                query.last = text
+                root.stats = d; root.totalShown = d.total
+            } catch (e) {}
         } }
     }
 
@@ -104,12 +115,15 @@ Panel {
                 p: root; index: 1; dy: 12; back: true
                 RowLayout {
                     Layout.fillWidth: true; spacing: 12
-                    StatCard { Layout.fillWidth: true; caption: "Daily average"; value: root.fmt(root.stats.avg); sub: "last 7 days" }
+                    StatCard { Layout.fillWidth: true; caption: "Daily average"; value: root.fmt(root.stats.avg)
+                              sub: "of " + (root.stats.week || []).filter(w => w.total > 0).length + " day(s) with data" }
                     StatCard { Layout.preferredWidth: 300; implicitHeight: 64; caption: ""; value: root.fmt(root.totalShown); valueSize: 26; valueColor: Theme.accent; opacity: root.dip }
                     StatCard {
                         Layout.fillWidth: true; caption: "vs yesterday"
                         readonly property real diff: root.stats.total - root.stats.prev
                         value: (diff >= 0 ? "↑ " : "↓ ") + root.fmt(Math.abs(diff))
+                        // say what it is compared to, so a missing yesterday does not look like today's time
+                        sub: root.stats.prev > 0 ? "yesterday " + root.fmt(root.stats.prev) : "no data for the day before"
                         valueColor: diff > 0 ? Theme.accent2 : Theme.accent
                     }
                 }

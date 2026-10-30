@@ -60,3 +60,4 @@ singleton SysMon SysMon.qml
 Sparkline 1.0 Sparkline.qml
 SysMonPanel 1.0 SysMonPanel.qml
 singleton Recorder Recorder.qml
+singleton Audio Audio.qml

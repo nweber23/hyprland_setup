@@ -24,8 +24,7 @@ Scope {
     Timer { id: hide; interval: 1400; onTriggered: root.shown = false }
 
     // ---- volume / mute ----
-    readonly property var sink: Pipewire.defaultAudioSink
-    PwObjectTracker { objects: [root.sink] }
+    readonly property var sink: Audio.sink
     readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
     property bool ready: false          // skip the values that arrive while the shell starts

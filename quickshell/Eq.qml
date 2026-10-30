@@ -29,9 +29,53 @@ Singleton {
         for (let i = 0; i < ns.length; i++) if (ns[i].name === "qs_eq") return ns[i]
         return null
     }
-    readonly property bool enabled: node !== null && Pipewire.preferredDefaultAudioSink === node
+    readonly property bool enabled: node !== null && Pipewire.defaultAudioSink === node
 
-    function setEnabled(on) { Pipewire.preferredDefaultAudioSink = on && node ? node : null }
+    // ---- one volume, whether the equalizer is on or not ----
+    // The real output (speakers, headphones) always carries the volume. The equalizer node stays at 100% and
+    // never shows up as a device; whatever sets its volume or mute (keys, wpctl, an app) is handed to the real output.
+    property string hwName: ""                       // name of the real output the equalizer plays into
+    readonly property var hardware: {
+        const ns = Pipewire.nodes.values
+        return ns.find(n => n.name === hwName && n.audio) ?? ns.find(n => n.isSink && !n.isStream && n.name !== "qs_eq" && n.audio) ?? null
+    }
+    PwObjectTracker { objects: [root.node, root.hardware] }
+    FileView { id: hwFile; path: Quickshell.env("HOME") + "/.cache/quickshell/eq-hw-id"; printErrors: false }
+    onHardwareChanged: if (hardware && hwFile.path !== "") hwFile.setText(String(hardware.id))
+    Connections {
+        target: Pipewire
+        function onDefaultAudioSinkChanged() { const d = Pipewire.defaultAudioSink; if (d && d.name !== "qs_eq") root.hwName = d.name }
+    }
+    Component.onCompleted: { const d = Pipewire.defaultAudioSink; if (d && d.name !== "qs_eq") hwName = d.name }
+    // A freshly created equalizer node reports volume 0 for a moment: that is not a wish of the user, so nothing is
+    // handed over in its first two seconds (it is set to 100% instead).
+    property double born: 0
+    function handOver() {
+        const n = root.node, h = root.hardware
+        if (!n || !n.audio || !h || !h.audio || !enabled) return
+        if (Date.now() - born < 2000) { if (n.audio.volume !== 1) n.audio.volume = 1; return }
+        // exactly 0 is what a node that is being torn down reports, not a wish; the keys go through bin/volume anyway
+        if (n.audio.volume > 0 && Math.abs(n.audio.volume - 1) > 0.002) { h.audio.volume = n.audio.volume; n.audio.volume = 1 }
+        if (n.audio.muted !== h.audio.muted) h.audio.muted = n.audio.muted     // mute: the two always agree
+    }
+    Connections { target: root.node && root.node.audio ? root.node.audio : null; function onVolumeChanged() { root.handOver() } function onMutedChanged() { root.handOver() } }
+    // ... and the other way round, so toggling mute on either one flips the real output
+    Connections {
+        target: root.hardware && root.hardware.audio ? root.hardware.audio : null
+        function onMutedChanged() { const n = root.node; if (root.enabled && n && n.audio && n.audio.muted !== root.hardware.audio.muted) n.audio.muted = root.hardware.audio.muted }
+    }
+    onEnabledChanged: if (enabled) handOver()
+
+    function setEnabled(on) {
+        if (on && node) {
+            const d = Pipewire.defaultAudioSink
+            if (d && d !== node) hwName = d.name
+            if (node.ready && node.audio) { node.audio.volume = 1; node.audio.muted = hardware && hardware.audio ? hardware.audio.muted : false }   // the volume stays on the real output
+            Pipewire.preferredDefaultAudioSink = node
+        } else {
+            Pipewire.preferredDefaultAudioSink = hardware
+        }
+    }
 
     function setBand(i, db) {
         const g = gains.slice()
@@ -57,8 +101,11 @@ Singleton {
         for (let i = 0; i < 10; i++) p += '"eq_band_' + (i + 1) + ':Gain" ' + gains[i].toFixed(1) + " "
         Quickshell.execDetached(["pw-cli", "s", String(node.id), "Props", "{ params = [ " + p + "] }"])
     }
-    // A fresh node starts flat: push the saved gains as soon as it shows up.
-    onNodeChanged: if (node) apply()
+    // A fresh node starts flat: push the saved gains as soon as it shows up, and set it to 100% (see handOver).
+    onNodeChanged: { born = Date.now(); pin.restart(); if (node) apply() }
+    // set up once the node is bound (setting it earlier is an error), and keep the id of the real output for bin/volume
+    Timer { id: pin; interval: 500; running: true
+        onTriggered: { if (root.node && root.node.ready && root.node.audio) root.node.audio.volume = 1; if (root.hardware) hwFile.setText(String(root.hardware.id)) } }
 
     FileView {
         id: store
@@ -73,7 +120,10 @@ Singleton {
 
     // Clears a leftover engine from a previous run. The pattern is anchored so it cannot match this sh itself.
     Process {
+        id: engine
         running: true
         command: ["sh", "-c", "pkill -f '^(/usr/bin/)?pipewire -c .*qs-eq\\.conf$'; exec pipewire -c \"$HOME/dotfiles/pipewire/qs-eq.conf\""]
+        onRunningChanged: if (!running) respawn.start()
     }
+    Timer { id: respawn; interval: 1500; onTriggered: engine.running = true }   // the engine comes back if it dies
 }

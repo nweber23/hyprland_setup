@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Usage: volume up|down|mute
+# Changes the volume of the real output, also while the equalizer is the default sink: its volume stays at 100%,
+# and a relative step ("5% louder") on it would turn into an absolute value on the speakers.
+def=$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk -F'"' '/node.name/{print $2; exit}')
+target=@DEFAULT_AUDIO_SINK@
+if [ "$def" = qs_eq ]; then
+    id=$(cat "$HOME/.cache/quickshell/eq-hw-id" 2>/dev/null)     # written by the shell
+    [ -n "$id" ] && target=$id
+fi
+case "${1:-}" in
+    up)   wpctl set-volume -l 1.0 "$target" 5%+ ;;
+    down) wpctl set-volume "$target" 5%- ;;
+    mute) wpctl set-mute "$target" toggle ;;
+    *) echo "usage: volume up|down|mute" >&2; exit 2 ;;
+esac

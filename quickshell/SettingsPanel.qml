@@ -126,9 +126,9 @@ Panel {
                         SettingButton { label: "Open"; accent: true; onClicked: root.open("display") } }
                 }
                 SettingPage { idx: 2; current: root.page; title: "Sound"
-                    SettingRow { title: "Volume"; hint: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.description : ""
-                        MSlider { implicitWidth: 260; knob: true; value: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Math.min(1, Pipewire.defaultAudioSink.audio.volume) : 0
-                                  onMoved: v => { if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.volume = v } } }
+                    SettingRow { title: "Volume"; hint: Audio.sink ? Audio.sink.description : ""
+                        MSlider { implicitWidth: 260; knob: true; value: Math.min(1, Audio.volume)
+                                  onMoved: v => Audio.setVolume(v) } }
                     SettingRow { title: "Mixer"; hint: "Output and input device, volume per app"
                         SettingButton { label: "Open"; accent: true; onClicked: root.open("volume") } }
                     SettingRow { title: "Music and equalizer"
