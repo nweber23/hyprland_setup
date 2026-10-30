@@ -12,11 +12,13 @@ ShellRoot {
             const m = Hyprland.focusedMonitor
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
+        function lock(): void { lockScreen.lock() }
     }
     Process { running: true; command: ["screentime-daemon"] }
     // Feeds the clipboard history: clip-store runs once per newly copied text.
     Process { running: true; command: ["wl-paste", "--type", "text", "--watch", "clip-store"] }
     Notifications {}
+    Lock { id: lockScreen }
     Osd {}
     PolkitDialog {}
     Variants {

@@ -242,6 +242,7 @@ hl.config({
     misc = {
         force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
+        allow_session_lock_restore = true, -- a new lock client may take over if the lock screen ever crashes (no lock-out)
     },
 })
 
@@ -315,6 +316,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("quickshell ipc call shell toggle wallpaper"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call shell toggle screentime"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call shell toggle clipboard"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call shell lock"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
