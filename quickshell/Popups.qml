@@ -4,6 +4,7 @@ import QtQuick
 
 // Which panel is open, on which screen, and where it should hang (x in screen coordinates).
 Singleton {
+    property bool dnd: false          // do not disturb: notification popups hidden
     property string current: ""
     property string screenName: ""
     property real anchorX: 0

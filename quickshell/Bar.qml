@@ -14,12 +14,12 @@ import QtQuick.Layouts
 PanelWindow {
     id: bar
     anchors { top: true; left: true; right: true }
-    margins { top: 8; left: 12; right: 12 }
+    margins { top: 6; left: 8; right: 8 }
     implicitHeight: 34
     color: "transparent"
     WlrLayershell.namespace: "qs-bar"
 
-    readonly property font textFont: Qt.font({ family: "JetBrains Mono", pixelSize: 13 })
+    readonly property font textFont: Qt.font({ family: Theme.mono, pixelSize: 12, bold: true })
 
     // ---- state ----------------------------------------------------------------
     readonly property var player: {
@@ -56,7 +56,7 @@ PanelWindow {
     }
     Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: kbQuery.running = true }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    SystemClock { id: clock; precision: SystemClock.Seconds }
 
     function volumeIcon() {
         if (muted || volume <= 0) return "volume_off"
@@ -74,82 +74,114 @@ PanelWindow {
     }
     function focusWorkspace(id) { Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + id + " })"]) }
 
-    // ---- left: workspaces + now playing ---------------------------------------------
+    function fmt(us) { us = Math.max(0, Math.floor(us)); return String(Math.floor(us / 60)).padStart(2, "0") + ":" + String(us % 60).padStart(2, "0") }
+    // MPRIS does not push the position: refresh it while something plays
+    Timer { running: bar.player !== null && bar.player.isPlaying; interval: 1000; repeat: true; onTriggered: bar.player.positionChanged() }
+
+    // ---- left ------------------------------------------------------------------
     RowLayout {
         anchors.left: parent.left
         height: parent.height
-        spacing: 8
+        spacing: 6
 
-        Chip {
-            Layout.fillHeight: true
-            Row {
-                spacing: 6
-                Repeater {
-                    model: 5
-                    delegate: Rectangle {
-                        required property int index
-                        readonly property int wsId: index + 1
-                        readonly property bool active: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
-                        readonly property bool occupied: Hyprland.workspaces.values.some(w => w.id === wsId)
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: 10
-                        width: active ? 28 : 10
-                        radius: 5
-                        color: active ? Theme.primary : occupied ? Theme.on_surface_variant : Theme.outline_variant
-                        Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
-                        Behavior on color { ColorAnimation { duration: 200 } }
-                        MouseArea { anchors.fill: parent; anchors.margins: -4; onClicked: bar.focusWorkspace(parent.wsId) }
-                    }
+        BarGroup {
+            id: searchBtn
+            implicitWidth: 34; padding: 0
+            BarChip { Layout.fillWidth: true; Icon { name: "search"; size: 18 } onClicked: bar.openPanel("launcher", searchBtn) }
+        }
+        BarGroup {
+            id: bellBtn
+            implicitWidth: 34; padding: 0
+            BarChip { Layout.fillWidth: true; active: Popups.dnd
+                Icon { name: Popups.dnd ? "notifications_off" : "notifications"; size: 18; color: Popups.dnd ? Theme.accent : Theme.on_surface }
+                onClicked: Popups.dnd = !Popups.dnd }
+        }
+
+        BarGroup {
+            spacing: 2
+            Repeater {
+                model: 8
+                delegate: Rectangle {
+                    required property int index
+                    readonly property int wsId: index + 1
+                    readonly property bool active: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
+                    readonly property bool occupied: Hyprland.workspaces.values.some(w => w.id === wsId)
+                    Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 7
+                    color: active ? Theme.accent : occupied ? Theme.cardHigh : "transparent"
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                    Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: parent.wsId; font: bar.textFont
+                           color: parent.active ? Theme.panelBg : parent.occupied ? Theme.on_surface : Theme.on_surface_variant }
+                    MouseArea { anchors.fill: parent; onClicked: bar.focusWorkspace(parent.wsId) }
                 }
             }
         }
 
-        Chip {
-            id: mediaChip
+        BarGroup {
+            id: mediaGroup
             visible: bar.player !== null
-            Layout.fillHeight: true
-            onClicked: bar.openPanel("music", mediaChip)
-            Icon { name: "skip_previous"; size: 20; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
-            Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 22; fill: 1; color: Theme.primary
-                   MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
-            Icon { name: "skip_next"; size: 20; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
-            Text { textFormat: Text.PlainText;
-                Layout.maximumWidth: 240
-                text: bar.player ? (bar.player.trackArtist ? bar.player.trackArtist + " – " : "") + bar.player.trackTitle : ""
-                color: Theme.on_surface_variant
-                font: bar.textFont
-                elide: Text.ElideRight
+            padding: 5; spacing: 8
+            onClicked: bar.openPanel("music", mediaGroup)
+            ClippingRectangle {
+                Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 6; color: Theme.card
+                Image { anchors.fill: parent; source: bar.player ? bar.player.trackArtUrl : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
             }
+            ColumnLayout {
+                Layout.maximumWidth: 190; spacing: 0
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; elide: Text.ElideRight
+                       text: bar.player ? bar.player.trackTitle : ""; color: Theme.on_surface; font: bar.textFont }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true
+                       text: bar.player ? bar.fmt(bar.player.position) + " / " + bar.fmt(bar.player.length) : ""
+                       color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 }
+            }
+            Item { Layout.preferredWidth: 4 }
+            Icon { name: "skip_previous"; size: 18; fill: 1; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
+            Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 20; fill: 1
+                   MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
+            Icon { name: "skip_next"; size: 18; fill: 1; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
+            Item { Layout.preferredWidth: 2 }
         }
     }
 
     // ---- centre: clock + weather --------------------------------------------------
-    Chip {
-        id: clockChip
+    RowLayout {
         anchors.centerIn: parent
         height: parent.height
-        highlighted: Popups.current === "calendar" && Popups.screenName === bar.screen.name
-        onClicked: bar.openPanel("calendar", clockChip)
-        Text { textFormat: Text.PlainText; text: Qt.formatDateTime(clock.date, "ddd d MMM"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface_variant; font: bar.textFont }
-        Text { textFormat: Text.PlainText; text: Qt.formatDateTime(clock.date, "HH:mm"); color: clockChip.highlighted ? Theme.on_primary_container : Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 15; font.bold: true }
-        Icon { visible: Weather.temp !== ""; name: Weather.icon; size: 18; fill: 1; color: Theme.primary }
-        Text { textFormat: Text.PlainText; visible: Weather.temp !== ""; text: Weather.temp; color: Theme.primary; font: bar.textFont }
+        spacing: 6
+        BarGroup {
+            id: clockGroup
+            padding: 12
+            implicitHeight: 34
+            onClicked: bar.openPanel("calendar", clockGroup)
+            ColumnLayout {
+                spacing: 0
+                Text { Layout.alignment: Qt.AlignHCenter; textFormat: Text.PlainText; text: Qt.formatTime(clock.date, "HH:mm:ss")
+                       color: Theme.accent; font.family: Theme.mono; font.pixelSize: 13; font.bold: true }
+                Text { Layout.alignment: Qt.AlignHCenter; textFormat: Text.PlainText; text: Qt.formatDate(clock.date, "dddd, d MMMM")
+                       color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 8 }
+            }
+        }
+        BarGroup {
+            visible: Weather.temp !== ""
+            padding: 10; spacing: 6
+            onClicked: bar.openPanel("calendar", clockGroup)
+            Icon { name: Weather.icon; size: 18; fill: 1; color: Theme.on_surface }
+            Text { textFormat: Text.PlainText; text: Weather.temp; color: Theme.on_surface; font: bar.textFont }
+        }
     }
 
-    // ---- right: tray + status chips ------------------------------------------------
+    // ---- right: tray + status ------------------------------------------------------
     RowLayout {
         anchors.right: parent.right
         height: parent.height
-        spacing: 8
+        spacing: 6
 
-        Chip {
-            visible: SystemTray.items.values.length > 0
-            Layout.fillHeight: true
+        BarGroup {
+            padding: 6; spacing: 8
             Repeater {
                 model: SystemTray.items
                 delegate: IconImage {
                     required property var modelData
-                    implicitSize: 18
+                    implicitSize: 16
                     source: modelData.icon
                     MouseArea {
                         anchors.fill: parent
@@ -158,75 +190,55 @@ PanelWindow {
                     }
                 }
             }
+            Icon { id: dispIcon; name: "desktop_windows"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("display", dispIcon) } }
+            Icon { id: timeIcon; name: "hourglass_top"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("screentime", timeIcon) } }
         }
 
-        Chip {
-            id: displayChip
-            Layout.fillHeight: true
-            highlighted: Popups.current === "display" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("display", displayChip)
-            Icon { name: "desktop_windows"; size: 18; color: displayChip.highlighted ? Theme.on_primary_container : Theme.on_surface }
-        }
-
-        Chip {
-            id: timeChip
-            Layout.fillHeight: true
-            highlighted: Popups.current === "screentime" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("screentime", timeChip)
-            Icon { name: "hourglass_top"; size: 18; color: timeChip.highlighted ? Theme.on_primary_container : Theme.on_surface }
-        }
-
-        Chip {
-            Layout.fillHeight: true
-            Icon { name: "keyboard"; size: 18 }
-            Text { textFormat: Text.PlainText; text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
-        }
-
-        Chip {
-            id: wifiChip
-            Layout.fillHeight: true
-            highlighted: Popups.current === "wifi" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("wifi", wifiChip)
-            Icon { name: Net.wifiNetwork ? "wifi" : "wifi_off"; size: 18; fill: 1; color: Net.wifiNetwork ? Theme.primary : Theme.outline }
-            Text { textFormat: Text.PlainText; visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""; color: Theme.on_surface; font: bar.textFont
-                   Layout.maximumWidth: 120; elide: Text.ElideRight }
-        }
-
-        Chip {
-            id: btChip
-            Layout.fillHeight: true
-            highlighted: Popups.current === "bluetooth" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("bluetooth", btChip)
-            Icon { name: Net.btDevice ? "bluetooth_connected" : "bluetooth"; size: 18; fill: 1; color: Net.btDevice ? Theme.primary : Theme.outline }
-            Text { textFormat: Text.PlainText; visible: Net.btDevice !== null; color: Theme.on_surface; font: bar.textFont; Layout.maximumWidth: 120; elide: Text.ElideRight
-                   text: Net.btDevice ? Net.btDevice.name + (Net.btDevice.batteryAvailable ? " " + Math.round(Net.btDevice.battery * (Net.btDevice.battery > 1 ? 1 : 100)) + "%" : "") : "" }
-        }
-
-        Chip {
-            id: volChip
-            Layout.fillHeight: true
-            Icon { name: bar.volumeIcon(); size: 18; fill: 1; color: bar.muted ? Theme.outline : Theme.on_surface }
-            Text { textFormat: Text.PlainText; text: Math.round(bar.volume * 100) + "%"; color: Theme.on_surface; font: bar.textFont }
-            onClicked: mouse => {
-                if (mouse.button === Qt.MiddleButton) { if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted }
-                else bar.openPanel("power", volChip)
+        BarGroup {
+            spacing: 4
+            BarChip {
+                Icon { name: "keyboard"; size: 16 }
+                Text { textFormat: Text.PlainText; text: bar.keymap; color: Theme.on_surface; font: bar.textFont }
             }
-            onScrolled: wheel => {
-                if (!bar.sink || !bar.sink.audio) return
-                const v = bar.sink.audio.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05)
-                bar.sink.audio.volume = Math.max(0, Math.min(1, v))
+            BarChip {
+                id: wifiChip
+                fillColor: Net.wifiNetwork ? Theme.accent : "transparent"
+                onClicked: bar.openPanel("wifi", wifiChip)
+                Icon { name: Net.wifiNetwork ? "wifi" : "wifi_off"; size: 16; fill: 1; color: Net.wifiNetwork ? Theme.panelBg : Theme.outline }
+                Text { textFormat: Text.PlainText; visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""
+                       color: Theme.panelBg; font: bar.textFont; Layout.maximumWidth: 110; elide: Text.ElideRight }
             }
-        }
-
-        Chip {
-            id: batChip
-            visible: bar.battery !== null && bar.battery.isLaptopBattery
-            Layout.fillHeight: true
-            highlighted: Popups.current === "power" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("power", batChip)
-            Icon { name: bar.batteryIcon(); size: 18; fill: 1
-                   color: bar.charging ? Theme.primary : bar.batteryPct <= 15 ? Theme.error : Theme.on_surface }
-            Text { textFormat: Text.PlainText; text: Math.round(bar.batteryPct) + "%"; color: Theme.on_surface; font: bar.textFont }
+            BarChip {
+                id: btChip
+                fillColor: Net.btDevice ? Theme.accent : "transparent"
+                onClicked: bar.openPanel("bluetooth", btChip)
+                Icon { name: Net.btDevice ? "bluetooth_connected" : "bluetooth"; size: 16; fill: 1; color: Net.btDevice ? Theme.panelBg : Theme.outline }
+                Text { textFormat: Text.PlainText; visible: Net.btDevice !== null; color: Theme.panelBg; font: bar.textFont; Layout.maximumWidth: 110; elide: Text.ElideRight
+                       text: Net.btDevice ? Net.btDevice.name : "" }
+            }
+            BarChip {
+                id: volChip
+                fillColor: bar.muted ? "transparent" : Theme.accent2
+                onClicked: mouse => {
+                    if (mouse.button === Qt.MiddleButton) { if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted }
+                    else bar.openPanel("power", volChip)
+                }
+                onScrolled: wheel => {
+                    if (!bar.sink || !bar.sink.audio) return
+                    const v = bar.sink.audio.volume + (wheel.angleDelta.y > 0 ? 0.05 : -0.05)
+                    bar.sink.audio.volume = Math.max(0, Math.min(1, v))
+                }
+                Icon { name: bar.volumeIcon(); size: 16; fill: 1; color: bar.muted ? Theme.outline : Theme.panelBg }
+                Text { textFormat: Text.PlainText; text: Math.round(bar.volume * 100); color: bar.muted ? Theme.outline : Theme.panelBg; font: bar.textFont }
+            }
+            BarChip {
+                id: batChip
+                visible: bar.battery !== null && bar.battery.isLaptopBattery
+                active: Popups.current === "power" && Popups.screenName === bar.screen.name
+                onClicked: bar.openPanel("power", batChip)
+                Icon { name: bar.batteryIcon(); size: 16; fill: 1; color: bar.charging ? Theme.accent : bar.batteryPct <= 15 ? Theme.error : Theme.on_surface }
+                Text { textFormat: Text.PlainText; text: Math.round(bar.batteryPct); color: Theme.on_surface; font: bar.textFont }
+            }
         }
     }
 }

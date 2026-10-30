@@ -29,3 +29,5 @@ Lock 1.0 Lock.qml
 Decor 1.0 Decor.qml
 Gauge 1.0 Gauge.qml
 ActionTile 1.0 ActionTile.qml
+BarGroup 1.0 BarGroup.qml
+BarChip 1.0 BarChip.qml

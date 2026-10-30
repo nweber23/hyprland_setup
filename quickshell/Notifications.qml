@@ -30,7 +30,7 @@ Scope {
         id: win
         screen: root.targetScreen
         // Always mapped, 1 px tall while empty. Binding this to the list made the window never map.
-        visible: true
+        visible: !Popups.dnd
         anchors { top: true; right: true }
         margins { top: 8 + 34 + 8; right: 12 }
         implicitWidth: 380
