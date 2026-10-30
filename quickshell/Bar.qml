@@ -216,7 +216,7 @@ PanelWindow {
                 fillColor: bar.muted ? "transparent" : Theme.accent2
                 onClicked: mouse => {
                     if (mouse.button === Qt.MiddleButton) { if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted }
-                    else bar.openPanel("power", volChip)
+                    else bar.openPanel("volume", volChip)
                 }
                 onScrolled: wheel => {
                     if (!bar.sink || !bar.sink.audio) return

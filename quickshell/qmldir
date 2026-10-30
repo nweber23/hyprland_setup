@@ -45,3 +45,4 @@ TrayMenu 1.0 TrayMenu.qml
 singleton NotifHistory NotifHistory.qml
 NotificationCenter 1.0 NotificationCenter.qml
 singleton Keyboard Keyboard.qml
+VolumePanel 1.0 VolumePanel.qml
