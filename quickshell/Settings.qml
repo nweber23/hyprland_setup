@@ -12,6 +12,7 @@ Singleton {
     property string themeMode: "dark"    // "dark" | "light", applied by matugen
     property int suspendMinutes: 15      // suspend after this many idle minutes on battery, 0 = never
     property bool autoSaver: true        // switch to the power-saver profile at 20 % and below
+    property bool widgets: true          // clock, battery and music on the bare desktop
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
 
     FileView {
@@ -27,12 +28,13 @@ Singleton {
                 if (d.themeMode === "dark" || d.themeMode === "light") root.themeMode = d.themeMode
                 if (d.suspendMinutes !== undefined) root.suspendMinutes = d.suspendMinutes
                 if (d.autoSaver !== undefined) root.autoSaver = !!d.autoSaver
+                if (d.widgets !== undefined) root.widgets = !!d.widgets
                 if (d.liveOnBattery !== undefined) root.liveOnBattery = !!d.liveOnBattery
             } catch (e) { console.warn("Settings: bad settings.json:", e) }
         }
     }
     function set(key, value) {
         root[key] = value
-        file.setText(JSON.stringify({ lockMinutes: lockMinutes, screenOffMinutes: screenOffMinutes, popupSeconds: popupSeconds, themeMode: themeMode, liveOnBattery: liveOnBattery, suspendMinutes: suspendMinutes, autoSaver: autoSaver }, null, 2))
+        file.setText(JSON.stringify({ lockMinutes: lockMinutes, screenOffMinutes: screenOffMinutes, popupSeconds: popupSeconds, themeMode: themeMode, liveOnBattery: liveOnBattery, suspendMinutes: suspendMinutes, autoSaver: autoSaver, widgets: widgets }, null, 2))
     }
 }

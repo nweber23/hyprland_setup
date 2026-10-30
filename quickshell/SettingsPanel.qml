@@ -118,6 +118,9 @@ Panel {
                 SettingPage { idx: 0; current: root.page; title: "Appearance"
                     SettingRow { title: "Theme"; hint: "Colours come from the wallpaper, in a dark or a light variant"
                         SettingChips { model: [{ label: "Dark", value: "dark" }, { label: "Light", value: "light" }]; current: Settings.themeMode; onPicked: v => root.applyTheme(v) } }
+                    SettingRow { title: "Desktop widgets"; hint: "Clock, battery and the playing track on the bare desktop"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.widgets; onPicked: v => Settings.set("widgets", v) } }
                     SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
                         SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
                     SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."

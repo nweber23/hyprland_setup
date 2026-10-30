@@ -55,6 +55,8 @@ Local, never committed: `~/.config/quickshell-local/calendar.ics` or `calendar-u
 | `Super+Shift+N` | night light |
 | `Super+M` | log out |
 
+Desktop widgets (clock with weather, battery, playing track) sit on the bare desktop below all windows; switch them off in Settings > Appearance.
+
 Bar: workspaces, media (click for the music panel), clock (calendar), weather, tray (right click for its menu),
 keyboard layout (click), Wi-Fi / Bluetooth (network panel), volume (mixer), battery (power panel),
 bell (notifications, right click = do not disturb).

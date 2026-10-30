@@ -42,6 +42,13 @@ ShellRoot {
     }
     Variants {
         model: Quickshell.screens
+        DesktopWidgets {
+            required property var modelData
+            screen: modelData
+        }
+    }
+    Variants {
+        model: Quickshell.screens
         Scope {
             id: perScreen
             required property var modelData
