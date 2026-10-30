@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Session wrapper for the locally built Hyprland (referenced by system/hyprland-local.desktop).
+# While the setup is being debugged it (1) copies the compositor log from tmpfs to disk,
+# (2) records the devices and monitors Hyprland sees, and (3) exits the session after
+# HYPR_TEST_SECONDS so a session without working input cannot trap anyone.
+# Remove the watchdog block once input is confirmed working.
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+LOGDIR="$HOME/.cache/hyprland-session"; mkdir -p "$LOGDIR"
+RUN="/run/user/$(id -u)/hypr"
+
+( while :; do cp "$RUN"/*/hyprland.log "$LOGDIR/hyprland.log" 2>/dev/null; sleep 2; done ) &
+
+(
+  sleep 15
+  sig=$(ls -t "$RUN" 2>/dev/null | head -1); export HYPRLAND_INSTANCE_SIGNATURE="$sig"
+  { echo "sig=$sig"; hyprctl version; echo; hyprctl devices; echo; hyprctl monitors; } > "$LOGDIR/state.txt" 2>&1
+  hyprctl dispatch 'hl.dsp.exec_cmd("kitty")' >> "$LOGDIR/state.txt" 2>&1
+  sleep "${HYPR_TEST_SECONDS:-90}"
+  hyprctl dispatch 'hl.dsp.exit()' >> "$LOGDIR/state.txt" 2>&1
+) &
+
+exec start-hyprland > "$LOGDIR/start-hyprland.log" 2>&1

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Hyprland (local build)
 Comment=Hyprland built from source into ~/.local
-Exec=env PATH=/home/niklas-weber/.local/bin:/usr/local/bin:/usr/bin:/bin /home/niklas-weber/.local/bin/start-hyprland
+Exec=/home/niklas-weber/.local/bin/hyprland-session
 Type=Application
 DesktopNames=Hyprland
 Keywords=tiling;wayland;compositor;
