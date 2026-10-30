@@ -194,6 +194,14 @@ Panel {
                     SettingRow { title: "Screen off while locked"; hint: "Minutes without input"
                         SettingChips { chipW: 66; model: [{ label: "Never", value: 0 }, { label: "3", value: 3 }, { label: "6", value: 6 }, { label: "10", value: 10 }]
                                        current: Settings.screenOffMinutes; onPicked: v => Settings.set("screenOffMinutes", v) } }
+                    SettingRow { title: "Suspend on battery"; hint: "Minutes without input, only while unplugged"
+                        SettingChips { chipW: 66; model: [{ label: "Never", value: 0 }, { label: "10", value: 10 }, { label: "15", value: 15 }, { label: "30", value: 30 }]
+                                       current: Settings.suspendMinutes; onPicked: v => Settings.set("suspendMinutes", v) } }
+                    SettingRow { title: "Power saver at 20 %"; hint: "Switches the profile automatically and restores it when charging"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.autoSaver; onPicked: v => Settings.set("autoSaver", v) } }
+                    SettingRow { title: "Battery health"; hint: Battery.health > 0 ? "Holds " + Battery.health + " % of its original capacity (" + Battery.cycles + " charge cycles)" : "Not reported by this battery"
+                        SettingButton { label: Battery.health > 0 ? Battery.health + " %" : "n/a" } }
                     SettingRow { title: "Lock now"; hint: "Super+L"
                         SettingButton { label: "Lock"; accent: true; onClicked: { Popups.close(); Quickshell.execDetached(["quickshell", "ipc", "call", "shell", "lock"]) } } }
                     SettingRow { title: "Power panel"; hint: "Battery, brightness, profile, session"
