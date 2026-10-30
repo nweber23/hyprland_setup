@@ -24,6 +24,8 @@ ColumnLayout {
     readonly property bool open: p ? p.shown : false
     onOpenChanged: if (open) { outAnim.stop(); inAnim.restart() } else { inAnim.stop(); outAnim.restart() }
 
+    Component.onCompleted: if (open) inAnim.restart()   // created while the panel is already open
+
     SequentialAnimation {
         id: inAnim
         PauseAnimation { duration: r.base + r.index * r.step }

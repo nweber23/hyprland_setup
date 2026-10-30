@@ -55,3 +55,4 @@ SettingRow 1.0 SettingRow.qml
 SettingButton 1.0 SettingButton.qml
 SettingPage 1.0 SettingPage.qml
 SettingsPanel 1.0 SettingsPanel.qml
+NotifCard 1.0 NotifCard.qml

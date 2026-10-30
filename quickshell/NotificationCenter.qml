@@ -54,36 +54,22 @@ Panel {
             add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250 } }
             remove: Transition { ParallelAnimation { NumberAnimation { property: "opacity"; to: 0; duration: 180 } NumberAnimation { property: "x"; to: 60; duration: 220; easing.type: Easing.InCubic } } }
             displaced: Transition { NumberAnimation { property: "y"; duration: 220; easing.type: Easing.OutCubic } }
-            delegate: Rectangle {
-                id: card
+            delegate: Item {
+                id: slot
                 required property int index
                 required property string app
                 required property string summary
                 required property string body
                 required property string icon
                 required property real time
-                width: ListView.view.width; implicitHeight: col.implicitHeight + 22; height: implicitHeight; radius: 12; color: Theme.card
-                RowLayout {
-                    id: col
-                    x: 12; y: 11; width: parent.width - 24; spacing: 10
-                    Image { Layout.preferredWidth: 32; Layout.preferredHeight: 32; Layout.alignment: Qt.AlignTop; sourceSize: Qt.size(64, 64); asynchronous: true
-                            visible: card.icon !== ""; source: card.icon }
-                    Icon { visible: card.icon === ""; Layout.alignment: Qt.AlignTop; name: "notifications"; size: 28; color: Theme.on_surface_variant }
-                    ColumnLayout {
-                        Layout.fillWidth: true; spacing: 2
-                        RowLayout {
-                            Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: card.app; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 10 }
-                            Text { textFormat: Text.PlainText; text: root.ago(card.time, tick.date); color: Theme.outline; font.family: Theme.mono; font.pixelSize: 10 }
-                        }
-                        Text { Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; textFormat: Text.PlainText; text: card.summary
-                               color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12; font.bold: true }
-                        Text { Layout.fillWidth: true; visible: text !== ""; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight; textFormat: Text.PlainText; text: card.body
-                               color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 11 }
-                    }
-                    Icon { Layout.alignment: Qt.AlignTop; name: "close"; size: 16; color: Theme.on_surface_variant; opacity: cardArea.containsMouse ? 1 : 0.35
-                           MouseArea { anchors.fill: parent; anchors.margins: -6; onClicked: NotifHistory.remove(card.index) } }
+                width: ListView.view.width; height: card.implicitHeight
+                NotifCard {
+                    id: card
+                    width: parent.width; p: root
+                    row: slot.index; app: slot.app; summary: slot.summary; body: slot.body; icon: slot.icon; time: slot.time
+                    ago: root.ago(slot.time, tick.date)
+                    onRemoveRequested: NotifHistory.remove(slot.index)
                 }
-                MouseArea { id: cardArea; anchors.fill: parent; hoverEnabled: true; z: -1 }
             }
         }
     }
