@@ -26,6 +26,7 @@ Rectangle {
     }
     MouseArea {
         id: area
+        z: -1   // below the children, so buttons inside a chip get their own clicks
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton

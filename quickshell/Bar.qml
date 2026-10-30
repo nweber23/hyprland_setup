@@ -105,8 +105,10 @@ PanelWindow {
         }
 
         Chip {
+            id: mediaChip
             visible: bar.player !== null
             Layout.fillHeight: true
+            onClicked: bar.openPanel("music", mediaChip)
             Icon { name: "skip_previous"; size: 20; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
             Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 22; fill: 1; color: Theme.primary
                    MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
@@ -117,7 +119,6 @@ PanelWindow {
                 color: Theme.on_surface_variant
                 font: bar.textFont
                 elide: Text.ElideRight
-                MouseArea { anchors.fill: parent; onClicked: bar.openPanel("music", parent) }
             }
         }
     }
