@@ -20,7 +20,7 @@ hl.monitor({
     output   = "eDP-1",
     mode     = "preferred",
     position = "0x0",
-    scale    = 1.5,
+    scale    = 1.25,
 })
 
 -- External Dell S3425DW, only connected sometimes. Matched by description so the
