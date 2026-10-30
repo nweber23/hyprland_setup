@@ -31,3 +31,4 @@ Gauge 1.0 Gauge.qml
 ActionTile 1.0 ActionTile.qml
 BarGroup 1.0 BarGroup.qml
 BarChip 1.0 BarChip.qml
+Reveal 1.0 Reveal.qml

@@ -38,6 +38,7 @@ Panel {
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
     // ---- clock boxes + logout ----
+    Reveal { p: root; index: 0; dx: -16; dy: 8
     RowLayout {
         Layout.fillWidth: true; spacing: 8
         Rectangle { implicitWidth: 46; implicitHeight: 44; radius: 10; color: Theme.card
@@ -49,7 +50,10 @@ Panel {
         ActionTile { implicitWidth: 40; implicitHeight: 40; icon: "logout"; needsConfirm: true
                onActivated: Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.exit()"]) }
     }
+    }
+
     // ---- battery ring ----
+    Reveal { p: root; index: 1; dy: 14; back: true
     Item {
         Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 6
         implicitWidth: 230; implicitHeight: 230
@@ -68,8 +72,10 @@ Panel {
                    color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12 }
         }
     }
+    }
 
     // ---- sliders ----
+    Reveal { p: root; index: 2
     Rectangle {
         Layout.fillWidth: true; implicitHeight: sl.implicitHeight + 28; radius: 12; color: Theme.card
         ColumnLayout {
@@ -89,8 +95,10 @@ Panel {
             }
         }
     }
+    }
 
     // ---- session ----
+    Reveal { p: root; index: 3; dy: 14; back: true
     RowLayout {
         Layout.fillWidth: true; spacing: 10
         ActionTile { Layout.fillWidth: true; icon: "lock"; onActivated: { Popups.close(); Quickshell.execDetached(["quickshell", "ipc", "call", "shell", "lock"]) } }
@@ -98,8 +106,10 @@ Panel {
         ActionTile { Layout.fillWidth: true; icon: "restart_alt"; needsConfirm: true; onActivated: Quickshell.execDetached(["systemctl", "reboot"]) }
         ActionTile { Layout.fillWidth: true; icon: "power_settings_new"; needsConfirm: true; onActivated: Quickshell.execDetached(["systemctl", "poweroff"]) }
     }
+    }
 
     // ---- power profile ----
+    Reveal { p: root; index: 4; dy: 14; back: true
     Rectangle {
         Layout.fillWidth: true; implicitHeight: 52; radius: 12; color: Theme.card
         RowLayout {
@@ -129,5 +139,6 @@ Panel {
                 }
             }
         }
+    }
     }
 }

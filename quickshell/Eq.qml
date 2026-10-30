@@ -11,12 +11,16 @@ Singleton {
     readonly property var freqLabels: ["31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"]
     readonly property real range: 12   // dB, +/-
     readonly property var presets: ({
-        "Flat":   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        "Bass":   [6, 5, 4, 2, 0, 0, 0, 0, 0, 0],
-        "Vocal":  [-2, -2, -1, 1, 3, 4, 3, 1, 0, -1],
-        "Treble": [0, 0, 0, 0, 0, 1, 3, 4, 5, 6],
-        "Rock":   [4, 3, 1, -1, -2, 0, 2, 3, 4, 4]
+        "Flat":    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Bass":    [6, 5, 4, 2, 0, 0, 0, 0, 0, 0],
+        "Treble":  [0, 0, 0, 0, 0, 1, 3, 4, 5, 6],
+        "Vocal":   [-2, -2, -1, 1, 3, 4, 3, 1, 0, -1],
+        "Pop":     [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2],
+        "Rock":    [4, 3, 1, -1, -2, 0, 2, 3, 4, 4],
+        "Jazz":    [3, 2, 1, 2, -2, -2, 0, 1, 2, 3],
+        "Classic": [0, 0, 0, 0, 0, 0, -2, -2, -2, -3]
     })
+    readonly property var presetOrder: ["Flat", "Bass", "Treble", "Vocal", "Pop", "Rock", "Jazz", "Classic"]
 
     property var gains: presets["Flat"]
     property string preset: "Flat"

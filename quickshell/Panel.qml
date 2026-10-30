@@ -19,7 +19,18 @@ PanelWindow {
     default property alias content: body.data
     readonly property bool shown: Popups.current === name && Popups.screenName === screenName
 
-    visible: shown || card.opacity > 0.01
+    // Intro timeline (as in the original): the card eases in over 760 ms, sections follow via Reveal;
+    // closing is quick and runs backwards.
+    property real intro: 0
+    NumberAnimation { id: introAnim; target: win; property: "intro"; to: 1; duration: 760; easing.type: Easing.OutQuart }
+    SequentialAnimation {
+        id: outAnim
+        PauseAnimation { duration: 70 }
+        NumberAnimation { target: win; property: "intro"; to: 0; duration: 170; easing.type: Easing.InQuart }
+    }
+    onShownChanged: if (shown) { outAnim.stop(); introAnim.restart() } else { introAnim.stop(); outAnim.restart() }
+
+    visible: shown || intro > 0.004
     anchors { top: true; left: true }
     margins {
         top: 8 + 34 + 8
@@ -45,12 +56,11 @@ PanelWindow {
         height: body.implicitHeight + win.pad * 2
         radius: Theme.radius
         color: Theme.panelBg
-        opacity: win.shown ? 1 : 0
-        scale: win.shown ? 1 : 0.96
+        opacity: win.intro
+        scale: 0.92 + 0.08 * win.intro
         transformOrigin: Item.Top
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        transform: Translate { y: 12 * (1 - win.intro) }
+        Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
         Decor {}
 
