@@ -15,6 +15,24 @@
 ------------------
 
 -- See https://wiki.hypr.land/configuring/core/monitors/
+-- Laptop panel (1920x1080): scaled up for readability.
+hl.monitor({
+    output   = "eDP-1",
+    mode     = "preferred",
+    position = "0x0",
+    scale    = 1.5,
+})
+
+-- External Dell S3425DW, only connected sometimes. Matched by description so the
+-- port (DP/HDMI/USB-C) does not matter. Placed to the right of the laptop panel.
+hl.monitor({
+    output   = "desc:Dell Inc. DELL S3425DW 6FWQQH4",
+    mode     = "3440x1440@120",
+    position = "auto-right",
+    scale    = 1,
+})
+
+-- Fallback for any other display.
 hl.monitor({
     output   = "",
     mode     = "preferred",
@@ -240,6 +258,11 @@ hl.config({
 
         touchpad = {
             natural_scroll = false,
+        },
+
+        -- The touchscreen (ELAN2514) belongs to the laptop panel, not the external monitor.
+        touchdevice = {
+            output = "eDP-1",
         },
     },
 })
