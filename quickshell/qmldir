@@ -25,6 +25,7 @@ Notifications 1.0 Notifications.qml
 Osd 1.0 Osd.qml
 ClipboardPanel 1.0 ClipboardPanel.qml
 WindowSwitcher 1.0 WindowSwitcher.qml
+LockView 1.0 LockView.qml
 PolkitDialog 1.0 PolkitDialog.qml
 Lock 1.0 Lock.qml
 Decor 1.0 Decor.qml
