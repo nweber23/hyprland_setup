@@ -21,3 +21,4 @@ WallpaperPicker 1.0 WallpaperPicker.qml
 ScreenTimePanel 1.0 ScreenTimePanel.qml
 DisplayPanel 1.0 DisplayPanel.qml
 Notifications 1.0 Notifications.qml
+Osd 1.0 Osd.qml

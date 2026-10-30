@@ -15,6 +15,7 @@ ShellRoot {
     }
     Process { running: true; command: ["screentime-daemon"] }
     Notifications {}
+    Osd {}
     Variants {
         model: Quickshell.screens
         Wallpaper {
