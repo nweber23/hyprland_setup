@@ -1,6 +1,5 @@
 import Quickshell
 import Quickshell.Services.Mpris
-import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
@@ -9,8 +8,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "music"
-    panelWidth: 560
-    pad: 34            // room for the bars around the cover
+    panelWidth: 540
 
     readonly property var player: {
         const ps = Mpris.players.values
@@ -19,13 +17,6 @@ Panel {
     }
     readonly property real len: player && player.lengthSupported ? player.length : 0
     function fmt(s) { s = Math.max(0, Math.floor(s)); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0") }
-
-    // The output level drives the pulse of the cover and a ring of bars around it (a level effect, not a spectrum).
-    PwNodePeakMonitor { id: meter; node: Pipewire.defaultAudioSink; enabled: root.shown }   // any sound counts, not only MPRIS players
-    property real level: meter.enabled ? Math.min(1, meter.peak * 1.6) : 0
-    Behavior on level { NumberAnimation { duration: 90 } }
-    property real phase: 0
-    NumberAnimation on phase { from: 0; to: Math.PI * 2; duration: 2600; loops: Animation.Infinite; running: root.shown && meter.enabled }
 
     // position is not pushed by MPRIS: poll once a second while the panel is open
     Timer {
@@ -42,22 +33,7 @@ Panel {
             p: root; index: 0; dx: -35; dy: 9; back: true; Layout.fillWidth: false
             Item {
             Layout.preferredWidth: 150; Layout.preferredHeight: 150
-            Rectangle { anchors.centerIn: parent; width: 164; height: 164; radius: 82; color: Qt.alpha(Theme.accent2, 0.12 + 0.2 * root.level)   // glow that breathes with the music
-                        scale: 1 + 0.18 * root.level }
-            Repeater {   // ring of bars around the cover
-                model: 44
-                delegate: Item {
-                    required property int index
-                    anchors.centerIn: parent; width: 1; height: 1; rotation: index * 360 / 44
-                    Rectangle {
-                        readonly property real k: 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(root.phase * 3 + index * 0.75) * Math.cos(root.phase + index * 0.31))
-                        x: -1.5; width: 3; radius: 1.5; color: Theme.accent2
-                        height: 2 + root.level * 22 * k
-                        y: -(84 + height)
-                        opacity: 0.35 + 0.65 * root.level
-                    }
-                }
-            }
+            Rectangle { anchors.centerIn: parent; width: 164; height: 164; radius: 82; color: Qt.alpha(Theme.accent2, 0.16) }   // soft glow
             ClippingRectangle {
                 id: cover
                 anchors.fill: parent
