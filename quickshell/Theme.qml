@@ -28,6 +28,15 @@ Singleton {
     property color outline:                pick("outline", "#938f99")
     property color outline_variant:        pick("outline_variant", "#49454f")
 
+    // ---- Look of the panels (see the Serpantinum video): near-black tinted surfaces, one accent, one counter colour.
+    readonly property color panelBg: Qt.darker(surface, 1.45)
+    readonly property color card: Qt.tint(panelBg, Qt.alpha(on_surface, 0.055))     // inner boxes
+    readonly property color cardHigh: Qt.tint(panelBg, Qt.alpha(on_surface, 0.10))  // chips, tracks
+    readonly property color accent: primary
+    readonly property color accent2: tertiary
+    readonly property string mono: "JetBrains Mono"
+    readonly property real radius: 14
+
     // Fade between palettes instead of snapping when the wallpaper changes.
     Behavior on primary                { ColorAnimation { duration: 600 } }
     Behavior on on_primary             { ColorAnimation { duration: 600 } }

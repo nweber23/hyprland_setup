@@ -26,3 +26,6 @@ Osd 1.0 Osd.qml
 ClipboardPanel 1.0 ClipboardPanel.qml
 PolkitDialog 1.0 PolkitDialog.qml
 Lock 1.0 Lock.qml
+Decor 1.0 Decor.qml
+Gauge 1.0 Gauge.qml
+ActionTile 1.0 ActionTile.qml
