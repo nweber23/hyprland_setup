@@ -357,6 +357,11 @@ for _, mod in ipairs({ "ALT", mainMod }) do
     hl.bind(mod .. " + Tab",         hl.dsp.exec_cmd("quickshell ipc call shell switcher 1"))
     hl.bind(mod .. " + SHIFT + Tab", hl.dsp.exec_cmd("quickshell ipc call shell switcher -1"))
 end
+-- Letting go of the modifier confirms. Done here because the overview does not see the key release:
+-- it only gets keyboard focus after Alt/Super is already down. Does nothing unless the overview is open.
+hl.bind("ALT + Alt_L",     hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
+hl.bind("ALT + Alt_R",     hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
+hl.bind(mainMod .. " + Super_L", hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 

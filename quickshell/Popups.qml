@@ -4,6 +4,7 @@ import QtQuick
 
 // Which panel is open, on which screen, and where it should hang (x in screen coordinates).
 Singleton {
+    signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
     property bool dnd: false          // do not disturb: notification popups hidden

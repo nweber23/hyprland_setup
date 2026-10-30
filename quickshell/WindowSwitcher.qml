@@ -6,7 +6,7 @@ import QtQuick
 import QtQuick.Layouts
 
 // Alt+Tab / Super+Tab overview: every window as a live-looking tile in a grid over a dimmed, blurred screen.
-// Tab / Shift+Tab or the arrows move, releasing Alt/Super or Enter switches, Delete closes, Escape cancels.
+// Tab / Shift+Tab or the arrows move, releasing Alt/Super (a Hyprland release bind) or Enter switches, Delete closes, Escape cancels.
 // The grid appears on the focused screen; other screens are only dimmed. Starts on the previous window.
 PanelWindow {
     id: win
@@ -33,10 +33,12 @@ PanelWindow {
                        ws: o.workspace ? o.workspace.name : "", mon: monitorName(o.monitor),
                        ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID })
         }
+        if (out.length === 0 && retries++ < 10) { collect.restart(); return }   // Hyprland has not filled the list yet
         out.sort((a, b) => a.order - b.order)   // most recently used first
         const first = windows.length === 0
         windows = out
         grid.currentIndex = first ? (out.length > 1 ? 1 : 0) : Math.min(grid.currentIndex, out.length - 1)
+        if (pendingPick) { pendingPick = false; late.restart() }   // the grid takes its new index a moment after the model
     }
     function pick() {
         const w = windows[grid.currentIndex]
@@ -49,10 +51,16 @@ PanelWindow {
         Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.close({ window = \"address:" + w.address + "\" })"])
         windows = windows.filter(x => x !== w)
     }
+    // Released before the list was ready (a quick tap): switch as soon as it is.
+    property bool pendingPick: false
+    property int retries: 0
+    function confirm() { if (collect.running || count === 0) pendingPick = true; else pick() }
+    Connections { target: Popups; function onSwitchConfirm() { if (win.shown) win.confirm() } }
     function step(d) { if (count > 0) grid.currentIndex = (grid.currentIndex + d + count) % count }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
+    Timer { id: late; interval: 80; onTriggered: win.pick() }
     Timer { id: collect; interval: 60; onTriggered: win.collectNow() }
-    onShownChanged: if (shown) { windows = []; refresh(); keys.forceActiveFocus() }
+    onShownChanged: if (shown) { pendingPick = false; retries = 0; windows = []; refresh(); keys.forceActiveFocus() }
 
     // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
     readonly property real areaW: width - 160
@@ -103,8 +111,7 @@ PanelWindow {
             else return
             event.accepted = true
         }
-        // letting go of the modifier that opened the overview confirms, as in every Alt+Tab
-        Keys.onReleased: event => { if (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta || event.key === Qt.Key_Super_L) { win.pick(); event.accepted = true } }
+        // releasing Alt/Super confirms: see switcherConfirm (a Hyprland release bind), this surface never sees that key release
 
         Text {
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 52 }

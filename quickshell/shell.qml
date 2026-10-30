@@ -15,6 +15,7 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
+        function switcherConfirm(): void { if (Popups.current === "switcher") Popups.switchConfirm() }
         function switcher(dir: int): void {   // Alt+Tab / Super+Tab: open the window switcher, or move on while it is open
             if (Popups.current === "switcher") Popups.switchStep(dir)
             else { const m = Hyprland.focusedMonitor; if (m) Popups.toggle("switcher", m.name, 0) }
