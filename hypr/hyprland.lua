@@ -352,26 +352,56 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind(mainMod .. " + CTRL + Tab",         hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + CTRL + SHIFT + Tab", hl.dsp.focus({ workspace = "e-1" }))
--- Window overview: Alt+Tab / Super+Tab. Hold the modifier, Tab moves on, releasing it switches.
--- Hyprland watches the modifier itself (the overview only gets keyboard focus after it is already down, so
--- neither the overview nor a release bind sees the key coming up). A quick tap still switches.
-local overviewTimer = nil
-local function overview(dir, modKeys)
-    hl.exec_cmd("quickshell ipc call shell switcher " .. dir)
-    if overviewTimer then return end   -- already waiting for the modifier to come up: this was just another step
-    local ticks = 0
-    overviewTimer = hl.timer(function()
-        ticks = ticks + 1
-        if ticks < 2 then return end   -- one tick of grace; a release that overtakes the open is handled by the shell
-        for _, k in ipairs(modKeys) do if hl.is_key_down(k) then return end end
-        overviewTimer:set_enabled(false); overviewTimer = nil
-        hl.exec_cmd("quickshell ipc call shell switcherConfirm")
+-- Window overview: Alt+Tab / Super+Tab.
+--   * A quick tap (modifier up within ~150 ms) swaps windows right here, with no overview and no round trip to the shell.
+--   * Holding the modifier opens the overview; Tab moves on, releasing the modifier switches.
+-- Hyprland watches the modifier itself: the overview only gets keyboard focus after the modifier is already down,
+-- so neither it nor a release bind sees the key coming up.
+local overview = { timer = nil, ticks = 0, steps = 0, opened = false }
+
+local function mruWindows()   -- mapped windows, focused one first
+    local list = {}
+    for _, w in ipairs(hl.get_windows()) do
+        if w.mapped and not w.hidden then list[#list + 1] = w end
+    end
+    table.sort(list, function(a, b) return a.focus_history_id < b.focus_history_id end)
+    return list
+end
+
+local function swapDirect(steps)
+    local list = mruWindows()
+    local n = #list
+    if n < 2 then return end
+    local w = list[(steps % n) + 1]   -- list[1] is the focused window; steps = number of Tab presses (negative with Shift)
+    hl.dispatch(hl.dsp.focus({ window = "address:" .. w.address }))
+end
+
+local function overviewKey(dir, modKeys)
+    local o = overview
+    if o.timer then   -- the modifier is still down: another step
+        o.steps = o.steps + dir
+        if o.opened then hl.exec_cmd("quickshell ipc call shell switcher " .. dir) end
+        return
+    end
+    o.steps, o.ticks, o.opened = dir, 0, false
+    o.timer = hl.timer(function()
+        o.ticks = o.ticks + 1
+        local down = false
+        for _, k in ipairs(modKeys) do if hl.is_key_down(k) then down = true end end
+        if not down then   -- released
+            o.timer:set_enabled(false); o.timer = nil
+            if o.opened then hl.exec_cmd("quickshell ipc call shell switcherConfirm") else swapDirect(o.steps) end
+        elseif not o.opened and o.ticks >= 5 then   -- still held after ~150 ms: show the overview
+            o.opened = true
+            hl.exec_cmd("quickshell ipc call shell switcherOpen " .. o.steps)
+        end
     end, { timeout = 30, type = "repeat" })
 end
-hl.bind("ALT + Tab",         function() overview(1,  { "Alt_L", "Alt_R" }) end)
-hl.bind("ALT + SHIFT + Tab", function() overview(-1, { "Alt_L", "Alt_R" }) end)
-hl.bind(mainMod .. " + Tab",         function() overview(1,  { "Super_L", "Super_R" }) end)
-hl.bind(mainMod .. " + SHIFT + Tab", function() overview(-1, { "Super_L", "Super_R" }) end)
+
+hl.bind("ALT + Tab",         function() overviewKey(1,  { "Alt_L", "Alt_R" }) end)
+hl.bind("ALT + SHIFT + Tab", function() overviewKey(-1, { "Alt_L", "Alt_R" }) end)
+hl.bind(mainMod .. " + Tab",         function() overviewKey(1,  { "Super_L", "Super_R" }) end)
+hl.bind(mainMod .. " + SHIFT + Tab", function() overviewKey(-1, { "Super_L", "Super_R" }) end)
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 

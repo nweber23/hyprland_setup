@@ -18,6 +18,13 @@ ShellRoot {
         function switcherConfirm(): void {
             if (Popups.current === "switcher") Popups.switchConfirm(); else Popups.earlyConfirm = Date.now()
         }
+        function switcherOpen(steps: int): void {   // held Alt/Super: open with the Tab presses counted so far
+            const m = Hyprland.focusedMonitor
+            if (!m || Popups.current === "switcher") return
+            Popups.initSteps = steps - 1
+            Popups.toggle("switcher", m.name, 0)
+            if (Date.now() - Popups.earlyConfirm < 300) { Popups.earlyConfirm = 0; Popups.switchConfirm() }
+        }
         function switcher(dir: int): void {   // Alt+Tab / Super+Tab: open the window overview, or move on while it is open
             if (Popups.current === "switcher") { Popups.switchStep(dir); return }
             const m = Hyprland.focusedMonitor

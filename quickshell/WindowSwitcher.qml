@@ -87,7 +87,7 @@ PanelWindow {
     }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
     Timer { id: late; interval: 80; onTriggered: win.pick() }
-    onShownChanged: if (shown) { pendingPick = false; queued = 0; windows = []; refresh(); keys.forceActiveFocus() }
+    onShownChanged: if (shown) { pendingPick = false; queued = Popups.initSteps; windows = []; refresh(); keys.forceActiveFocus() }
 
     // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
     readonly property real areaW: width - 160
