@@ -107,10 +107,11 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")   -- Electron apps (VS Code, D
 -- Refer to https://wiki.hypr.land/configuring/core/config-options/
 hl.config({
     general = {
-        gaps_in  = 6,
-        gaps_out = 14,
+        -- Clean look (as in Serpantinum): tight gaps and no window borders.
+        gaps_in  = 4,
+        gaps_out = 6,
 
-        border_size = 2,
+        border_size = 0,
 
         col = {
             active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
@@ -118,7 +119,8 @@ hl.config({
         },
 
         -- Set to true to enable resizing windows by clicking and dragging on borders and gaps
-        resize_on_border = false,
+        resize_on_border = true,
+        extend_border_grab_area = 30,   -- grab the gap between windows to resize
 
         -- Please see https://wiki.hypr.land/configuring/extra/tearing/ before you turn this on
         allow_tearing = false,
@@ -127,15 +129,14 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 16,
+        rounding       = 12,
         rounding_power = 3, -- 2 = plain circle; higher = smoother "squircle" corners
 
-        -- Slight see-through on unfocused windows so blur is visible and focus is obvious.
         active_opacity   = 1.0,
-        inactive_opacity = 0.94,
+        inactive_opacity = 1.0,
 
         shadow = {
-            enabled      = true,
+            enabled      = false,
             range        = 24,
             render_power = 3,
             color        = 0x66000000,
@@ -146,7 +147,7 @@ hl.config({
         blur = {
             enabled           = true,
             size              = 8,
-            passes            = 3,
+            passes            = 2,
             noise             = 0.02,
             vibrancy          = 0.17,
             new_optimizations = true,
@@ -240,6 +241,8 @@ hl.config({
 
 hl.config({
     misc = {
+        focus_on_activate = false,       -- a window asking for attention does not steal focus
+        disable_splash_rendering = true,
         force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
         allow_session_lock_restore = true, -- a new lock client may take over if the lock screen ever crashes (no lock-out)
