@@ -2,16 +2,17 @@ import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
-// Wi-Fi networks. Known and open networks connect with one click;
+// Wi-Fi networks list. Known and open networks connect with one click;
 // a new secured network opens a password field under the list.
-Panel {
+ColumnLayout {
     id: root
-    name: "wifi"
-    panelWidth: 400
+    property bool active: false       // set by the owner while the list is on screen
+    Layout.fillWidth: true
+    spacing: 8
 
-    onShownChanged: {
-        if (Net.wifiDevice) Net.wifiDevice.scannerEnabled = shown
-        if (!shown) { pending = null; error = "" }
+    onActiveChanged: {
+        if (Net.wifiDevice) Net.wifiDevice.scannerEnabled = active
+        if (!active) { pending = null; error = "" }
     }
 
     property var pending: null      // secured network waiting for a password

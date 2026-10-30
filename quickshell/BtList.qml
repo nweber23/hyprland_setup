@@ -3,16 +3,17 @@ import QtQuick
 import QtQuick.Layouts
 
 // Bluetooth: paired devices on top, devices found nearby below. Click connects, pairs or disconnects.
-Panel {
+ColumnLayout {
     id: root
-    name: "bluetooth"
-    panelWidth: 400
+    property bool active: false       // set by the owner while the list is on screen
+    Layout.fillWidth: true
+    spacing: 8
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool on: adapter !== null && adapter.enabled
 
     // Scan while the panel is open.
-    onShownChanged: if (adapter && adapter.enabled) adapter.discovering = shown
+    onActiveChanged: if (adapter && adapter.enabled) adapter.discovering = active
 
     function deviceIcon(d) {
         const i = d.icon || ""

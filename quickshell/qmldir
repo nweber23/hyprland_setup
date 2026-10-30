@@ -11,8 +11,8 @@ MSlider 1.0 MSlider.qml
 singleton Events Events.qml
 Toggle 1.0 Toggle.qml
 CalendarPanel 1.0 CalendarPanel.qml
-WifiPanel 1.0 WifiPanel.qml
-BluetoothPanel 1.0 BluetoothPanel.qml
+WifiList 1.0 WifiList.qml
+BtList 1.0 BtList.qml
 PowerPanel 1.0 PowerPanel.qml
 singleton Eq Eq.qml
 EqBand 1.0 EqBand.qml
@@ -32,3 +32,8 @@ ActionTile 1.0 ActionTile.qml
 BarGroup 1.0 BarGroup.qml
 BarChip 1.0 BarChip.qml
 Reveal 1.0 Reveal.qml
+NetLink 1.0 NetLink.qml
+NetNode 1.0 NetNode.qml
+NetChip 1.0 NetChip.qml
+NetView 1.0 NetView.qml
+NetworkPanel 1.0 NetworkPanel.qml

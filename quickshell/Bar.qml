@@ -68,9 +68,9 @@ PanelWindow {
         return p > 90 ? "battery_full" : p > 70 ? "battery_5_bar" : p > 50 ? "battery_4_bar"
              : p > 35 ? "battery_3_bar" : p > 20 ? "battery_2_bar" : p > 8 ? "battery_1_bar" : "battery_alert"
     }
-    function openPanel(name, item) {
+    function openPanel(name, item, tab) {
         const p = item.mapToItem(null, item.width / 2, 0)
-        Popups.toggle(name, bar.screen.name, p.x + bar.margins.left)
+        Popups.toggle(name, bar.screen.name, p.x + bar.margins.left, tab)
     }
     function focusWorkspace(id) { Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + id + " })"]) }
 
@@ -203,7 +203,7 @@ PanelWindow {
             BarChip {
                 id: wifiChip
                 fillColor: Net.wifiNetwork ? Theme.accent : "transparent"
-                onClicked: bar.openPanel("wifi", wifiChip)
+                onClicked: bar.openPanel("network", wifiChip, "wifi")
                 Icon { name: Net.wifiNetwork ? "wifi" : "wifi_off"; size: 16; fill: 1; color: Net.wifiNetwork ? Theme.panelBg : Theme.outline }
                 Text { textFormat: Text.PlainText; visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""
                        color: Theme.panelBg; font: bar.textFont; Layout.maximumWidth: 110; elide: Text.ElideRight }
@@ -211,7 +211,7 @@ PanelWindow {
             BarChip {
                 id: btChip
                 fillColor: Net.btDevice ? Theme.accent : "transparent"
-                onClicked: bar.openPanel("bluetooth", btChip)
+                onClicked: bar.openPanel("network", btChip, "bluetooth")
                 Icon { name: Net.btDevice ? "bluetooth_connected" : "bluetooth"; size: 16; fill: 1; color: Net.btDevice ? Theme.panelBg : Theme.outline }
                 Text { textFormat: Text.PlainText; visible: Net.btDevice !== null; color: Theme.panelBg; font: bar.textFont; Layout.maximumWidth: 110; elide: Text.ElideRight
                        text: Net.btDevice ? Net.btDevice.name : "" }
