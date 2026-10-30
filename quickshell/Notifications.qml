@@ -17,7 +17,7 @@ Scope {
         imageSupported: true
         // Apps get plain text only; the cards render it with textFormat PlainText as well.
         bodyMarkupSupported: false
-        onNotification: n => { n.tracked = true }
+        onNotification: n => { n.tracked = true; NotifHistory.add(n) }
     }
 
     // Show on the monitor that has focus right now.

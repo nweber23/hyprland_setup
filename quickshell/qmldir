@@ -42,3 +42,5 @@ Arrow 1.0 Arrow.qml
 StatCard 1.0 StatCard.qml
 TrayMenuList 1.0 TrayMenuList.qml
 TrayMenu 1.0 TrayMenu.qml
+singleton NotifHistory NotifHistory.qml
+NotificationCenter 1.0 NotificationCenter.qml

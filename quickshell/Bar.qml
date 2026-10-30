@@ -92,9 +92,11 @@ PanelWindow {
         BarGroup {
             id: bellBtn
             implicitWidth: 34; padding: 0
-            BarChip { Layout.fillWidth: true; active: Popups.dnd
-                Icon { name: Popups.dnd ? "notifications_off" : "notifications"; size: 18; color: Popups.dnd ? Theme.accent : Theme.on_surface }
-                onClicked: Popups.dnd = !Popups.dnd }
+            BarChip { Layout.fillWidth: true; active: Popups.current === "notifications"
+                // left click: notification center, right click: do not disturb; a dot marks unread ones
+                Icon { name: Popups.dnd ? "notifications_off" : "notifications"; size: 18; color: Popups.dnd ? Theme.accent : Theme.on_surface
+                       Rectangle { visible: NotifHistory.unread > 0 && !Popups.dnd; x: parent.width - 7; y: 1; width: 8; height: 8; radius: 4; color: Theme.accent2 } }
+                onClicked: m => { if (m.button === Qt.RightButton) Popups.dnd = !Popups.dnd; else bar.openPanel("notifications", bellBtn) } }
         }
 
         BarGroup {
