@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
@@ -19,26 +20,38 @@ PanelWindow {
     readonly property bool manyScreens: Hyprland.monitors.values.length > 1
 
     // ---- window list ----
-    function refresh() { Hyprland.refreshToplevels(); collect.restart() }   // lastIpcObject arrives asynchronously
+    // Asked from Hyprland itself every time: the toplevel objects cache their data, and a stale focus order made a quick
+    // Alt+Tab pick the window that was already focused.
+    property bool loading: false
+    function refresh() { if (!listing.running) { loading = true; listing.running = true } }
     function monitorName(id) {
         const m = Hyprland.monitors.values.find(x => x.id === id)
         return m ? m.name : ""
     }
-    function collectNow() {
+    function noPrefix(a) { return String(a).replace(/^0x/, "") }
+    function build(json) {
+        let clients = []
+        try { clients = JSON.parse(json) } catch (e) {}
+        const tops = Hyprland.toplevels.values
         const out = []
-        for (const t of Hyprland.toplevels.values) {
-            const o = t.lastIpcObject
-            if (!o || !o.mapped || o.hidden || !o.address) continue
-            out.push({ top: t, address: o.address, cls: o.class || "", title: o.title || o.class || "Window",
+        for (const o of clients) {
+            if (!o.mapped || o.hidden || !o.address) continue
+            out.push({ top: tops.find(t => noPrefix(t.address) === noPrefix(o.address)) ?? null, address: o.address,
+                       cls: o.class || "", title: o.title || o.class || "Window",
                        ws: o.workspace ? o.workspace.name : "", mon: monitorName(o.monitor),
                        ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID })
         }
-        if (out.length === 0 && retries++ < 10) { collect.restart(); return }   // Hyprland has not filled the list yet
-        out.sort((a, b) => a.order - b.order)   // most recently used first
+        out.sort((a, b) => a.order - b.order)   // most recently used first: index 0 is the focused window
         const first = windows.length === 0
         windows = out
         grid.currentIndex = first ? (out.length > 1 ? 1 : 0) : Math.min(grid.currentIndex, out.length - 1)
+        loading = false
         if (pendingPick) { pendingPick = false; late.restart() }   // the grid takes its new index a moment after the model
+    }
+    Process {
+        id: listing
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector { onStreamFinished: win.build(text) }
     }
     function pick() {
         const w = windows[grid.currentIndex]
@@ -53,14 +66,12 @@ PanelWindow {
     }
     // Released before the list was ready (a quick tap): switch as soon as it is.
     property bool pendingPick: false
-    property int retries: 0
-    function confirm() { if (collect.running || count === 0) pendingPick = true; else pick() }
+    function confirm() { if (loading || count === 0) pendingPick = true; else pick() }
     Connections { target: Popups; function onSwitchConfirm() { if (win.shown) win.confirm() } }
     function step(d) { if (count > 0) grid.currentIndex = (grid.currentIndex + d + count) % count }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
     Timer { id: late; interval: 80; onTriggered: win.pick() }
-    Timer { id: collect; interval: 60; onTriggered: win.collectNow() }
-    onShownChanged: if (shown) { pendingPick = false; retries = 0; windows = []; refresh(); keys.forceActiveFocus() }
+    onShownChanged: if (shown) { pendingPick = false; windows = []; refresh(); keys.forceActiveFocus() }
 
     // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
     readonly property real areaW: width - 160
