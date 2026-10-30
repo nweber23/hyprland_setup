@@ -49,3 +49,9 @@ VolumePanel 1.0 VolumePanel.qml
 ToggleTile 1.0 ToggleTile.qml
 CaptureTile 1.0 CaptureTile.qml
 CapturePanel 1.0 CapturePanel.qml
+singleton Settings Settings.qml
+SettingChips 1.0 SettingChips.qml
+SettingRow 1.0 SettingRow.qml
+SettingButton 1.0 SettingButton.qml
+SettingPage 1.0 SettingPage.qml
+SettingsPanel 1.0 SettingsPanel.qml

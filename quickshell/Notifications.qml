@@ -67,7 +67,7 @@ Scope {
 
                 // Auto-dismiss: the app's timeout, else 6 s. Critical ones stay until closed. Hovering pauses.
                 Timer {
-                    interval: card.modelData.expireTimeout > 0 ? card.modelData.expireTimeout * 1000 : 6000
+                    interval: card.modelData.expireTimeout > 0 ? card.modelData.expireTimeout * 1000 : Settings.popupSeconds * 1000
                     running: !card.critical && !hover.containsMouse
                     onTriggered: card.modelData.expire()
                 }

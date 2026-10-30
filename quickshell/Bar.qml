@@ -184,6 +184,7 @@ PanelWindow {
                     }
                 }
             }
+            Icon { id: setIcon; name: "settings"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("settings", setIcon) } }
             Icon { id: capIcon; name: "photo_camera"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("capture", capIcon) } }
             Icon { id: dispIcon; name: "desktop_windows"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("display", dispIcon) } }
             Icon { id: timeIcon; name: "hourglass_top"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("screentime", timeIcon) } }

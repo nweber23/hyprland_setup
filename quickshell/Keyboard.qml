@@ -17,7 +17,9 @@ Singleton {
     }
     function cycle() { Quickshell.execDetached(["hyprctl", "switchxkblayout", "all", "next"]) }
 
+    function refresh() { q.running = true }
     Process {
+        id: q
         running: true
         command: ["hyprctl", "-j", "devices"]
         stdout: StdioCollector {
