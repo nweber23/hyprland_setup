@@ -180,13 +180,21 @@ PanelWindow {
             Repeater {
                 model: SystemTray.items
                 delegate: IconImage {
+                    id: trayIcon
                     required property var modelData
                     implicitSize: 16
                     source: modelData.icon
                     MouseArea {
                         anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onClicked: m => m.button === Qt.LeftButton ? modelData.activate() : modelData.secondaryActivate()
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        onClicked: m => {
+                            // right click (or left click on menu-only items) opens the menu; left click activates
+                            if (m.button === Qt.RightButton || (m.button === Qt.LeftButton && trayIcon.modelData.onlyMenu)) {
+                                if (trayIcon.modelData.hasMenu) { Popups.trayItem = trayIcon.modelData; bar.openPanel("traymenu", trayIcon) }
+                                else trayIcon.modelData.secondaryActivate()
+                            } else if (m.button === Qt.MiddleButton) trayIcon.modelData.secondaryActivate()
+                            else trayIcon.modelData.activate()
+                        }
                     }
                 }
             }

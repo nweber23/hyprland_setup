@@ -2,6 +2,7 @@
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Services.SystemTray
 import QtQuick
 
 ShellRoot {
@@ -13,6 +14,10 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
+        function tray(index: int): void {   // open the menu of tray item <index> (for testing without a mouse)
+            const it = SystemTray.items.values[index]; const m = Hyprland.focusedMonitor
+            if (it && m) { Popups.trayItem = it; Popups.toggle("traymenu", m.name, m.width / m.scale - 120) }
+        }
         function charge(plugged: bool): void { chargeOsd.play(plugged) }   // preview: quickshell ipc call shell charge true
     }
     Process { running: true; command: ["screentime-daemon"] }
@@ -42,6 +47,7 @@ ShellRoot {
             ScreenTimePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             DisplayPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             ClipboardPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             Launcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             PowerPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             MusicPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

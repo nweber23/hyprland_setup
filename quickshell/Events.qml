@@ -39,7 +39,7 @@ Singleton {
         }
         const now = Date.now() - 3600000, limit = Date.now() + 30 * 86400000
         return out.filter(e => e.start.getTime() >= now && e.start.getTime() <= limit)
-                  .sort((a, b) => a.start - b.start).slice(0, 5)
+                  .sort((a, b) => a.start - b.start).slice(0, 12)
     }
 
     Process {

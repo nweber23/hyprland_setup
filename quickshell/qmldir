@@ -40,3 +40,5 @@ NetworkPanel 1.0 NetworkPanel.qml
 ChargeOsd 1.0 ChargeOsd.qml
 Arrow 1.0 Arrow.qml
 StatCard 1.0 StatCard.qml
+TrayMenuList 1.0 TrayMenuList.qml
+TrayMenu 1.0 TrayMenu.qml

@@ -274,7 +274,8 @@ Panel {
             RowLayout {
                 anchors.fill: parent; spacing: 0
                 Repeater {
-                    model: Events.upcoming.slice(0, 3)
+                    // the events of the first upcoming day, as the heading says
+                    model: Events.upcoming.filter(e => e.start.toDateString() === Events.upcoming[0].start.toDateString()).slice(0, 3)
                     delegate: Rectangle {
                         id: ev
                         required property var modelData
