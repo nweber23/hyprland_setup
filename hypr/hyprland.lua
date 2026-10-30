@@ -352,16 +352,26 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind(mainMod .. " + CTRL + Tab",         hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + CTRL + SHIFT + Tab", hl.dsp.focus({ workspace = "e-1" }))
--- Window switcher (hold the modifier, Tab moves on, release picks)
-for _, mod in ipairs({ "ALT", mainMod }) do
-    hl.bind(mod .. " + Tab",         hl.dsp.exec_cmd("quickshell ipc call shell switcher 1"))
-    hl.bind(mod .. " + SHIFT + Tab", hl.dsp.exec_cmd("quickshell ipc call shell switcher -1"))
+-- Window overview: Alt+Tab / Super+Tab. Hold the modifier, Tab moves on, releasing it switches.
+-- Hyprland watches the modifier itself (the overview only gets keyboard focus after it is already down, so
+-- neither the overview nor a release bind sees the key coming up). A quick tap still switches.
+local overviewTimer = nil
+local function overview(dir, modKeys)
+    hl.exec_cmd("quickshell ipc call shell switcher " .. dir)
+    if overviewTimer then return end   -- already waiting for the modifier to come up: this was just another step
+    local ticks = 0
+    overviewTimer = hl.timer(function()
+        ticks = ticks + 1
+        if ticks < 2 then return end   -- one tick of grace; a release that overtakes the open is handled by the shell
+        for _, k in ipairs(modKeys) do if hl.is_key_down(k) then return end end
+        overviewTimer:set_enabled(false); overviewTimer = nil
+        hl.exec_cmd("quickshell ipc call shell switcherConfirm")
+    end, { timeout = 30, type = "repeat" })
 end
--- Letting go of the modifier confirms. Done here because the overview does not see the key release:
--- it only gets keyboard focus after Alt/Super is already down. Does nothing unless the overview is open.
-hl.bind("ALT + Alt_L",     hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
-hl.bind("ALT + Alt_R",     hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
-hl.bind(mainMod .. " + Super_L", hl.dsp.exec_cmd("quickshell ipc call shell switcherConfirm"), { release = true, non_consuming = true })
+hl.bind("ALT + Tab",         function() overview(1,  { "Alt_L", "Alt_R" }) end)
+hl.bind("ALT + SHIFT + Tab", function() overview(-1, { "Alt_L", "Alt_R" }) end)
+hl.bind(mainMod .. " + Tab",         function() overview(1,  { "Super_L", "Super_R" }) end)
+hl.bind(mainMod .. " + SHIFT + Tab", function() overview(-1, { "Super_L", "Super_R" }) end)
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 

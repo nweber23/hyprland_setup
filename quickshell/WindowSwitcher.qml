@@ -23,6 +23,8 @@ PanelWindow {
     // Asked from Hyprland itself every time: the toplevel objects cache their data, and a stale focus order made a quick
     // Alt+Tab pick the window that was already focused.
     property bool loading: false
+    property string recent: ""       // address of the window picked last
+    property real recentAt: 0
     function refresh() { if (!listing.running) { loading = true; listing.running = true } }
     function monitorName(id) {
         const m = Hyprland.monitors.values.find(x => x.id === id)
@@ -42,9 +44,16 @@ PanelWindow {
                        ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID })
         }
         out.sort((a, b) => a.order - b.order)   // most recently used first: index 0 is the focused window
+        // A second tap right after a switch: Hyprland may not have moved the focus yet, so trust our own last pick.
+        if (recent !== "" && Date.now() - recentAt < 700) {
+            const i = out.findIndex(w => w.address === recent)
+            if (i > 0) out.unshift(out.splice(i, 1)[0])
+        }
         const first = windows.length === 0
         windows = out
         grid.currentIndex = first ? (out.length > 1 ? 1 : 0) : Math.min(grid.currentIndex, out.length - 1)
+        if (queued !== 0 && out.length > 0) grid.currentIndex = (((grid.currentIndex + queued) % out.length) + out.length) % out.length
+        queued = 0
         loading = false
         if (pendingPick) { pendingPick = false; late.restart() }   // the grid takes its new index a moment after the model
     }
@@ -55,7 +64,7 @@ PanelWindow {
     }
     function pick() {
         const w = windows[grid.currentIndex]
-        if (w) Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + w.address + "\" })"])
+        if (w) { recent = w.address; recentAt = Date.now(); Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + w.address + "\" })"]) }
         Popups.close()
     }
     function closeWindow() {
@@ -66,12 +75,19 @@ PanelWindow {
     }
     // Released before the list was ready (a quick tap): switch as soon as it is.
     property bool pendingPick: false
-    function confirm() { if (loading || count === 0) pendingPick = true; else pick() }
+    function confirm() {
+        if (loading || count === 0) pendingPick = true; else pick()
+    }
     Connections { target: Popups; function onSwitchConfirm() { if (win.shown) win.confirm() } }
-    function step(d) { if (count > 0) grid.currentIndex = (grid.currentIndex + d + count) % count }
+    // Steps that arrive before the list is loaded (a fast double tap) are queued, not dropped.
+    property int queued: 0
+    function step(d) {
+        if (loading || count === 0) { queued += d; return }
+        grid.currentIndex = (grid.currentIndex + d + count) % count
+    }
     Connections { target: Popups; function onSwitchStep(d) { if (win.shown) win.step(d) } }
     Timer { id: late; interval: 80; onTriggered: win.pick() }
-    onShownChanged: if (shown) { pendingPick = false; windows = []; refresh(); keys.forceActiveFocus() }
+    onShownChanged: if (shown) { pendingPick = false; queued = 0; windows = []; refresh(); keys.forceActiveFocus() }
 
     // ---- layout: the biggest tiles that still fit; more windows than fit scroll ----
     readonly property real areaW: width - 160

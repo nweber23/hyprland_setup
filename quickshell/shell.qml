@@ -15,10 +15,16 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
-        function switcherConfirm(): void { if (Popups.current === "switcher") Popups.switchConfirm() }
-        function switcher(dir: int): void {   // Alt+Tab / Super+Tab: open the window switcher, or move on while it is open
-            if (Popups.current === "switcher") Popups.switchStep(dir)
-            else { const m = Hyprland.focusedMonitor; if (m) Popups.toggle("switcher", m.name, 0) }
+        function switcherConfirm(): void {
+            if (Popups.current === "switcher") Popups.switchConfirm(); else Popups.earlyConfirm = Date.now()
+        }
+        function switcher(dir: int): void {   // Alt+Tab / Super+Tab: open the window overview, or move on while it is open
+            if (Popups.current === "switcher") { Popups.switchStep(dir); return }
+            const m = Hyprland.focusedMonitor
+            if (!m) return
+            Popups.toggle("switcher", m.name, 0)
+            // the release can overtake the open (two separate processes): then it is applied right after opening
+            if (Date.now() - Popups.earlyConfirm < 300) { Popups.earlyConfirm = 0; Popups.switchConfirm() }
         }
         function tray(index: int): void {   // open the menu of tray item <index> (for testing without a mouse)
             const it = SystemTray.items.values[index]; const m = Hyprland.focusedMonitor
