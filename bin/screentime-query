@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Print screen-time stats as JSON for one day: screentime-query [YYYY-MM-DD].
-{date, total, hours[24], apps[{name, seconds}], week[{date, total}] (7 days ending that day), avg}
+{date, total, prev (the day before), hours[24], apps[{name, seconds}], week[{date, total}] (7 days ending that day),
+avg, grid[{date, hours[24]}] (Monday-Sunday of the week containing that day), peak (busiest hour of that week)}
 """
 import datetime, json, sqlite3, sys
 from pathlib import Path
@@ -31,6 +32,17 @@ def main():
         total = db.execute("SELECT COALESCE(SUM(seconds),0) FROM usage WHERE day=?", (d.isoformat(),)).fetchone()[0]
         week.append({"date": d.isoformat(), "total": total})
     active = [w["total"] for w in week if w["total"] > 0]
+
+    # the Monday-Sunday week that contains `day`, hour by hour (heat map)
+    monday = day - datetime.timedelta(days=day.weekday())
+    grid, sums = [], [0.0] * 24
+    for i in range(7):
+        d = monday + datetime.timedelta(days=i)
+        hrs = [0.0] * 24
+        for hour, secs in db.execute("SELECT hour, SUM(seconds) FROM usage WHERE day=? GROUP BY hour", (d.isoformat(),)):
+            hrs[hour] = secs; sums[hour] += secs
+        grid.append({"date": d.isoformat(), "hours": hrs})
+    prev = db.execute("SELECT COALESCE(SUM(seconds),0) FROM usage WHERE day=?", ((day - datetime.timedelta(days=1)).isoformat(),)).fetchone()[0]
     print(json.dumps({
         "date": day.isoformat(),
         "total": sum(hours),
@@ -38,6 +50,7 @@ def main():
         "apps": [{"name": n, "seconds": s} for n, s in sorted(apps.items(), key=lambda x: -x[1])],
         "week": week,
         "avg": sum(active) / len(active) if active else 0,
+        "prev": prev, "grid": grid, "peak": sums.index(max(sums)) if max(sums) > 0 else -1,
     }))
 
 

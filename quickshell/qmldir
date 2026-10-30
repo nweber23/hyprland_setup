@@ -39,3 +39,4 @@ NetView 1.0 NetView.qml
 NetworkPanel 1.0 NetworkPanel.qml
 ChargeOsd 1.0 ChargeOsd.qml
 Arrow 1.0 Arrow.qml
+StatCard 1.0 StatCard.qml

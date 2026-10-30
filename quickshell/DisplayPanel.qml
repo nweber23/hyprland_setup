@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 
 // Resolution, refresh rate and scale per monitor. Changes apply at once through `hyprctl eval` and are
@@ -151,7 +152,17 @@ Panel {
                     width: Math.min(220, 140 * aspect); height: width / aspect
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 30 + (140 - height) / 2
-                    radius: 10; color: Theme.card; border.width: 3; border.color: Theme.cardHigh
+                    radius: 10; color: Theme.card; border.width: 4; border.color: Theme.cardHigh
+                    // faint dot grid on the glass
+                    Canvas {
+                        anchors.fill: parent; anchors.margins: 6
+                        onWidthChanged: requestPaint(); onHeightChanged: requestPaint()
+                        onPaint: {
+                            const c = getContext("2d"); c.reset()
+                            c.fillStyle = Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.09)
+                            for (let x = 4; x < width; x += 14) for (let y = 4; y < height; y += 14) c.fillRect(x, y, 2, 2)
+                        }
+                    }
                     Behavior on width { NumberAnimation { duration: 450; easing.type: Easing.OutBack; easing.overshoot: 0.8 } }
                     Behavior on y { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
                     ColumnLayout {
@@ -167,7 +178,9 @@ Panel {
                                    NumberAnimation { to: 0.3; duration: 70 } NumberAnimation { to: 1; duration: 260; easing.type: Easing.OutCubic } } }
                     }
                 }
-                Rectangle { x: (parent.width - 26) / 2; y: 176; width: 26; height: 34; color: Theme.cardHigh }            // neck
+                Rectangle { x: -24; y: 216; width: parent.width + 120; height: 8; radius: 4; color: Theme.card }          // desk
+                Rectangle { x: (parent.width - 26) / 2; y: 176; width: 26; height: 34; color: Theme.cardHigh
+                            Rectangle { x: 9; y: 8; width: 8; height: 18; radius: 4; color: Theme.card } }                   // neck with cable slot
                 Rectangle { x: (parent.width - 110) / 2; y: 208; width: 110; height: 10; radius: 5; color: Theme.cardHigh } // foot
             }
         }
@@ -299,6 +312,10 @@ Panel {
                         implicitWidth: 120; implicitHeight: 40; radius: 20
                         color: root.applied ? Theme.accent2 : Theme.accent
                         scale: aArea.pressed ? 0.94 : (aArea.containsMouse ? 1.04 : 1)
+                        layer.enabled: true
+                        layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Theme.accent; shadowOpacity: aArea.containsMouse ? 0.7 : 0.4
+                                                    shadowBlur: 1.0; shadowVerticalOffset: 4
+                                                    Behavior on shadowOpacity { NumberAnimation { duration: 200 } } }
                         Behavior on color { ColorAnimation { duration: 250 } }
                         Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
                         RowLayout {
