@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
-# Toggle the night light (warm screen colour). Needs the package wlsunset.
-if pgrep -x wlsunset >/dev/null; then
-    pkill -x wlsunset
-    notify-send -a "Night light" "Night light off"
-else
+# Night light (warm screen colour) with wlsunset.
+#   nightlight            toggle
+#   nightlight on|off     switch explicitly
+#   nightlight set <K>    choose the colour temperature (2000-6000, default 3800); restarts it if it is running
+#   nightlight status     prints "on <K>" or "off <K>"
+conf="$HOME/.config/quickshell-local/nightlight-temp"; mkdir -p "$(dirname "$conf")"
+temp=$(cat "$conf" 2>/dev/null); [[ "$temp" =~ ^[0-9]+$ ]] || temp=3800
+running() { pgrep -x wlsunset >/dev/null; }
+start() {
     command -v wlsunset >/dev/null || { notify-send -a "Night light" "wlsunset is not installed"; exit 1; }
-    # equal day and night temperature = a fixed warm colour until it is switched off
-    setsid wlsunset -S 06:00 -s 18:00 -t 3800 -T 3800 >/dev/null 2>&1 &
-    notify-send -a "Night light" "Night light on"
-fi
+    pkill -x wlsunset 2>/dev/null
+    # wlsunset wants high > low: day is one kelvin above night, so the colour stays constant until switched off
+    setsid wlsunset -S 06:00 -s 18:00 -t "$temp" -T "$((temp + 1))" >/dev/null 2>&1 &
+}
+case "${1:-toggle}" in
+    toggle) if running; then pkill -x wlsunset; else start; fi ;;
+    on)     start ;;
+    off)    pkill -x wlsunset ;;
+    set)    t="${2:-}"; [[ "$t" =~ ^[0-9]+$ ]] && [ "$t" -ge 2000 ] && [ "$t" -le 6000 ] || { echo "temperature must be 2000-6000" >&2; exit 2; }
+            echo "$t" > "$conf"; temp=$t; if running; then start; fi ;;
+    status) if running; then echo "on $temp"; else echo "off $temp"; fi ;;
+    *) echo "usage: nightlight [toggle|on|off|set <K>|status]" >&2; exit 2 ;;
+esac
