@@ -103,8 +103,8 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -- Refer to https://wiki.hypr.land/configuring/core/config-options/
 hl.config({
     general = {
-        gaps_in  = 5,
-        gaps_out = 20,
+        gaps_in  = 6,
+        gaps_out = 14,
 
         border_size = 2,
 
@@ -123,25 +123,30 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 10,
-        rounding_power = 2,
+        rounding       = 16,
+        rounding_power = 3, -- 2 = plain circle; higher = smoother "squircle" corners
 
-        -- Change transparency of focused and unfocused windows
+        -- Slight see-through on unfocused windows so blur is visible and focus is obvious.
         active_opacity   = 1.0,
-        inactive_opacity = 1.0,
+        inactive_opacity = 0.94,
 
         shadow = {
             enabled      = true,
-            range        = 4,
+            range        = 24,
             render_power = 3,
-            color        = 0xee1a1a1a,
+            color        = 0x66000000,
         },
 
+        -- Blur is the main GPU cost on the Vega 6 iGPU: size 8 / 3 passes is the
+        -- quality-per-cost sweet spot; lower passes first if frames drop.
         blur = {
-            enabled   = true,
-            size      = 3,
-            passes    = 1,
-            vibrancy  = 0.1696,
+            enabled           = true,
+            size              = 8,
+            passes            = 3,
+            noise             = 0.02,
+            vibrancy          = 0.17,
+            new_optimizations = true,
+            popups            = true,
         },
     },
 
@@ -150,33 +155,33 @@ hl.config({
     },
 })
 
--- Default curves and animations, see https://wiki.hypr.land/configuring/core/animations/
-hl.curve("easeOutQuint",   { type = "bezier", points = { {0.23, 1},    {0.32, 1}    } })
-hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1}    } })
-hl.curve("linear",         { type = "bezier", points = { {0, 0},       {1, 1}       } })
-hl.curve("almostLinear",   { type = "bezier", points = { {0.5, 0.5},   {0.75, 1}    } })
-hl.curve("quick",          { type = "bezier", points = { {0.15, 0},    {0.1, 1}     } })
+-- Curves: Material-style "expressive" easing. The spatial ones overshoot slightly,
+-- which is what makes windows feel springy; decel/accel pairs handle enter/exit.
+hl.curve("expressiveFastSpatial",    { type = "bezier", points = { {0.42, 1.67}, {0.21, 0.90} } })
+hl.curve("expressiveDefaultSpatial", { type = "bezier", points = { {0.38, 1.21}, {0.22, 1.00} } })
+hl.curve("emphasizedDecel",          { type = "bezier", points = { {0.05, 0.70}, {0.10, 1.00} } })
+hl.curve("emphasizedAccel",          { type = "bezier", points = { {0.30, 0.00}, {0.80, 0.15} } })
+hl.curve("standardDecel",            { type = "bezier", points = { {0.00, 0.00}, {0.00, 1.00} } })
+hl.curve("menuDecel",                { type = "bezier", points = { {0.10, 1.00}, {0.00, 1.00} } })
+hl.curve("menuAccel",                { type = "bezier", points = { {0.52, 0.03}, {0.72, 0.08} } })
+hl.curve("linear",                   { type = "bezier", points = { {0, 0}, {1, 1} } })
 
--- Default springs
-hl.curve("easy",           { type = "spring", mass = 1, stiffness = 238.1191, damping = 24.21279333 })
-
-hl.animation({ leaf = "global",        enabled = true,  speed = 10,   bezier = "default" })
-hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "easeOutQuint" })
-hl.animation({ leaf = "windows",       enabled = true,  speed = 4.79, spring = "easy" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.1,  spring = "easy",         style = "popin 87%" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 1.49, bezier = "linear",       style = "popin 87%" })
-hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 1.73, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 1.46, bezier = "almostLinear" })
-hl.animation({ leaf = "fade",          enabled = true,  speed = 3.03, bezier = "quick" })
-hl.animation({ leaf = "layers",        enabled = true,  speed = 3.81, bezier = "easeOutQuint" })
-hl.animation({ leaf = "layersIn",      enabled = true,  speed = 4,    bezier = "easeOutQuint", style = "fade" })
-hl.animation({ leaf = "layersOut",     enabled = true,  speed = 1.5,  bezier = "linear",       style = "fade" })
-hl.animation({ leaf = "fadeLayersIn",  enabled = true,  speed = 1.79, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeLayersOut", enabled = true,  speed = 1.39, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces",    enabled = true,  speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 1.21, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "quick" })
+hl.animation({ leaf = "global",        enabled = true, speed = 10,  bezier = "default" })
+hl.animation({ leaf = "border",        enabled = true, speed = 6,   bezier = "standardDecel" })
+hl.animation({ leaf = "windows",       enabled = true, speed = 3.5, bezier = "expressiveDefaultSpatial" })
+hl.animation({ leaf = "windowsIn",     enabled = true, speed = 3.2, bezier = "expressiveFastSpatial", style = "popin 80%" })
+hl.animation({ leaf = "windowsOut",    enabled = true, speed = 2.2, bezier = "emphasizedAccel",       style = "popin 88%" })
+hl.animation({ leaf = "windowsMove",   enabled = true, speed = 3.5, bezier = "expressiveDefaultSpatial" })
+hl.animation({ leaf = "fade",          enabled = true, speed = 3,   bezier = "standardDecel" })
+hl.animation({ leaf = "fadeIn",        enabled = true, speed = 2.5, bezier = "standardDecel" })
+hl.animation({ leaf = "fadeOut",       enabled = true, speed = 2,   bezier = "menuAccel" })
+hl.animation({ leaf = "layers",        enabled = true, speed = 3.5, bezier = "menuDecel" })
+hl.animation({ leaf = "layersIn",      enabled = true, speed = 3.5, bezier = "menuDecel",  style = "slide" })
+hl.animation({ leaf = "layersOut",     enabled = true, speed = 2,   bezier = "menuAccel",  style = "slide" })
+hl.animation({ leaf = "fadeLayersIn",  enabled = true, speed = 2.5, bezier = "standardDecel" })
+hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2,   bezier = "menuAccel" })
+hl.animation({ leaf = "workspaces",    enabled = true, speed = 4,   bezier = "emphasizedDecel", style = "slidefade 20%" })
+hl.animation({ leaf = "zoomFactor",    enabled = true, speed = 7,   bezier = "standardDecel" })
 
 -- Ref https://wiki.hypr.land/configuring/core/rules/workspace-rules/
 -- "Smart gaps" / "No gaps when only"
