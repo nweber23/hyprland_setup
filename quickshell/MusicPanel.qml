@@ -1,7 +1,7 @@
 import Quickshell
 import Quickshell.Services.Mpris
+import Quickshell.Widgets
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 
 // Now playing: round cover, seek bar, transport controls and the 10-band equalizer.
@@ -29,25 +29,24 @@ Panel {
     RowLayout {
         Layout.fillWidth: true
         spacing: 14
-        Item {
+        ClippingRectangle {
+            id: cover
             Layout.preferredWidth: 96; Layout.preferredHeight: 96
-            Rectangle { id: mask; anchors.fill: parent; radius: width / 2; visible: false; layer.enabled: true }
-            Rectangle { anchors.fill: parent; radius: width / 2; color: Theme.surface_container_high
-                Icon { anchors.centerIn: parent; name: "music_note"; size: 40; color: Theme.on_surface_variant } }
+            radius: width / 2
+            color: Theme.surface_container_high
+            Icon { anchors.centerIn: parent; name: "music_note"; size: 40; color: Theme.on_surface_variant }
             Image {
-                id: art
                 anchors.fill: parent
                 source: root.player ? root.player.trackArtUrl : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                layer.enabled: true
-                layer.effect: MultiEffect { maskEnabled: true; maskSource: mask }
                 opacity: status === Image.Ready ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 300 } }
-                RotationAnimator on rotation {
-                    from: 0; to: 360; duration: 14000; loops: Animation.Infinite
-                    running: root.shown && root.player !== null && root.player.isPlaying
-                }
+            }
+            // Spins while playing; stopping keeps the current angle.
+            RotationAnimator on rotation {
+                from: 0; to: 360; duration: 14000; loops: Animation.Infinite
+                running: root.shown && root.player !== null && root.player.isPlaying
             }
         }
         ColumnLayout {
@@ -87,8 +86,14 @@ Panel {
         spacing: 22
         visible: root.player !== null
         Icon { name: "skip_previous"; size: 30; MouseArea { anchors.fill: parent; onClicked: root.player.previous() } }
-        Icon { name: root.player && root.player.isPlaying ? "pause_circle" : "play_circle"; size: 44; fill: 1; color: Theme.primary
-               MouseArea { anchors.fill: parent; onClicked: root.player.togglePlaying() } }
+        Rectangle {   // the filled *_circle glyphs render with artifacts, so draw the disc ourselves
+            Layout.preferredWidth: 46; Layout.preferredHeight: 46; radius: 23
+            color: Theme.primary
+            scale: playArea.pressed ? 0.92 : 1
+            Behavior on scale { NumberAnimation { duration: 100 } }
+            Icon { anchors.centerIn: parent; name: root.player && root.player.isPlaying ? "pause" : "play_arrow"; size: 28; fill: 1; color: Theme.on_primary }
+            MouseArea { id: playArea; anchors.fill: parent; onClicked: root.player.togglePlaying() }
+        }
         Icon { name: "skip_next"; size: 30; MouseArea { anchors.fill: parent; onClicked: root.player.next() } }
     }
 
