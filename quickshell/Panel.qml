@@ -25,6 +25,11 @@ PanelWindow {
     property bool centered: false           // true: centre on the screen instead of hanging under the chip
     property real pad: 20
     property bool animateHeight: true       // false when the content animates its own height
+    // Resizing the window costs a compositor round trip per frame (measured: 30 fps while it animated).
+    // A panel whose content height animates reserves its largest height here so the window size stays constant;
+    // the card inside grows and shrinks, the empty rest of the window lets clicks through.
+    property real extraH: 0
+    property real fixedH: 0                 // > 0: the window never changes size at all (the card still follows the content)
     default property alias content: body.data
     readonly property bool shown: Popups.current === name && Popups.screenName === screenName
 
@@ -66,7 +71,8 @@ PanelWindow {
                        : Math.max(12, Math.min(screenWidth - panelWidth - 12, Popups.anchorX - panelWidth / 2))
     }
     implicitWidth: panelWidth
-    implicitHeight: smoothH
+    implicitHeight: fixedH > 0 ? fixedH : smoothH + extraH
+    mask: Region { item: card }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-panel"

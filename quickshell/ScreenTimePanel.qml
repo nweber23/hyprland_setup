@@ -12,6 +12,9 @@ Panel {
     centered: true
     pad: 22
     animateHeight: false
+    // The content height changes every frame while switching (and when the data arrives), so the window gets one
+    // fixed height that fits the tallest case (day view with five apps).
+    fixedH: 640
 
     property string mode: "day"          // "day" | "week"
     property int offset: 0               // days back (day view) or weeks back (week view)
@@ -43,6 +46,7 @@ Panel {
         return Qt.formatDate(new Date(g[0].date + "T12:00:00"), "MMM d") + " - " + Qt.formatDate(new Date(g[6].date + "T12:00:00"), "MMM d")
     }
     function load() { if (!query.running) query.running = true }
+    Component.onCompleted: load()   // build the bars and cells at startup, not in the middle of the opening animation
     onOffsetChanged: { dipAnim.restart(); load() }
     onShownChanged: if (shown) { mode = "day"; offset = 0; grow = 0; growAnim.restart(); load() }
     SequentialAnimation { id: growAnim; PauseAnimation { duration: 450 }
@@ -54,7 +58,13 @@ Panel {
     Process {
         id: query
         command: ["screentime-query", root.dateFor(root.offset)]
-        stdout: StdioCollector { onStreamFinished: { try { root.stats = JSON.parse(text); root.totalShown = root.stats.total } catch (e) {} } }
+        // Only replace `stats` when something changed: a new value rebuilds every bar and heat cell (168 items).
+        property string last: ""
+        stdout: StdioCollector { onStreamFinished: {
+            if (text === query.last) return
+            query.last = text
+            try { root.stats = JSON.parse(text); root.totalShown = root.stats.total } catch (e) {}
+        } }
     }
 
     // ================= header =================
@@ -79,6 +89,7 @@ Panel {
 
     // ================= views (they slide past each other) =================
     Item {
+        id: stage
         Layout.fillWidth: true
         implicitHeight: dayView.implicitHeight * (1 - root.blend) + weekView.implicitHeight * root.blend
 
