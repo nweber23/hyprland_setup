@@ -8,7 +8,8 @@ ColumnLayout {
     id: r
     property var p                  // the Panel this section belongs to
     property int index: 0
-    property real step: 65          // delay between sections in ms
+    property real step: 70          // delay between sections in ms
+    property real base: 300         // first section starts while the card is still growing
     property real dx: 0             // slide-in offset in px
     property real dy: 10
     property bool back: false       // slight overshoot (OutBack), used for covers, controls and preset buttons
@@ -25,7 +26,7 @@ ColumnLayout {
 
     SequentialAnimation {
         id: inAnim
-        PauseAnimation { duration: 70 + r.index * r.step }
+        PauseAnimation { duration: r.base + r.index * r.step }
         NumberAnimation { target: r; property: "progress"; to: 1; duration: r.duration_
                           easing.type: r.back ? Easing.OutBack : r.easing_; easing.overshoot: 0.9 }
     }
