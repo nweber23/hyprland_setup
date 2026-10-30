@@ -185,8 +185,8 @@ PanelWindow {
         Chip {
             id: wifiChip
             Layout.fillHeight: true
-            highlighted: Popups.current === "network" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("network", wifiChip)
+            highlighted: Popups.current === "wifi" && Popups.screenName === bar.screen.name
+            onClicked: bar.openPanel("wifi", wifiChip)
             Icon { name: Net.wifiNetwork ? "wifi" : "wifi_off"; size: 18; fill: 1; color: Net.wifiNetwork ? Theme.primary : Theme.outline }
             Text { textFormat: Text.PlainText; visible: Net.wifiNetwork !== null; text: Net.wifiNetwork ? Net.wifiNetwork.name : ""; color: Theme.on_surface; font: bar.textFont
                    Layout.maximumWidth: 120; elide: Text.ElideRight }
@@ -195,8 +195,8 @@ PanelWindow {
         Chip {
             id: btChip
             Layout.fillHeight: true
-            highlighted: Popups.current === "network" && Popups.screenName === bar.screen.name
-            onClicked: bar.openPanel("network", btChip)
+            highlighted: Popups.current === "bluetooth" && Popups.screenName === bar.screen.name
+            onClicked: bar.openPanel("bluetooth", btChip)
             Icon { name: Net.btDevice ? "bluetooth_connected" : "bluetooth"; size: 18; fill: 1; color: Net.btDevice ? Theme.primary : Theme.outline }
             Text { textFormat: Text.PlainText; visible: Net.btDevice !== null; color: Theme.on_surface; font: bar.textFont; Layout.maximumWidth: 120; elide: Text.ElideRight
                    text: Net.btDevice ? Net.btDevice.name + (Net.btDevice.batteryAvailable ? " " + Math.round(Net.btDevice.battery * (Net.btDevice.battery > 1 ? 1 : 100)) + "%" : "") : "" }

@@ -1,13 +1,12 @@
-import Quickshell.Bluetooth
 import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
-// Wi-Fi networks and Bluetooth devices. Known and open networks connect with one click;
+// Wi-Fi networks. Known and open networks connect with one click;
 // a new secured network opens a password field under the list.
 Panel {
     id: root
-    name: "network"
+    name: "wifi"
     panelWidth: 400
 
     onShownChanged: {
@@ -46,7 +45,7 @@ Panel {
         Toggle { checked: Networking.wifiEnabled; onToggled: Networking.wifiEnabled = !Networking.wifiEnabled }
     }
     Repeater {
-        model: Networking.wifiEnabled ? Net.wifiList.slice(0, 6) : []
+        model: Networking.wifiEnabled ? Net.wifiList.slice(0, 8) : []
         delegate: Rectangle {
             required property var modelData
             Layout.fillWidth: true
@@ -106,49 +105,5 @@ Panel {
     Text { textFormat: Text.PlainText;
         visible: Networking.wifiEnabled && Net.wifiList.length === 0
         text: "Scanning…"; color: Theme.outline; font.family: "JetBrains Mono"; font.pixelSize: 11
-    }
-
-    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.outline_variant; opacity: 0.6 }
-
-    // ---- Bluetooth ----
-    RowLayout {
-        Layout.fillWidth: true
-        Icon { name: "bluetooth"; fill: 1; color: Theme.primary }
-        Text { textFormat: Text.PlainText; Layout.fillWidth: true; text: "Bluetooth"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 15; font.bold: true }
-        Icon { visible: Bluetooth.defaultAdapter !== null && Bluetooth.defaultAdapter.enabled
-               name: Bluetooth.defaultAdapter && Bluetooth.defaultAdapter.discovering ? "bluetooth_searching" : "search"; size: 20
-               color: Theme.on_surface_variant
-               MouseArea { anchors.fill: parent; onClicked: Bluetooth.defaultAdapter.discovering = !Bluetooth.defaultAdapter.discovering } }
-        Toggle {
-            visible: Bluetooth.defaultAdapter !== null
-            checked: Bluetooth.defaultAdapter !== null && Bluetooth.defaultAdapter.enabled
-            onToggled: Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled
-        }
-    }
-    Text { textFormat: Text.PlainText; visible: Bluetooth.defaultAdapter === null; text: "No Bluetooth adapter"; color: Theme.outline; font.family: "JetBrains Mono"; font.pixelSize: 11 }
-    Repeater {
-        model: Bluetooth.defaultAdapter && Bluetooth.defaultAdapter.enabled ? Net.btList.slice(0, 6) : []
-        delegate: Rectangle {
-            required property var modelData
-            Layout.fillWidth: true
-            implicitHeight: 40; radius: 14
-            color: modelData.connected ? Theme.primary_container : barea.containsMouse ? Theme.surface_container_high : "transparent"
-            Behavior on color { ColorAnimation { duration: 150 } }
-            RowLayout {
-                anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 10
-                Icon { name: modelData.connected ? "bluetooth_connected" : "bluetooth"; size: 20
-                       color: modelData.connected ? Theme.on_primary_container : Theme.on_surface_variant }
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; text: modelData.name; elide: Text.ElideRight
-                       color: modelData.connected ? Theme.on_primary_container : Theme.on_surface
-                       font.family: "JetBrains Mono"; font.pixelSize: 12 }
-                Text { textFormat: Text.PlainText; visible: modelData.batteryAvailable
-                       text: Math.round(modelData.battery * (modelData.battery > 1 ? 1 : 100)) + "%"
-                       color: modelData.connected ? Theme.on_primary_container : Theme.outline; font.family: "JetBrains Mono"; font.pixelSize: 11 }
-            }
-            MouseArea {
-                id: barea; anchors.fill: parent; hoverEnabled: true
-                onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
-            }
-        }
     }
 }
