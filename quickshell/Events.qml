@@ -10,7 +10,7 @@ import QtQuick
 // Limitation: recurring events (RRULE) are not expanded.
 Singleton {
     id: root
-    property var upcoming: []        // [{ title, start (Date), allDay }]
+    property var upcoming: []        // [{ title, start (Date), end (Date|null), allDay, location }]
     property bool configured: true
 
     function parseDate(v) {
@@ -33,6 +33,8 @@ Singleton {
                 const key = l.slice(0, i).split(";")[0], val = l.slice(i + 1)
                 if (key === "SUMMARY") ev.title = val.replace(/\\,/g, ",").replace(/\\n/g, " ")
                 else if (key === "DTSTART") { const p = parseDate(val); if (p) { ev.start = p.d; ev.allDay = p.allDay } }
+                else if (key === "DTEND") { const p = parseDate(val); if (p) ev.end = p.d }
+                else if (key === "LOCATION") ev.location = val.replace(/\\,/g, ",").replace(/\\n/g, " ")
             }
         }
         const now = Date.now() - 3600000, limit = Date.now() + 30 * 86400000

@@ -7,6 +7,7 @@ Item {
     property var leftNode: ({})
     property var rightNode: ({})
     property bool shown: false
+    signal disconnectRight()
     readonly property real lx: width * 0.29
     readonly property real ly: height * 0.46
     readonly property real rx: width * 0.71
@@ -29,7 +30,8 @@ Item {
     NetNode { x: v.lx - width / 2; y: v.ly - height / 2; shown: v.shown
               tone: v.leftNode.tone ?? Theme.accent; icon: v.leftNode.icon ?? "devices"; title: v.leftNode.title ?? ""; status: v.leftNode.status ?? ""; online: v.leftNode.online ?? true }
     NetNode { x: v.rx - width / 2; y: v.ry - height / 2; shown: v.shown
-              tone: v.rightNode.tone ?? Theme.accent2; icon: v.rightNode.icon ?? "devices"; title: v.rightNode.title ?? ""; status: v.rightNode.status ?? ""; online: v.rightNode.online ?? false }
+              tone: v.rightNode.tone ?? Theme.accent2; icon: v.rightNode.icon ?? "devices"; title: v.rightNode.title ?? ""; status: v.rightNode.status ?? ""; online: v.rightNode.online ?? false
+              canDisconnect: true; onDisconnectRequested: v.disconnectRight() }
 
     Repeater {
         model: v.leftNode.chips ?? []

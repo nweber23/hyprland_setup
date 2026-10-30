@@ -80,6 +80,7 @@ Panel {
                     anchors.fill: parent
                     leftNode: root.wifiLeft; rightNode: root.wifiRight
                     shown: root.shown && !root.listMode && !root.isBt
+                    onDisconnectRight: { if (root.wnet) root.wnet.disconnect() }
                     opacity: root.isBt ? 0 : 1
                     x: root.isBt ? -60 : 0
                     Behavior on opacity { NumberAnimation { duration: 340; easing.type: Easing.OutCubic } }
@@ -89,6 +90,7 @@ Panel {
                     anchors.fill: parent
                     leftNode: root.btLeft; rightNode: root.btRight
                     shown: root.shown && !root.listMode && root.isBt
+                    onDisconnectRight: { if (root.bdev) root.bdev.disconnect() }
                     opacity: root.isBt ? 1 : 0
                     x: root.isBt ? 0 : 60
                     Behavior on opacity { NumberAnimation { duration: 340; easing.type: Easing.OutCubic } }
