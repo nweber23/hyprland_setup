@@ -27,6 +27,7 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-panel"
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand   // panels with text fields get keys after a click
 
     HyprlandFocusGrab {
         windows: [win]

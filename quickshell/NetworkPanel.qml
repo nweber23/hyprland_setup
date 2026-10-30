@@ -3,14 +3,38 @@ import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
-// Wi-Fi networks and Bluetooth devices. Joining a NEW secured network needs a password dialog,
-// which is not built yet: known networks connect with one click.
+// Wi-Fi networks and Bluetooth devices. Known and open networks connect with one click;
+// a new secured network opens a password field under the list.
 Panel {
     id: root
     name: "network"
     panelWidth: 400
 
-    onShownChanged: if (Net.wifiDevice) Net.wifiDevice.scannerEnabled = shown
+    onShownChanged: {
+        if (Net.wifiDevice) Net.wifiDevice.scannerEnabled = shown
+        if (!shown) { pending = null; error = "" }
+    }
+
+    property var pending: null      // secured network waiting for a password
+    property string error: ""
+    function join(net) {
+        if (net.connected) { net.disconnect(); return }
+        if (net.known || net.security === WifiSecurityType.Open) { net.connect(); return }
+        error = ""; pending = net; pwd.text = ""; pwd.forceActiveFocus()
+    }
+    function submit() {
+        if (!pending || pwd.text === "") return
+        error = ""
+        pending.connectWithPsk(pwd.text)
+        pwd.text = ""   // do not keep the secret around
+    }
+    // Success closes the form, a failure is shown under it.
+    Connections {
+        target: root.pending
+        ignoreUnknownSignals: true
+        function onConnectedChanged() { if (root.pending && root.pending.connected) root.pending = null }
+        function onConnectionFailed(reason) { root.error = "Could not connect (wrong password?)" }
+    }
 
     function bars(s) { s = s > 1 ? s / 100 : s; return s > 0.66 ? "wifi" : s > 0.33 ? "wifi_2_bar" : "wifi_1_bar" }
 
@@ -41,8 +65,42 @@ Panel {
             }
             MouseArea {
                 id: area; anchors.fill: parent; hoverEnabled: true
-                onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
+                onClicked: root.join(modelData)
             }
+        }
+    }
+    // ---- password form for a new secured network ----
+    Rectangle {
+        Layout.fillWidth: true
+        visible: root.pending !== null
+        implicitHeight: form.implicitHeight + 20; radius: 16
+        color: Theme.surface_container_high
+        ColumnLayout {
+            id: form
+            x: 12; y: 10; width: parent.width - 24; spacing: 6
+            Text { textFormat: Text.PlainText; Layout.fillWidth: true; elide: Text.ElideRight
+                   text: root.pending ? "Password for " + root.pending.name : ""
+                   color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 11 }
+            RowLayout {
+                spacing: 8
+                TextInput {
+                    id: pwd
+                    Layout.fillWidth: true
+                    echoMode: TextInput.Password
+                    color: Theme.on_surface; selectionColor: Theme.primary
+                    font.family: "JetBrains Mono"; font.pixelSize: 13
+                    clip: true
+                    onAccepted: root.submit()
+                    Keys.onEscapePressed: { root.pending = null; root.error = "" }
+                }
+                Rectangle {
+                    implicitWidth: 78; implicitHeight: 28; radius: 14; color: Theme.primary
+                    Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: "Connect"; color: Theme.on_primary; font.family: "JetBrains Mono"; font.pixelSize: 11 }
+                    MouseArea { anchors.fill: parent; onClicked: root.submit() }
+                }
+            }
+            Text { textFormat: Text.PlainText; visible: root.error !== ""; text: root.error
+                   color: Theme.error; font.family: "JetBrains Mono"; font.pixelSize: 10 }
         }
     }
     Text { textFormat: Text.PlainText;
