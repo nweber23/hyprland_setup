@@ -2,10 +2,14 @@
 # Pick a region of the screen, read the text in it (tesseract) and copy it to the clipboard.
 # Needs: grim slurp tesseract-ocr (+ tesseract-ocr-deu for German), wl-clipboard, notify-send.
 set -u
-region=$(slurp) || exit 0   # Esc cancels
-img=$(mktemp --suffix=.png)
-trap 'rm -f "$img"' EXIT
-grim -g "$region" "$img" || exit 1
+if [ -n "${SCREEN_IMAGE:-}" ]; then   # testing: read this image instead of picking a region
+    img=$SCREEN_IMAGE
+else
+    region=$(slurp) || exit 0   # Esc cancels
+    img=$(mktemp --suffix=.png)
+    trap 'rm -f "$img"' EXIT
+    grim -g "$region" "$img" || exit 1
+fi
 langs=eng
 tesseract --list-langs 2>/dev/null | grep -qx deu && langs=deu+eng
 text=$(tesseract "$img" - -l "$langs" --psm 6 2>/dev/null | sed 's/[[:space:]]*$//' | cat -s)
