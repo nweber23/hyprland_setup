@@ -370,6 +370,13 @@ local function wsOffset(name)
     return 0
 end
 
+-- Monitors are addressed by description: a disabled monitor can no longer be found by its name, and a rule by name
+-- does not override a saved one by description.
+local function monitorRef(m)
+    if m.description and m.description ~= "" then return "desc:" .. m.description end
+    return m.name
+end
+
 -- Show workspace `id` on a monitor. One that still lives on another monitor (e.g. from before this scheme) is moved over first;
 -- plain focusing would just jump to that other monitor instead.
 local function showOn(monitorName, id)
@@ -445,15 +452,15 @@ function qsProjector(mode)
     if not main or #others == 0 then return end
     -- start from a clean slate: every monitor on, side by side, then the saved arrangement on top
     for _, m in ipairs(hl.get_monitors({ all = true })) do
-        hl.monitor({ output = m.name, mode = "preferred", position = "auto", scale = 1 })
+        hl.monitor({ output = monitorRef(m), mode = "preferred", position = "auto", scale = 1, disabled = false })
     end
     pcall(dofile, os.getenv("HOME") .. "/.config/hypr/monitors-local.lua")
     if mode == "mirror" then
-        for _, o in ipairs(others) do hl.monitor({ output = o.name, mode = "preferred", position = "auto", scale = 1, mirror = main.name }) end
+        for _, o in ipairs(others) do hl.monitor({ output = monitorRef(o), mode = "preferred", position = "auto", scale = 1, mirror = main.name }) end
     elseif mode == "first" then
-        for _, o in ipairs(others) do hl.monitor({ output = o.name, disabled = true }) end
+        for _, o in ipairs(others) do hl.monitor({ output = monitorRef(o), disabled = true }) end
     elseif mode == "second" then
-        hl.monitor({ output = main.name, disabled = true })
+        hl.monitor({ output = monitorRef(main), disabled = true })
     else
         -- back to extended: every workspace returns to its own monitor (mirroring pulls them all onto the laptop panel)
         local names = {}
@@ -470,6 +477,72 @@ function qsProjector(mode)
         end
     end
 end
+
+-- Docking: lid closed with an external monitor connected. The windows of the laptop's workspaces (1-10) move to the matching
+-- workspaces of the external monitor and the laptop screen goes off; opening the lid or unplugging reverses it. logind
+-- already does not suspend on a closed lid while a monitor is attached ("docked").
+qsLidClosed = false
+qsDocked = {}   -- window address -> the laptop workspace it came from
+
+local function panelAndOthers()
+    local main, others = nil, {}
+    for _, m in ipairs(hl.get_monitors({ all = true })) do
+        if m.name:sub(1, 3) == "eDP" then main = m else others[#others + 1] = m end
+    end
+    table.sort(others, function(a, b) return a.name < b.name end)
+    return main, others
+end
+
+function qsDock()
+    local main, others = panelAndOthers()
+    if not main or #others == 0 then return end
+    local offset = wsOffset(others[1].name)
+    for _, w in ipairs(hl.get_windows()) do
+        local id = w.workspace and w.workspace.id
+        if w.mapped and id and id >= 1 and id <= 10 then
+            qsDocked[w.address] = id
+            hl.dispatch(hl.dsp.window.move({ workspace = id + offset, window = "address:" .. w.address }))
+        end
+    end
+    hl.monitor({ output = monitorRef(main), disabled = true })
+end
+
+function qsUndock()
+    qsProjector("extend")   -- laptop screen back on, workspaces back on their own monitors
+    local back = qsDocked
+    qsDocked = {}
+    -- give the panel a moment to come up before the windows return to its workspaces
+    hl.timer(function()
+        for addr, id in pairs(back) do
+            hl.dispatch(hl.dsp.window.move({ workspace = id, window = "address:" .. addr }))
+        end
+        qsProjector("extend")
+    end, { timeout = 1500, type = "oneshot" })
+end
+
+local function settleMonitors()   -- after a monitor came or went (debounced: a cable often reports several events)
+    local _, others = panelAndOthers()
+    if qsLidClosed and #others > 0 and next(qsDocked) == nil then qsDock()
+    elseif not qsLidClosed or #others == 0 then
+        if next(qsDocked) ~= nil or qsLidClosed then qsUndock() elseif #others > 0 then qsProjector("extend") end
+    end
+end
+local settleTimer
+local function settleSoon()
+    if settleTimer then settleTimer:set_enabled(false) end
+    settleTimer = hl.timer(settleMonitors, { timeout = 1200, type = "oneshot" })
+end
+hl.on("monitor.added", settleSoon)
+hl.on("monitor.removed", settleSoon)
+hl.bind("switch:on:Lid Switch", function()
+    qsLidClosed = true
+    local _, others = panelAndOthers()
+    if #others > 0 then qsDock() end
+end, { locked = true })
+hl.bind("switch:off:Lid Switch", function()
+    qsLidClosed = false
+    if next(qsDocked) ~= nil then qsUndock() end
+end, { locked = true })
 
 -- Move a window to workspace number n of the monitor it is on (the workspace overview calls this when you drop a window on a card).
 function qsMoveWindow(address, n)
