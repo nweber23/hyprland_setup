@@ -255,6 +255,23 @@ Panel {
                         SettingButton { label: "Open"; onClicked: root.open("power") } }
                 }
                 SettingPage { idx: 8; current: root.page; title: "Notifications"
+                    SettingRow { title: "Muted apps"; hint: "No pop-up from these; they stay in the history. Click one to let it speak again."
+                        Flow {
+                            Layout.preferredWidth: 300; spacing: 6
+                            Text { visible: Settings.mutedApps.length === 0; textFormat: Text.PlainText; text: "None. Mute an app with the bell on its card in the notification center."
+                                   color: Theme.outline; font.family: Theme.mono; font.pixelSize: 10; wrapMode: Text.Wrap; width: 300 }
+                            Repeater {
+                                model: Settings.mutedApps
+                                delegate: Rectangle {
+                                    required property string modelData
+                                    height: 28; width: mt.implicitWidth + 30; radius: 9; color: mm.containsMouse ? Theme.error : Theme.cardHigh
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Text { id: mt; anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData + "  \u00d7"
+                                           color: mm.containsMouse ? Theme.panelBg : Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
+                                    MouseArea { id: mm; anchors.fill: parent; hoverEnabled: true; onClicked: Settings.set("mutedApps", Settings.mutedApps.filter(a => a !== modelData)) }
+                                }
+                            }
+                        } }
                     SettingRow { title: "Popup duration"; hint: "Apps that set their own time keep it"
                         SettingChips { chipW: 60; model: [{ label: "3 s", value: 3 }, { label: "6 s", value: 6 }, { label: "10 s", value: 10 }, { label: "15 s", value: 15 }]
                                        current: Settings.popupSeconds; onPicked: v => Settings.set("popupSeconds", v) } }

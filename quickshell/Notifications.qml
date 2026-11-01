@@ -17,7 +17,12 @@ Scope {
         imageSupported: true
         // Apps get plain text only; the cards render it with textFormat PlainText as well.
         bodyMarkupSupported: false
-        onNotification: n => { n.tracked = true; NotifHistory.add(n) }
+        onNotification: n => {
+            NotifHistory.add(n)
+            // a muted app skips the pop-up but stays in the history; urgent messages (low battery, overheating) always show
+            if (Settings.mutedApps.indexOf(n.appName) >= 0 && n.urgency !== NotificationUrgency.Critical) return
+            n.tracked = true
+        }
     }
 
     // Show on the monitor that has focus right now.

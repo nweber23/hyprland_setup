@@ -14,6 +14,7 @@ Singleton {
     property bool autoSaver: true        // switch to the power-saver profile at 20 % and below
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
+    property var mutedApps: []           // notifications from these apps skip the pop-up but stay in the history
     property bool noiseSuppression: false // the "Clean microphone" is the default microphone
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
     // pointer and keyboard (applied to Hyprland by the settings panel, which also writes input-local.lua)
@@ -27,7 +28,7 @@ Singleton {
     property int repeatDelay: 600        // ms before a held key repeats
 
     readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets",
-                                 "liveOnBattery", "noiseSuppression", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
+                                 "liveOnBattery", "noiseSuppression", "mutedApps", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
                                  "repeatRate", "repeatDelay"]
     readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"] })
 
@@ -40,9 +41,9 @@ Singleton {
             try {
                 const d = JSON.parse(text())
                 for (const k of root.keys) {
-                    if (d[k] === undefined || typeof d[k] !== typeof root[k]) continue   // unknown or wrongly typed: keep the default
+                    if (d[k] === undefined || typeof d[k] !== typeof root[k] || Array.isArray(d[k]) !== Array.isArray(root[k])) continue   // unknown or wrongly typed: keep the default
                     if (root.allowed[k] && root.allowed[k].indexOf(d[k]) < 0) continue
-                    root[k] = d[k]
+                    root[k] = Array.isArray(d[k]) ? d[k].filter(x => typeof x === "string") : d[k]
                 }
             } catch (e) { console.warn("Settings: bad settings.json:", e) }
         }

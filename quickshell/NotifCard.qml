@@ -12,6 +12,7 @@ Reveal {
     property int row: 0              // position in the list
     property string ago: ""
     signal removeRequested()
+    signal muteRequested()
     base: 120; step: 55; dx: 40; dy: 0; duration_: 520
     index: Math.min(8, row)
 
@@ -36,6 +37,11 @@ Reveal {
                 Text { Layout.fillWidth: true; visible: text !== ""; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight; textFormat: Text.PlainText; text: root.body
                        color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 11 }
             }
+            Icon { Layout.alignment: Qt.AlignTop; name: "notifications_off"; size: 16; color: muteArea.containsMouse ? Theme.accent : Theme.on_surface_variant
+                   opacity: area.containsMouse ? 1 : 0   // appears on hover: stop pop-ups from this app
+                   Behavior on opacity { NumberAnimation { duration: 150 } }
+                   Behavior on color { ColorAnimation { duration: 150 } }
+                   MouseArea { id: muteArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; onClicked: root.muteRequested() } }
             Icon { Layout.alignment: Qt.AlignTop; name: "close"; size: 16; color: closeArea.containsMouse ? Theme.error : Theme.on_surface_variant
                    opacity: area.containsMouse ? 1 : 0.35; rotation: closeArea.containsMouse ? 90 : 0
                    Behavior on rotation { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2 } }
