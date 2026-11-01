@@ -6,7 +6,7 @@ import Quickshell.Services.SystemTray
 import QtQuick
 
 ShellRoot {
-    Component.onCompleted: { Battery.init(); SysMon.init() }
+    Component.onCompleted: { Battery.init(); SysMon.init(); Mic.init() }
     // Keybinds call:  quickshell ipc call shell toggle <panel>
     IpcHandler {
         target: "shell"
@@ -27,6 +27,7 @@ ShellRoot {
             const m = Hyprland.focusedMonitor
             if (m) Popups.toggle("launcher", m.name, m.width / m.scale / 2)
         }
+        function noise(on: bool): void { Mic.set(on) }   // microphone noise suppression on / off
         function dock(): void { Popups.dockPinned = !Popups.dockPinned }   // hold the dock open / let it hide again
         function switcherConfirm(): void {
             if (Popups.current === "switcher") Popups.switchConfirm(); else Popups.earlyConfirm = Date.now()

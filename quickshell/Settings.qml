@@ -14,6 +14,7 @@ Singleton {
     property bool autoSaver: true        // switch to the power-saver profile at 20 % and below
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
+    property bool noiseSuppression: false // the "Clean microphone" is the default microphone
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
     // pointer and keyboard (applied to Hyprland by the settings panel, which also writes input-local.lua)
     property bool naturalScroll: false   // touchpad: content follows the fingers
@@ -26,7 +27,7 @@ Singleton {
     property int repeatDelay: 600        // ms before a held key repeats
 
     readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets",
-                                 "liveOnBattery", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
+                                 "liveOnBattery", "noiseSuppression", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
                                  "repeatRate", "repeatDelay"]
     readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"] })
 

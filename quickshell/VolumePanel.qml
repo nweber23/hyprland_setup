@@ -13,16 +13,24 @@ Panel {
     // everything that has volume controls; the tracker makes node.audio available
     readonly property var all: Pipewire.nodes.values.filter(n => n.audio)
     // the equalizer is not a device: it is an effect in front of the chosen output
-    readonly property var sinks: all.filter(n => n.isSink && !n.isStream && n.name !== "qs_eq")
-    readonly property var sources: all.filter(n => !n.isSink && !n.isStream && !n.name.endsWith(".monitor"))
+    readonly property var sinks: all.filter(n => n.isSink && !n.isStream && n.name !== "qs_eq" && n.name !== "qs_mic_sink")
+    readonly property var sources: all.filter(n => !n.isSink && !n.isStream && !n.name.endsWith(".monitor") && n.name !== "qs_mic")
     // the equalizer's own playback stream is plumbing, not an app
-    readonly property var streams: all.filter(n => n.isSink && n.isStream && !n.name.startsWith("qs_eq"))
+    readonly property var streams: all.filter(n => n.isSink && n.isStream && !n.name.startsWith("qs_eq") && !n.name.startsWith("qs_mic"))
     PwObjectTracker { objects: root.all }
     readonly property var sink: Audio.sink
     readonly property var source: Pipewire.defaultAudioSource
 
     function label(n) { return n.nickname !== "" ? n.nickname : (n.description !== "" ? n.description : n.name) }
     function appName(n) { return n.properties["application.name"] ?? n.properties["media.name"] ?? n.name }
+    // where each app plays: node id -> sink node id; missing = automatic (the default output, through the equalizer if it is on)
+    property var routes: ({})
+    function route(app, sink) {
+        const r = Object.assign({}, routes)
+        if (sink) { r[app.id] = sink.id; Quickshell.execDetached(["pw-metadata", String(app.id), "target.node", String(sink.id), "Spa:Id"]) }
+        else { delete r[app.id]; Quickshell.execDetached(["pw-metadata", "-d", String(app.id), "target.node"]) }
+        routes = r
+    }
     function pct(v) { return Math.round(v * 100) + "%" }
 
     // ---- output ----
@@ -75,6 +83,22 @@ Panel {
         MSlider { Layout.fillWidth: true; knob: true; fill: Theme.accent2
                   value: root.source && root.source.audio ? Math.min(1, root.source.audio.volume) : 0
                   onMoved: v => { if (root.source && root.source.audio) root.source.audio.volume = v } }
+        RowLayout {   // noise suppression: the "Clean microphone" becomes the default input
+            Layout.fillWidth: true; spacing: 10
+            Icon { name: "graphic_eq"; size: 18; color: Mic.enabled ? Theme.accent2 : Theme.on_surface_variant }
+            ColumnLayout { Layout.fillWidth: true; spacing: 0
+                Text { textFormat: Text.PlainText; text: "Noise suppression"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12 }
+                Text { textFormat: Text.PlainText; text: Mic.enabled ? (Mic.clean ? "Clean microphone is on" : "Starting\u2026") : "Filters keyboard, fan and room noise"
+                       color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 } }
+            Rectangle {
+                implicitWidth: 52; implicitHeight: 28; radius: 14
+                color: Mic.enabled ? Theme.accent2 : Theme.cardHigh
+                Behavior on color { ColorAnimation { duration: 180 } }
+                Rectangle { width: 20; height: 20; radius: 10; y: 4; x: Mic.enabled ? 28 : 4; color: Mic.enabled ? Theme.panelBg : Theme.on_surface_variant
+                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutBack } } }
+                MouseArea { anchors.fill: parent; onClicked: Mic.set(!Mic.enabled) }
+            }
+        }
         Flow {
             Layout.fillWidth: true; spacing: 6; visible: root.sources.length > 1
             Repeater {
@@ -119,6 +143,22 @@ Panel {
                 MSlider { Layout.fillWidth: true; fill: Theme.accent
                           value: app.modelData.audio ? Math.min(1, app.modelData.audio.volume) : 0
                           onMoved: v => { if (app.modelData.audio) app.modelData.audio.volume = v } }
+                Flow {   // where this app plays: Auto, or one device (bypasses the equalizer)
+                    Layout.fillWidth: true; spacing: 5; visible: root.sinks.length > 1
+                    Repeater {
+                        model: [null].concat(root.sinks)
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property bool on: modelData ? root.routes[app.modelData.id] === modelData.id : root.routes[app.modelData.id] === undefined
+                            height: 22; width: rn.implicitWidth + 16; radius: 7
+                            color: on ? Theme.accent : (rm.containsMouse ? Theme.cardHigh : Theme.card)
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Text { id: rn; anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData ? root.label(modelData) : "Auto"
+                                   color: parent.on ? Theme.panelBg : Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9; font.bold: true }
+                            MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; onClicked: root.route(app.modelData, modelData) }
+                        }
+                    }
+                }
             }
         }
     }

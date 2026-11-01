@@ -79,6 +79,7 @@ ProjectorPanel 1.0 ProjectorPanel.qml
 QuickPanel 1.0 QuickPanel.qml
 singleton Shortcuts 1.0 Shortcuts.qml
 ToolChip 1.0 ToolChip.qml
+singleton Mic 1.0 Mic.qml
 singleton Audio Audio.qml
 BackWaves 1.0 BackWaves.qml
 BackRings 1.0 BackRings.qml
