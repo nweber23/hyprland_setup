@@ -13,14 +13,14 @@ Requests: {"id": 1, "cmd": "unlock", "pw": "..."}, list is returned by unlock; t
   delete {path}       moves the entry to the recycle bin
   lock                forget everything and exit
 The master password is only ever passed to keepassxc-cli on its standard input, and only lives in this process while
-the vault is unlocked. Passwords are copied with wl-copy; the clipboard history ignores them (see the marker file).
+the vault is unlocked. Passwords are copied with wl-copy; the clipboard history ignores them (see the marker file: only time and length, never the secret or a hash of it).
 """
 import csv, hashlib, io, json, os, secrets, string, subprocess, sys, time
 from pathlib import Path
 
 CLI = "keepassxc-cli"
 CLIP_SECONDS = int(os.environ.get("VAULT_CLIP_SECONDS", "30"))   # the environment variable is for tests
-MARKER = Path.home() / ".cache" / "quickshell" / "vault-clip"   # sha1 of the last copied secret + time: clip-store skips it
+MARKER = Path.home() / ".cache" / "quickshell" / "vault-clip"   # time and length of recent secret copies: clip-store skips those
 
 
 class VaultError(Exception):
@@ -48,10 +48,25 @@ def entry_path(group, title):
 
 
 def mark_secret(secret):
+    """Tell clip-store that a secret is about to land on the clipboard, without writing anything derived from it.
+    Only the time and the length are kept (a hash of a weak password could be cracked offline); several copies in a
+    row each keep their line, old lines are dropped."""
+    now = time.time()
+    lines = []
+    try:
+        for line in MARKER.read_text().splitlines():
+            stamp, _, length = line.partition(" ")
+            if now - float(stamp) < 10:
+                lines.append(line)
+    except (OSError, ValueError):
+        pass
+    lines.append(f"{now:.3f} {len(secret)}")
     MARKER.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(MARKER, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    tmp = MARKER.with_name(MARKER.name + ".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
-        f.write(hashlib.sha1(secret.encode()).hexdigest() + " " + str(int(time.time())))
+        f.write("\n".join(lines) + "\n")
+    os.replace(tmp, MARKER)
 
 
 def copy_secret(secret):
@@ -65,8 +80,9 @@ def copy_secret(secret):
                 os._exit(0)
             time.sleep(CLIP_SECONDS)
             now = subprocess.run(["wl-paste", "--no-newline"], capture_output=True, text=True).stdout
-            if hashlib.sha1(now.encode()).hexdigest() == digest:
+            if hashlib.sha1(now.encode()).hexdigest() == digest:   # only in this process's memory, never written anywhere
                 subprocess.run(["wl-copy", "--clear"], check=False)
+            MARKER.unlink(missing_ok=True)
         finally:
             os._exit(0)
     os.wait()

@@ -76,7 +76,7 @@ Every panel can also be opened with `quickshell ipc call shell toggle <name>`
   (duplicate / extend / one screen), ``Super+` `` drop-down terminal. The bar shows a dot with the app's name while the microphone, camera or screen is in use.
 * **Passwords** (`Super+K`): a front end for a KeePassXC database in `~/.local/share/passwords/vault.kdbx` (outside the repo, back it up).
   `bin/vault` only talks to `keepassxc-cli`; the master password goes to it on stdin and is not kept in the shell. Enter copies the password
-  (cleared after 30 s, never stored in the clipboard history), Shift+Enter types user, Tab, password into the window behind (`wtype`).
+  (cleared after 30 s; the clipboard history skips it through a marker that holds only time and length, never a hash), Shift+Enter types user, Tab, password into the window behind (`wtype`).
   It locks after 5 minutes unused, a minute after the panel closes and with the screen lock. Needs `sudo apt install keepassxc wtype`.
 * **Clipboard** (`Super+Shift+V`): text and pictures; the pin keeps an entry for good, and pinned texts are snippets (`;name` in the launcher). Sensitive copies (password managers) are never stored.
 * **Audio**: the mixer (`Super+Shift+…` via the bar's volume chip) also has microphone noise suppression (a virtual "Clean microphone" from PipeWire's WebRTC module, `pipewire/qs-mic.conf`) and a per-app choice of output device.
