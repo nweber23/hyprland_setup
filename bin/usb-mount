@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Mount USB sticks and other removable drives when they are plugged in, and say so with a notification
+# that has Open and Eject buttons (the shell's notification server shows them).
+#
+#   usb-mount            watch udisks and handle every new drive (started by the shell)
+#   usb-mount handle DEV mount DEV (if it is a removable filesystem) and notify
+#   usb-mount eject DEV  unmount DEV and power its drive off
+#
+# Needs udisks2 (udisksctl). USB_MOUNT_ALL=1 also accepts system devices, for testing.
+set -u
+PATH=$PATH:/sbin:/usr/sbin
+
+eject() {
+    local dev=$1 parent
+    udisksctl unmount -b "$dev" --no-user-interaction >/dev/null 2>&1
+    parent=$(lsblk -dno pkname "$dev" 2>/dev/null)
+    [ -n "$parent" ] && udisksctl power-off -b "/dev/$parent" --no-user-interaction >/dev/null 2>&1
+    notify-send -a "Drives" -i drive-removable-media "Safe to remove" "${dev##*/} was ejected"
+}
+
+handle() {
+    local dev=$1 info label out mnt action
+    info=$(udisksctl info -b "$dev" 2>/dev/null) || return
+    if [ -z "${USB_MOUNT_ALL:-}" ] && grep -q "HintSystem: *true" <<<"$info"; then return; fi
+    grep -q "IdUsage: *filesystem" <<<"$info" || return
+    findmnt -rn -S "$dev" >/dev/null 2>&1 && return   # already mounted
+    label=$(sed -n 's/^ *IdLabel: *//p' <<<"$info" | head -1)
+    out=$(udisksctl mount -b "$dev" --no-user-interaction 2>&1) || {
+        notify-send -u critical -a "Drives" -i dialog-error "Could not mount ${label:-$dev}" "$out"; return; }
+    mnt=${out#* at }; mnt=${mnt%.}
+    action=$(notify-send -a "Drives" -i drive-removable-media -A open=Open -A eject=Eject "${label:-USB drive} mounted" "$mnt")
+    case $action in
+        open) gio open "$mnt" ;;
+        eject) eject "$dev" ;;
+    esac
+}
+
+case ${1:-daemon} in
+    handle) handle "$2" ;;
+    eject) eject "$2" ;;
+    daemon)
+        exec 9>"${XDG_RUNTIME_DIR:-/tmp}/usb-mount.lock"
+        flock -n 9 || exit 0   # one instance per session
+        udisksctl monitor | while read -r line; do
+            case $line in
+                *": Added /org/freedesktop/UDisks2/block_devices/"*)
+                    dev=/dev/${line##*/}
+                    ( sleep 1; handle "$dev" ) &   # give udisks a moment to read the filesystem
+                    ;;
+            esac
+        done ;;
+    *) sed -n '2,10p' "$0"; exit 1 ;;
+esac
