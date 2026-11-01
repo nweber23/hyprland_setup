@@ -28,4 +28,4 @@ while read -r line; do
         "boolean true")  $LOCK_CMD; sleep 1; release ;;   # going to sleep: lock first, then let it go
         "boolean false") take ;;                           # woke up
     esac
-done < <($SIGNAL_SOURCE)
+done < <($SIGNAL_SOURCE 9>&-)   # the watcher must not keep the instance lock open either
