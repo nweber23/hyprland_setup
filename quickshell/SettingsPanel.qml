@@ -241,22 +241,8 @@ Panel {
                         SettingButton { label: "Open"; onClicked: root.open("calendar") } }
                 }
                 SettingPage { idx: 9; current: root.page; title: "Shortcuts"
-                    GridLayout {
-                        Layout.fillWidth: true; columns: 2; columnSpacing: 12; rowSpacing: 6
-                        Repeater {
-                            model: [["Super+R", "Launcher"], ["Super+Q", "Terminal"], ["Super+C", "Close window"], ["Super+B", "Browser"], ["Super+W", "Wallpaper"],
-                                    ["Super+T", "Screen time"], ["Super+X", "Screenshot / recording"], ["Super+Shift+V", "Clipboard history"], ["Super+L", "Lock"],
-                                    ["Super+Space", "Next keyboard layout"], ["Super+Tab", "Next workspace"], ["Super+1..9", "Go to workspace"],
-                                    ["Super+Shift+1..9", "Move window there"], ["Super+Arrows", "Focus"], ["Super+Shift+N", "Night light"], ["Super+Shift+R", "Record region"], ["Super+M", "Log out"]]
-                            delegate: Rectangle {
-                                required property var modelData
-                                Layout.fillWidth: true; implicitHeight: 36; radius: 10; color: Theme.card
-                                RowLayout { anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                                    Text { Layout.preferredWidth: 130; textFormat: Text.PlainText; text: modelData[0]; color: Theme.accent; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
-                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: modelData[1]; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11 } }
-                            }
-                        }
-                    }
+                    SettingRow { title: "All shortcuts"; hint: "Every key combination of this desktop, grouped. Also on Super+F1"
+                        SettingButton { label: "Open"; accent: true; onClicked: root.open("shortcuts") } }
                 }
                 SettingPage { idx: 10; current: root.page; title: "About"
                     SettingRow { title: "Software"; hint: root.hyprVersion }
