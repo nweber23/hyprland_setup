@@ -68,7 +68,7 @@ PanelWindow {
     }
     function pick() {
         const w = windows[grid.currentIndex]
-        if (w) { recent = w.address; recentAt = Date.now(); Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + w.address + "\" })"]) }
+        if (w) { recent = w.address; recentAt = Date.now(); if (/^0x[0-9a-f]+$/.test(w.address)) Quickshell.execDetached(["hyprctl", "eval", "qsFocusWindow(\"" + w.address + "\")"]) }   // also switches the other monitors
         Popups.close()
     }
     function closeWindow() {

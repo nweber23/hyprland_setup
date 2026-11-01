@@ -374,6 +374,24 @@ function qsGotoWorkspace(n)
     hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
 end
 
+-- Focus a window and show its workspace number on every monitor (Alt+Tab, the overview). Global: the shell calls it
+-- through `hyprctl eval`.
+function qsFocusWindow(address)
+    local target
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address == address then target = w end
+    end
+    if not target then return end
+    local id = target.workspace and target.workspace.id or 0
+    if id > 0 then   -- special workspaces (scratchpad) have no number to share
+        local n = (id - 1) % 10 + 1
+        local pos = hl.get_cursor_pos()
+        for _, m in ipairs(hl.get_monitors()) do showOn(m.name, n + wsOffset(m.name)) end
+        hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
+    end
+    hl.dispatch(hl.dsp.focus({ window = "address:" .. address }))
+end
+
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace of the monitor it is on with mainMod + SHIFT + [0-9]
 for i = 1, 10 do
@@ -410,7 +428,7 @@ local function swapDirect(steps)
     local n = #list
     if n < 2 then return end
     local w = list[(steps % n) + 1]   -- list[1] is the focused window; steps = number of Tab presses (negative with Shift)
-    hl.dispatch(hl.dsp.focus({ window = "address:" .. w.address }))
+    qsFocusWindow(w.address)
 end
 
 local function overviewKey(dir, modKeys)
