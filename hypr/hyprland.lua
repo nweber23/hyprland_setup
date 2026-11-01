@@ -340,6 +340,7 @@ hl.bind(mainMod .. " + SHIFT + G", function() qsGameMode(not qsGameModeOn) end) 
 hl.bind(mainMod .. " + code:49", function() qsDropdown() end)   -- drop-down terminal (the key left of 1)
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("quickshell ipc call shell focus"))   -- focus mode: no bar, no notifications, 25 min timer
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("quickshell ipc call shell toggle quick"))   -- quick menu
+hl.bind(mainMod .. " + K", hl.dsp.exec_cmd("quickshell ipc call shell toggle vault"))   -- password vault
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call shell toggle shortcuts"))   -- all shortcuts
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle workspaces"))   -- workspace overview
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings

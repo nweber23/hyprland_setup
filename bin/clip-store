@@ -54,6 +54,13 @@ else:
     text = sys.stdin.read()
     if not text.strip() or len(text) > MAX_TEXT:
         sys.exit(0)
+    # the password vault leaves the hash and time of what it copied: such a secret is never stored
+    try:
+        digest, stamp = (Path.home() / ".cache" / "quickshell" / "vault-clip").read_text().split()
+        if digest == hashlib.sha1(text.encode()).hexdigest() and now - int(stamp) < 120:
+            sys.exit(0)
+    except (OSError, ValueError):
+        pass
     old = next((i for i in items if i.get("t") == text), None)
     new = {"t": text, "ts": now}
     if old and old.get("pin"):

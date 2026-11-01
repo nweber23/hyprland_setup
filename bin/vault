@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""vault -- the helper behind the shell's password panel. The encryption is done by keepassxc-cli (KeePassXC); this
+script only talks to it.
+
+    vault create DB          create a new database; the new master password is read from stdin (two lines: password, again)
+    vault serve DB           talk to the panel: one JSON request per line on stdin, one JSON answer per line on stdout
+
+Requests: {"id": 1, "cmd": "unlock", "pw": "..."}, list is returned by unlock; then
+  copy {path, field}  field is password|username|url|totp; the clipboard is cleared again after 30 s
+  type {path, mode, delay}  mode is login (user, Tab, password), password, username or totp; typed with wtype
+  generate {length}   a random password
+  add {title, username, url, password, group}   an empty password is generated
+  delete {path}       moves the entry to the recycle bin
+  lock                forget everything and exit
+The master password is only ever passed to keepassxc-cli on its standard input, and only lives in this process while
+the vault is unlocked. Passwords are copied with wl-copy; the clipboard history ignores them (see the marker file).
+"""
+import csv, hashlib, io, json, os, secrets, string, subprocess, sys, time
+from pathlib import Path
+
+CLI = "keepassxc-cli"
+CLIP_SECONDS = int(os.environ.get("VAULT_CLIP_SECONDS", "30"))   # the environment variable is for tests
+MARKER = Path.home() / ".cache" / "quickshell" / "vault-clip"   # sha1 of the last copied secret + time: clip-store skips it
+
+
+class VaultError(Exception):
+    pass
+
+
+def cli(args, stdin_text, timeout=60):
+    try:
+        p = subprocess.run([CLI, args[0], "-q"] + args[1:], input=stdin_text, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError:
+        raise VaultError("keepassxc-cli is not installed (sudo apt install keepassxc)")
+    except subprocess.TimeoutExpired:
+        raise VaultError("keepassxc-cli took too long")
+    return p.returncode, p.stdout, p.stderr
+
+
+def clean_error(text, default):
+    t = (text or "").strip().splitlines()
+    return t[-1][:200] if t else default
+
+
+def entry_path(group, title):
+    parts = [g for g in group.split("/") if g][1:]   # the first element is the root group
+    return "/".join(parts + [title])
+
+
+def mark_secret(secret):
+    MARKER.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(MARKER, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(hashlib.sha1(secret.encode()).hexdigest() + " " + str(int(time.time())))
+
+
+def copy_secret(secret):
+    mark_secret(secret)   # before the copy, so the clipboard watcher cannot be faster
+    subprocess.run(["wl-copy"], input=secret, text=True, check=False)
+    digest = hashlib.sha1(secret.encode()).hexdigest()
+    if os.fork() == 0:   # a detached child clears the clipboard again, if it still holds this secret
+        try:
+            os.setsid()
+            if os.fork() != 0:
+                os._exit(0)
+            time.sleep(CLIP_SECONDS)
+            now = subprocess.run(["wl-paste", "--no-newline"], capture_output=True, text=True).stdout
+            if hashlib.sha1(now.encode()).hexdigest() == digest:
+                subprocess.run(["wl-copy", "--clear"], check=False)
+        finally:
+            os._exit(0)
+    os.wait()
+
+
+def generate(length):
+    length = max(8, min(128, int(length)))
+    classes = [string.ascii_lowercase, string.ascii_uppercase, string.digits, "!@#$%^&*()-_=+[]{}"]
+    chars = [secrets.choice(c) for c in classes]
+    allc = "".join(classes)
+    chars += [secrets.choice(allc) for _ in range(length - len(chars))]
+    secrets.SystemRandom().shuffle(chars)
+    return "".join(chars)
+
+
+class Vault:
+    def __init__(self, db):
+        self.db = db
+        self.pw = None
+        self.entries = []
+
+    def need_open(self):
+        if self.pw is None:
+            raise VaultError("The vault is locked")
+
+    def unlock(self, pw):
+        rc, out, err = cli(["export", "-f", "csv", self.db], pw + "\n")
+        if rc != 0:
+            # in quiet mode a wrong master password gives no message at all; anything it does say is shown
+            raise VaultError(clean_error(err or out, "Wrong password"))
+        self.pw = pw
+        self.entries = []
+        for row in csv.DictReader(io.StringIO(out)):
+            title = row.get("Title", "")
+            grp = row.get("Group", "")
+            if not title or grp.split("/")[1:2] == ["Recycle Bin"]:   # deleted entries wait in KeePassXC's recycle bin
+                continue
+            self.entries.append({"path": entry_path(row.get("Group", ""), title), "title": title, "username": row.get("Username", ""),
+                                 "url": row.get("URL", ""), "totp": bool(row.get("TOTP", "")), "group": "/".join([g for g in row.get("Group", "").split("/") if g][1:])})
+        self.entries.sort(key=lambda e: e["path"].lower())
+        return self.entries
+
+    def secret(self, path, field):
+        self.need_open()
+        if field == "totp":
+            rc, out, err = cli(["show", "-t", self.db, path], self.pw + "\n")
+        else:
+            attr = {"password": "Password", "username": "UserName", "url": "URL"}.get(field)
+            if not attr:
+                raise VaultError("Unknown field")
+            rc, out, err = cli(["show", "-s", "-a", attr, self.db, path], self.pw + "\n")
+        if rc != 0:
+            raise VaultError(clean_error(err or out, "Could not read the entry"))
+        return out[:-1] if out.endswith("\n") else out
+
+    def add(self, title, username, url, password, group):
+        self.need_open()
+        group = group.strip("/")
+        path = (group + "/" if group else "") + title
+        parts = [g for g in group.split("/") if g]
+        for i in range(len(parts)):   # a group that does not exist yet is created first
+            cli(["mkdir", self.db, "/".join(parts[:i + 1])], self.pw + "\n")
+        pwd = password or generate(20)
+        args = ["add", "-p"]
+        if username:
+            args += ["-u", username]
+        if url:
+            args += ["--url", url]
+        rc, out, err = cli(args + [self.db, path], self.pw + "\n" + pwd + "\n")
+        if rc != 0:
+            raise VaultError(clean_error(err or out, "Could not add the entry"))
+        self.unlock(self.pw)   # reload the list
+        return pwd
+
+    def delete(self, path):
+        self.need_open()
+        rc, out, err = cli(["rm", self.db, path], self.pw + "\n")
+        if rc != 0:
+            raise VaultError(clean_error(err or out, "Could not delete the entry"))
+        self.unlock(self.pw)
+
+
+def type_text(text):
+    subprocess.run(["wtype", "-"], input=text, text=True, check=False)   # on stdin, so it never shows up in a process list
+
+
+def serve(db):
+    v = Vault(db)
+    for line in sys.stdin:
+        try:
+            req = json.loads(line)
+            rid, cmd = req.get("id"), req.get("cmd")
+            res = {"id": rid, "ok": True}
+            if cmd == "unlock":
+                res["entries"] = v.unlock(req["pw"])
+            elif cmd == "copy":
+                copy_secret(v.secret(req["path"], req["field"]))
+            elif cmd == "type":
+                mode, path = req.get("mode", "login"), req["path"]
+                time.sleep(max(0, min(3000, int(req.get("delay", 400)))) / 1000)
+                if mode == "login":
+                    type_text(v.secret(path, "username"))
+                    subprocess.run(["wtype", "-k", "Tab"], check=False)
+                    type_text(v.secret(path, "password"))
+                else:
+                    type_text(v.secret(path, mode))
+            elif cmd == "generate":
+                res["password"] = generate(req.get("length", 20))
+            elif cmd == "add":
+                v.add(req["title"], req.get("username", ""), req.get("url", ""), req.get("password", ""), req.get("group", ""))
+                res["entries"] = v.entries
+            elif cmd == "delete":
+                v.delete(req["path"])
+                res["entries"] = v.entries
+            elif cmd == "lock":
+                print(json.dumps(res), flush=True)
+                return
+            else:
+                raise VaultError("Unknown command")
+        except VaultError as e:
+            res = {"id": req.get("id") if isinstance(req, dict) else None, "ok": False, "error": str(e)}
+        except (KeyError, ValueError, TypeError) as e:
+            res = {"id": None, "ok": False, "error": "Bad request"}
+        print(json.dumps(res), flush=True)
+
+
+def create(db):
+    pw1 = sys.stdin.readline().rstrip("\n")
+    pw2 = sys.stdin.readline().rstrip("\n")
+    if len(pw1) < 8 or pw1 != pw2:
+        print(json.dumps({"ok": False, "error": "The passwords differ or are shorter than 8 characters"}))
+        return
+    Path(db).parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if Path(db).exists():
+        print(json.dumps({"ok": False, "error": "A vault exists already"}))
+        return
+    rc, out, err = cli(["db-create", "-p", db], pw1 + "\n" + pw1 + "\n")
+    if rc != 0:
+        print(json.dumps({"ok": False, "error": clean_error(err or out, "Could not create the vault")}))
+        return
+    os.chmod(db, 0o600)
+    print(json.dumps({"ok": True}))
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "serve":
+        serve(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == "create":
+        create(sys.argv[2])
+    else:
+        print(__doc__)
+        sys.exit(2)

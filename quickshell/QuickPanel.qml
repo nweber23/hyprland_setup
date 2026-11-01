@@ -32,6 +32,7 @@ Panel {
             ToggleTile { Layout.fillWidth: true; icon: "self_improvement"; label: "Focus"; on: Popups.focusMode
                          onToggled: { Popups.close(); Popups.setFocus(!Popups.focusMode) } }
             ToggleTile { Layout.fillWidth: true; icon: "keyboard_command_key"; label: "Shortcuts"; onToggled: root.open("shortcuts") }
+            ToggleTile { Layout.fillWidth: true; icon: "key"; label: "Passwords"; onToggled: root.open("vault") }
         }
     }
 }
