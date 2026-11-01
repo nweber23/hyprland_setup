@@ -67,6 +67,7 @@ singleton Tools 1.0 Tools.qml
 ToolsPanel 1.0 ToolsPanel.qml
 ToolRound 1.0 ToolRound.qml
 DesktopWidgets 1.0 DesktopWidgets.qml
+Dock 1.0 Dock.qml
 ToolChip 1.0 ToolChip.qml
 singleton Audio Audio.qml
 BackWaves 1.0 BackWaves.qml
