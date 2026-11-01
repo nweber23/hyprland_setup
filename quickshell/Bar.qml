@@ -53,7 +53,15 @@ PanelWindow {
         const p = item.mapToItem(null, item.width / 2, 0)
         Popups.toggle(name, bar.screen.name, p.x + bar.margins.left, tab)
     }
-    function focusWorkspace(id) { Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + id + " })"]) }
+    // Each monitor has its own workspaces (the laptop panel 1-10, the next monitor 11-20, ...), see hyprland.lua.
+    readonly property var hyprMonitor: Hyprland.monitors.values.find(m => m.name === screen.name) ?? null
+    readonly property int wsOffset: {
+        if (screen.name.startsWith("eDP")) return 0
+        const names = Hyprland.monitors.values.map(m => m.name).filter(n => !n.startsWith("eDP")).sort()
+        const i = names.indexOf(screen.name)
+        return i < 0 ? 0 : 10 * (i + 1)
+    }
+    function focusWorkspace(n) { Quickshell.execDetached(["hyprctl", "eval", "qsGotoWorkspace(" + Math.round(n) + ")"]) }   // switches every monitor
 
     function fmt(us) { us = Math.max(0, Math.floor(us)); return String(Math.floor(us / 60)).padStart(2, "0") + ":" + String(us % 60).padStart(2, "0") }
     // MPRIS does not push the position: refresh it while something plays
@@ -86,15 +94,16 @@ PanelWindow {
                 model: 8
                 delegate: Rectangle {
                     required property int index
-                    readonly property int wsId: index + 1
-                    readonly property bool active: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
+                    readonly property int number: index + 1                  // the key: Super + number
+                    readonly property int wsId: number + bar.wsOffset        // this monitor's workspace id
+                    readonly property bool active: bar.hyprMonitor && bar.hyprMonitor.activeWorkspace && bar.hyprMonitor.activeWorkspace.id === wsId
                     readonly property bool occupied: Hyprland.workspaces.values.some(w => w.id === wsId)
                     Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 7
                     color: active ? Theme.accent : occupied ? Theme.cardHigh : "transparent"
                     Behavior on color { ColorAnimation { duration: 180 } }
-                    Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: parent.wsId; font: bar.textFont
+                    Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: parent.number; font: bar.textFont
                            color: parent.active ? Theme.panelBg : parent.occupied ? Theme.on_surface : Theme.on_surface_variant }
-                    MouseArea { anchors.fill: parent; onClicked: bar.focusWorkspace(parent.wsId) }
+                    MouseArea { anchors.fill: parent; onClicked: bar.focusWorkspace(parent.number) }
                 }
             }
         }

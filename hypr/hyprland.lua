@@ -337,12 +337,49 @@ hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
 hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
 
+-- Every monitor has its own workspaces: the laptop panel owns 1-10, the next monitor 11-20, the one after 21-30 ...
+-- (the others in name order). mainMod + N shows workspace N on ALL monitors at once, each on its own set.
+local function wsOffset(name)
+    if name:sub(1, 3) == "eDP" then return 0 end
+    local names = {}
+    for _, m in ipairs(hl.get_monitors()) do
+        if m.name:sub(1, 3) ~= "eDP" then names[#names + 1] = m.name end
+    end
+    table.sort(names)
+    for i, n in ipairs(names) do
+        if n == name then return 10 * i end
+    end
+    return 0
+end
+
+-- Show workspace `id` on a monitor. One that still lives on another monitor (e.g. from before this scheme) is moved over first;
+-- plain focusing would just jump to that other monitor instead.
+local function showOn(monitorName, id)
+    local ws = hl.get_workspace(id)
+    if ws and ws.monitor and ws.monitor.name ~= monitorName then
+        hl.dispatch(hl.dsp.workspace.move({ workspace = id, monitor = monitorName }))
+    end
+    hl.dispatch(hl.dsp.focus({ monitor = monitorName }))
+    hl.dispatch(hl.dsp.focus({ workspace = id }))
+end
+
+-- Global on purpose: the bar calls it through `hyprctl eval` when a workspace dot is clicked.
+function qsGotoWorkspace(n)
+    local cur = hl.get_active_monitor().name
+    local pos = hl.get_cursor_pos()   -- focusing a monitor warps the pointer to its centre: put it back afterwards
+    for _, m in ipairs(hl.get_monitors()) do
+        if m.name ~= cur then showOn(m.name, n + wsOffset(m.name)) end
+    end
+    showOn(cur, n + wsOffset(cur))
+    hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
+end
+
 -- Switch workspaces with mainMod + [0-9]
--- Move active window to a workspace with mainMod + SHIFT + [0-9]
+-- Move active window to a workspace of the monitor it is on with mainMod + SHIFT + [0-9]
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
-    hl.bind(mainMod .. " + " .. key,             hl.dsp.focus({ workspace = i}))
-    hl.bind(mainMod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + " .. key,             function() qsGotoWorkspace(i) end)
+    hl.bind(mainMod .. " + SHIFT + " .. key,     function() hl.dispatch(hl.dsp.window.move({ workspace = i + wsOffset(hl.get_active_monitor().name) })) end)
 end
 
 -- Example special workspace (scratchpad)
