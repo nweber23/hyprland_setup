@@ -107,11 +107,11 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")   -- Electron apps (VS Code, D
 -- Refer to https://wiki.hypr.land/configuring/core/config-options/
 hl.config({
     general = {
-        -- Clean look (as in Serpantinum): tight gaps and no window borders.
+        -- Clean look: tight gaps and a thin border that only really shows on the focused window (wallpaper colours, see matugen).
         gaps_in  = 4,
         gaps_out = 6,
 
-        border_size = 0,
+        border_size = 2,
 
         col = {
             active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
@@ -134,6 +134,10 @@ hl.config({
 
         active_opacity   = 1.0,
         inactive_opacity = 1.0,
+
+        -- Windows that do not have the focus are dimmed a little, so the active one stands out at a glance.
+        dim_inactive = true,
+        dim_strength = 0.12,
 
         shadow = {
             enabled      = false,
