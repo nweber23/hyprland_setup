@@ -294,6 +294,12 @@ hl.gesture({
     action = "workspace"
 })
 
+-- three fingers up: workspace overview, three fingers down: window overview (the same as Super+O and Alt+Tab held, tap to choose)
+hl.gesture({ fingers = 3, direction = "up",
+    action = { finish = function() hl.exec_cmd("quickshell ipc call shell toggle workspaces") end } })
+hl.gesture({ fingers = 3, direction = "down",
+    action = { finish = function() hl.exec_cmd("quickshell ipc call shell toggle switcher") end } })
+
 -- Example per-device config
 -- See https://wiki.hypr.land/configuring/core/devices/ for more
 hl.device({
@@ -322,6 +328,9 @@ hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call shell to
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call shell lock"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))   -- next keyboard layout
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("record region"))   -- start/stop a region recording
+hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("screen-ocr"))    -- copy text from a region of the screen
+hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("screen-qr"))     -- read a QR code
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("colorpick"))     -- pick a colour
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nightlight"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle capture"))   -- screenshot / recording options
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("quickshell ipc call shell toggle tools"))

@@ -213,6 +213,10 @@ PanelWindow {
                 MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: m => { if (m.button === Qt.RightButton) Updates.check(); else Updates.install() } }
             }
+            Icon {   // on-screen keyboard for the touch screen
+                id: oskIcon; name: "keyboard_alt"; size: 17
+                MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["osk"]) }
+            }
             Icon {   // keep awake: no auto-lock, screen-off or suspend while it is on
                 id: awakeIcon; name: "local_cafe"; size: 17
                 color: Popups.keepAwake ? Theme.accent : Theme.on_surface

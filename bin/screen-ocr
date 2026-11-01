@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Pick a region of the screen, read the text in it (tesseract) and copy it to the clipboard.
+# Needs: grim slurp tesseract-ocr (+ tesseract-ocr-deu for German), wl-clipboard, notify-send.
+set -u
+region=$(slurp) || exit 0   # Esc cancels
+img=$(mktemp --suffix=.png)
+trap 'rm -f "$img"' EXIT
+grim -g "$region" "$img" || exit 1
+langs=eng
+tesseract --list-langs 2>/dev/null | grep -qx deu && langs=deu+eng
+text=$(tesseract "$img" - -l "$langs" --psm 6 2>/dev/null | sed 's/[[:space:]]*$//' | cat -s)
+if [ -z "$(tr -d '[:space:]' <<<"$text")" ]; then
+    notify-send -a "Text from screen" -i dialog-warning "No text found" "Try a larger or sharper region."
+    exit 1
+fi
+printf %s "$text" | wl-copy
+notify-send -a "Text from screen" -i edit-copy "Text copied" "${text:0:240}"

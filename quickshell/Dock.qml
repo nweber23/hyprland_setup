@@ -68,6 +68,7 @@ PanelWindow {
             Behavior on opacity { NumberAnimation { duration: 180 } }
         }
         TapHandler { enabled: !win.revealed; onTapped: win.touched = true }
+        DragHandler { target: null; enabled: !win.revealed; onTranslationChanged: if (translation.y < -24) win.touched = true }   // swipe up from the bottom edge
 
         Rectangle {
             id: pill

@@ -22,7 +22,8 @@ packages() {
     say "apt packages (sudo)"
     local runtime="grim slurp wl-clipboard brightnessctl playerctl wlsunset wf-recorder xdg-desktop-portal-wlr xdg-desktop-portal-gtk
         network-manager-gnome libnotify-bin power-profiles-daemon pipewire wireplumber pipewire-pulse jq ffmpeg mpv kitty
-        python3-pil python3-venv python3-pip fonts-jetbrains-mono papirus-icon-theme curl git"
+        python3-pil python3-venv python3-pip fonts-jetbrains-mono papirus-icon-theme curl git
+        tesseract-ocr tesseract-ocr-deu zbar-tools wvkbd udisks2"
     local build="build-essential gcc-14 g++-14 ninja-build meson pkg-config bison flex xcb-proto hwdata
         clang-20 libc++-20-dev libc++abi-20-dev glslang-tools glslang-dev libre2-dev libmuparser-dev libcanberra-dev libeis-dev
         libseat-dev libliftoff-dev libpugixml-dev libxcb-icccm4-dev libxcb-xfixes0-dev libxcb-render-util0-dev libxcb-ewmh-dev
@@ -71,6 +72,8 @@ build() {
     "$here/build/hypr-stack.sh"
     "$here/build/hyprland.sh"
     "$here/build/quickshell.sh"
+    # colour picker (not packaged for Ubuntu 24.04)
+    "$here/build/dep.sh" cmake hyprpicker https://github.com/hyprwm/hyprpicker.git v0.4.7 -DBUILD_TESTING=OFF
 }
 
 # ---------- links ----------

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Pick a colour anywhere on the screen (hyprpicker, a magnifier shows up), copy it as hex and say so.
+set -u
+hex=$(hyprpicker -a -f hex -q 2>/dev/null) || exit 0   # Esc cancels
+[ -n "$hex" ] && notify-send -a "Colour picker" -i color-select "Copied $hex" "$hex is on the clipboard"

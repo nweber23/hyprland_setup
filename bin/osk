@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Toggle the on-screen keyboard (wvkbd) for the touch screen. Starts it the first time; afterwards shows/hides it.
+set -u
+if pgrep -x wvkbd-mobintl >/dev/null; then
+    pkill -RTMIN -x wvkbd-mobintl   # wvkbd: SIGRTMIN toggles the visibility
+else
+    exec wvkbd-mobintl -L 280 --fn "JetBrains Mono 14"
+fi
