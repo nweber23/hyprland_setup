@@ -20,7 +20,7 @@ Panel {
     property int page: 0
     readonly property var pages: [
         { name: "Appearance", icon: "palette" }, { name: "Display", icon: "desktop_windows" }, { name: "Sound", icon: "volume_up" },
-        { name: "Network", icon: "wifi" }, { name: "Keyboard", icon: "keyboard" }, { name: "Night light", icon: "nightlight" },
+        { name: "Network", icon: "wifi" }, { name: "Keyboard", icon: "keyboard" }, { name: "Mouse & touchpad", icon: "mouse" }, { name: "Night light", icon: "nightlight" },
         { name: "Power & lock", icon: "lock_clock" }, { name: "Notifications", icon: "notifications" }, { name: "Calendar", icon: "calendar_month" },
         { name: "Shortcuts", icon: "keyboard_command_key" }, { name: "About", icon: "info" }
     ]
@@ -55,7 +55,12 @@ Panel {
         command: ["sh", "-c", "hyprctl version | head -1; quickshell --version 2>&1 | head -1"]
         stdout: StdioCollector { onStreamFinished: root.hyprVersion = text.trim() }
     }
-    onShownChanged: if (shown) { kbRead.running = true; kbOpt.running = true; nlRead.running = true; ver.running = true }
+    onShownChanged: if (shown) {
+        kbRead.running = true; kbOpt.running = true; nlRead.running = true; ver.running = true
+        const i = root.pages.findIndex(pg => pg.name === Popups.tab)   // opened on a given page: quickshell ipc call shell settings "<page>"
+        if (i >= 0) page = i
+        Popups.tab = ""
+    }
 
     Timer { id: nlSet; interval: 350; onTriggered: Quickshell.execDetached(["nightlight", "set", String(Math.round(root.nlTemp))]) }
 
@@ -64,12 +69,24 @@ Panel {
         if (wallpaper !== "") Quickshell.execDetached(["env", "THEME_MODE=" + mode, "set-wallpaper", wallpaper])
     }
     // the layouts come from a fixed list, so nothing user-typed ends up in the Lua text
-    function applyKeyboard() {
-        const lua = 'hl.config({ input = { kb_layout = "' + layouts.join(",") + '", kb_options = "' + kbSwitch + '" } })\n'
+    // Everything is built from fixed lists and numbers, so nothing user-typed ends up in the Lua text.
+    function inputLua() {
+        const num = v => String(Number(v))
+        return 'hl.config({ input = { kb_layout = "' + layouts.join(",") + '", kb_options = "' + kbSwitch + '", '
+             + 'sensitivity = ' + num(Settings.pointerSpeed) + ', accel_profile = "' + Settings.accelProfile + '", '
+             + 'repeat_rate = ' + Math.round(Settings.repeatRate) + ', repeat_delay = ' + Math.round(Settings.repeatDelay) + ', '
+             + 'touchpad = { natural_scroll = ' + (Settings.naturalScroll ? "true" : "false") + ', tap_to_click = ' + (Settings.tapToClick ? "true" : "false")
+             + ', disable_while_typing = ' + (Settings.disableTyping ? "true" : "false") + ', scroll_factor = ' + num(Settings.scrollSpeed) + ' } } })\n'
+    }
+    function applyInput() {
+        const lua = inputLua()
         kbFile.setText("-- Written by the shell's settings; loaded last by hyprland.lua.\n" + lua)
         Quickshell.execDetached(["hyprctl", "eval", lua])
         refreshKb.restart()
     }
+    function applyKeyboard() { applyInput() }
+    function setInput(key, value) { Settings.set(key, value); inputApply.restart() }
+    Timer { id: inputApply; interval: 300; onTriggered: root.applyInput() }
     FileView { id: kbFile; path: Quickshell.env("HOME") + "/.config/hypr/input-local.lua"; printErrors: false }
     Timer { id: refreshKb; interval: 600; onTriggered: Keyboard.refresh() }
     function saveCalendar(url) {
@@ -182,7 +199,30 @@ Panel {
                     SettingRow { title: "Apply"; hint: "Active layout now: " + Keyboard.name
                         SettingButton { label: "Apply"; accent: true; onClicked: root.applyKeyboard() } }
                 }
-                SettingPage { idx: 5; current: root.page; title: "Night light"
+                SettingPage { idx: 5; current: root.page; title: "Mouse & touchpad"
+                    SettingRow { title: "Natural scrolling"; hint: "Touchpad: content follows your fingers"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.naturalScroll; onPicked: v => root.setInput("naturalScroll", v) } }
+                    SettingRow { title: "Tap to click"; hint: "Touchpad"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.tapToClick; onPicked: v => root.setInput("tapToClick", v) } }
+                    SettingRow { title: "Pause while typing"; hint: "Touchpad ignores your palm"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.disableTyping; onPicked: v => root.setInput("disableTyping", v) } }
+                    SettingRow { title: "Pointer speed"; hint: "Mouse and touchpad"
+                        SettingChips { chipW: 70; model: [{ label: "Slow", value: -0.4 }, { label: "Normal", value: 0 }, { label: "Fast", value: 0.4 }, { label: "Faster", value: 0.8 }]
+                                       current: Settings.pointerSpeed; onPicked: v => root.setInput("pointerSpeed", v) } }
+                    SettingRow { title: "Scroll speed"; hint: "Touchpad"
+                        SettingChips { chipW: 70; model: [{ label: "Slow", value: 0.5 }, { label: "Normal", value: 1 }, { label: "Fast", value: 1.6 }, { label: "Faster", value: 2.4 }]
+                                       current: Settings.scrollSpeed; onPicked: v => root.setInput("scrollSpeed", v) } }
+                    SettingRow { title: "Mouse acceleration"; hint: "Flat = the same distance every time"
+                        SettingChips { chipW: 80; model: [{ label: "Adaptive", value: "adaptive" }, { label: "Flat", value: "flat" }]
+                                       current: Settings.accelProfile; onPicked: v => root.setInput("accelProfile", v) } }
+                    SettingRow { title: "Key repeat"; hint: "How fast a held key repeats"
+                        SettingChips { chipW: 70; model: [{ label: "Slow", value: 15 }, { label: "Normal", value: 25 }, { label: "Fast", value: 40 }]
+                                       current: Settings.repeatRate; onPicked: v => root.setInput("repeatRate", v) } }
+                }
+                SettingPage { idx: 6; current: root.page; title: "Night light"
                     SettingRow { title: "Night light"; hint: "Warms the screen colour"
                         SettingChips { chipW: 64; model: [{ label: "On", value: true }, { label: "Off", value: false }]; current: root.nlOn
                                        onPicked: v => { root.nlOn = v; Quickshell.execDetached(["nightlight", v ? "on" : "off"]) } } }
@@ -194,7 +234,7 @@ Panel {
                                        current: Math.abs(root.nlTemp - 3000) < 50 ? 3000 : Math.abs(root.nlTemp - 3800) < 50 ? 3800 : Math.abs(root.nlTemp - 4600) < 50 ? 4600 : -1
                                        onPicked: v => { root.nlTemp = v; nlSet.restart() } } }
                 }
-                SettingPage { idx: 6; current: root.page; title: "Power & lock"
+                SettingPage { idx: 7; current: root.page; title: "Power & lock"
                     SettingRow { title: "Lock after"; hint: "Minutes without input"
                         SettingChips { chipW: 66; model: [{ label: "Never", value: 0 }, { label: "3", value: 3 }, { label: "5", value: 5 }, { label: "10", value: 10 }, { label: "15", value: 15 }]
                                        current: Settings.lockMinutes; onPicked: v => Settings.set("lockMinutes", v) } }
@@ -214,7 +254,7 @@ Panel {
                     SettingRow { title: "Power panel"; hint: "Battery, brightness, profile, session"
                         SettingButton { label: "Open"; onClicked: root.open("power") } }
                 }
-                SettingPage { idx: 7; current: root.page; title: "Notifications"
+                SettingPage { idx: 8; current: root.page; title: "Notifications"
                     SettingRow { title: "Popup duration"; hint: "Apps that set their own time keep it"
                         SettingChips { chipW: 60; model: [{ label: "3 s", value: 3 }, { label: "6 s", value: 6 }, { label: "10 s", value: 10 }, { label: "15 s", value: 15 }]
                                        current: Settings.popupSeconds; onPicked: v => Settings.set("popupSeconds", v) } }
@@ -224,7 +264,7 @@ Panel {
                         SettingButton { label: "Clear"; onClicked: NotifHistory.clear() }
                         SettingButton { label: "Open"; onClicked: root.open("notifications") } }
                 }
-                SettingPage { idx: 8; current: root.page; title: "Calendar"
+                SettingPage { idx: 9; current: root.page; title: "Calendar"
                     SettingRow { title: "Calendar link (iCal)"; hint: Events.configured ? "Source found, " + Events.upcoming.length + " upcoming events" : "No source yet. Paste a private iCal link."
                         Rectangle {
                             implicitWidth: 300; implicitHeight: 32; radius: 10; color: Theme.cardHigh
@@ -240,11 +280,11 @@ Panel {
                     SettingRow { title: "Calendar panel"
                         SettingButton { label: "Open"; onClicked: root.open("calendar") } }
                 }
-                SettingPage { idx: 9; current: root.page; title: "Shortcuts"
+                SettingPage { idx: 10; current: root.page; title: "Shortcuts"
                     SettingRow { title: "All shortcuts"; hint: "Every key combination of this desktop, grouped. Also on Super+F1"
                         SettingButton { label: "Open"; accent: true; onClicked: root.open("shortcuts") } }
                 }
-                SettingPage { idx: 10; current: root.page; title: "About"
+                SettingPage { idx: 11; current: root.page; title: "About"
                     SettingRow { title: "Software"; hint: root.hyprVersion }
                     SettingRow { title: "Configuration"; hint: "~/dotfiles  (Hyprland, Quickshell, matugen)"
                         SettingButton { label: "Open folder"; onClicked: { Popups.close(); Quickshell.execDetached(["xdg-open", Quickshell.env("HOME") + "/dotfiles"]) } } }

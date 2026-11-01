@@ -16,6 +16,12 @@ ShellRoot {
         }
         function lock(): void { lockScreen.lock() }
         function focus(): void { Popups.setFocus(!Popups.focusMode) }   // focus mode: no bar, no notifications, a 25 minute countdown
+        function settings(page: string): void {   // open the settings on a page, e.g. "Mouse & touchpad"
+            const m = Hyprland.focusedMonitor
+            if (!m) return
+            Popups.tab = page
+            Popups.toggle("settings", m.name, m.width / m.scale / 2)
+        }
         function launcher(query: string): void {   // open the launcher with a ready-made query
             Popups.launcherPrefill = query
             const m = Hyprland.focusedMonitor

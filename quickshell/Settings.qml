@@ -15,6 +15,21 @@ Singleton {
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
+    // pointer and keyboard (applied to Hyprland by the settings panel, which also writes input-local.lua)
+    property bool naturalScroll: false   // touchpad: content follows the fingers
+    property bool tapToClick: true       // touchpad: tapping clicks
+    property bool disableTyping: true    // touchpad: ignored while typing
+    property real pointerSpeed: 0        // -1 .. 1, mouse and touchpad
+    property real scrollSpeed: 1         // touchpad scrolling factor
+    property string accelProfile: "adaptive"   // "adaptive" | "flat"
+    property int repeatRate: 25          // key repeats per second
+    property int repeatDelay: 600        // ms before a held key repeats
+
+    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets",
+                                 "liveOnBattery", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
+                                 "repeatRate", "repeatDelay"]
+    readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"] })
+
 
     FileView {
         id: file
@@ -23,20 +38,18 @@ Singleton {
         onLoaded: {
             try {
                 const d = JSON.parse(text())
-                if (d.lockMinutes !== undefined) root.lockMinutes = d.lockMinutes
-                if (d.screenOffMinutes !== undefined) root.screenOffMinutes = d.screenOffMinutes
-                if (d.popupSeconds !== undefined) root.popupSeconds = d.popupSeconds
-                if (d.themeMode === "dark" || d.themeMode === "light") root.themeMode = d.themeMode
-                if (d.suspendMinutes !== undefined) root.suspendMinutes = d.suspendMinutes
-                if (d.autoSaver !== undefined) root.autoSaver = !!d.autoSaver
-                if (d.dock !== undefined) root.dock = !!d.dock
-                if (d.widgets !== undefined) root.widgets = !!d.widgets
-                if (d.liveOnBattery !== undefined) root.liveOnBattery = !!d.liveOnBattery
+                for (const k of root.keys) {
+                    if (d[k] === undefined || typeof d[k] !== typeof root[k]) continue   // unknown or wrongly typed: keep the default
+                    if (root.allowed[k] && root.allowed[k].indexOf(d[k]) < 0) continue
+                    root[k] = d[k]
+                }
             } catch (e) { console.warn("Settings: bad settings.json:", e) }
         }
     }
     function set(key, value) {
         root[key] = value
-        file.setText(JSON.stringify({ lockMinutes: lockMinutes, screenOffMinutes: screenOffMinutes, popupSeconds: popupSeconds, themeMode: themeMode, liveOnBattery: liveOnBattery, suspendMinutes: suspendMinutes, autoSaver: autoSaver, widgets: widgets, dock: dock }, null, 2))
+        const out = {}
+        for (const k of root.keys) out[k] = root[k]
+        file.setText(JSON.stringify(out, null, 2))
     }
 }
