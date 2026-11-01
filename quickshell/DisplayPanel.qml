@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 
-// Resolution, refresh rate and scale per monitor. Changes apply at once through `hyprctl eval` and are
+// Resolution, refresh rate, scale and position per monitor. Changes apply at once through `hyprctl eval` and are
 // saved to ~/.config/hypr/monitors-local.{json,lua}; hyprland.lua loads the .lua file after its own rules.
 Panel {
     id: root
@@ -32,25 +32,104 @@ Panel {
     // The description ends up inside a Lua string: refuse anything that could break out of it.
     function safe(s) { return typeof s === "string" && s.length > 0 && !/["\\\n\r]/.test(s) }
 
-    function apply(mon, w, h, r, scale) {
-        if (!safe(mon.description)) return
-        const mode = w + "x" + h + "@" + r
-        const pos = mon.name.startsWith("eDP") ? "0x0" : "auto-right"
-        const rule = 'hl.monitor({ output = "desc:' + mon.description + '", mode = "' + mode + '", position = "' + pos + '", scale = ' + scale + ' })'
-        Quickshell.execDetached(["hyprctl", "eval", rule])
-        const s = Object.assign({}, saved); s[mon.description] = { mode: mode, scale: scale }; saved = s
+    // ---- arrangement of the displays ----
+    // The main display (the laptop panel) sits at 0,0. Every other display is placed against one edge of it
+    // (left, above, below, right) and aligned along that edge (start, center, end).
+    readonly property var mainMon: monitors.find(m => m.name.startsWith("eDP")) ?? (monitors.length > 0 ? monitors[0] : null)
+    readonly property bool isMain: !!mon && !!mainMon && mon.description === mainMon.description
+    property string pplace: "right"     // pending side of the selected display
+    property string palign: "start"     // pending alignment along that side
+
+    // size in layout pixels (pixels / scale), from the pending values, the saved ones or the live ones
+    function sizeOf(m, pending) {
+        let w = m.width, h = m.height, sc = m.scale
+        if (pending && mon && m.description === mon.description) { w = pw; h = ph; sc = pscale }
+        else if (saved[m.description]) {
+            const mm = /^(\d+)x(\d+)@/.exec(saved[m.description].mode)
+            if (mm) { w = +mm[1]; h = +mm[2]; sc = saved[m.description].scale }
+        }
+        return { w: Math.round(w / sc), h: Math.round(h / sc) }
+    }
+    function spot(M, S, place, align) {
+        const f = (outer, inner) => align === "start" ? 0 : align === "end" ? outer - inner : Math.round((outer - inner) / 2)
+        if (place === "right") return { x: M.w, y: f(M.h, S.h) }
+        if (place === "left")  return { x: -S.w, y: f(M.h, S.h) }
+        if (place === "above") return { x: f(M.w, S.w), y: -S.h }
+        return { x: f(M.w, S.w), y: M.h }   // below
+    }
+    // where a display is now, read back from its live position
+    function inferPlace(m) {
+        const M = mainMon, a = sizeOf(M, false), b = sizeOf(m, false)
+        let place = "below"
+        if (m.x >= M.x + a.w) place = "right"
+        else if (m.x + b.w <= M.x) place = "left"
+        else if (m.y + b.h <= M.y) place = "above"
+        const horiz = place === "left" || place === "right"
+        const d = horiz ? m.y - M.y : m.x - M.x, outer = horiz ? a.h : a.w, inner = horiz ? b.h : b.w
+        return { place: place, align: Math.abs(d) < 3 ? "start" : (Math.abs(d - (outer - inner)) < 3 ? "end" : "center") }
+    }
+    function placeOf(m, pending) {
+        if (pending && mon && m.description === mon.description) return { place: pplace, align: palign }
+        const sv = saved[m.description]
+        if (sv && sv.place) return { place: sv.place, align: sv.align }
+        return inferPlace(m)
+    }
+    // { description: { x, y, w, h, place, align } } for every connected display
+    function layout(pending) {
+        const out = {}
+        if (!mainMon) return out
+        const M = sizeOf(mainMon, pending)
+        out[mainMon.description] = { x: 0, y: 0, w: M.w, h: M.h }
+        for (const m of monitors) {
+            if (m.description === mainMon.description) continue
+            const S = sizeOf(m, pending), p = placeOf(m, pending), xy = spot(M, S, p.place, p.align)
+            out[m.description] = { x: xy.x, y: xy.y, w: S.w, h: S.h, place: p.place, align: p.align }
+        }
+        return out
+    }
+    readonly property var preview: layout(true)   // what the map shows: includes pending changes
+    readonly property var mapBox: {               // scale and offset that fit all displays into the 260 x 120 map
+        const v = Object.values(preview)
+        if (v.length === 0) return { k: 1, ox: 0, oy: 0 }
+        let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9
+        for (const r of v) { x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.w); y1 = Math.max(y1, r.y + r.h) }
+        const k = Math.min(260 / (x1 - x0), 120 / (y1 - y0))
+        return { k: k, ox: 20 + (260 - (x1 - x0) * k) / 2 - x0 * k, oy: 15 + (120 - (y1 - y0) * k) / 2 - y0 * k }
+    }
+
+    // Everything that ends up in a Lua string is checked first: a hand-edited JSON file must not be able to break out of it.
+    function valid(d, e) {
+        return safe(d) && e && /^\d+x\d+@[\d.]+$/.test(e.mode) && typeof e.scale === "number" && (e.pos === undefined || /^-?\d+x-?\d+$/.test(e.pos))
+    }
+    function rulesText() {
+        let lua = ""
+        for (const d in saved) {
+            const e = saved[d]
+            if (!valid(d, e)) continue
+            const pos = e.pos ?? (d.startsWith("AU Optronics") ? "0x0" : "auto-right")   // older files had no position
+            lua += 'hl.monitor({ output = "desc:' + d + '", mode = "' + e.mode + '", position = "' + pos + '", scale = ' + e.scale + ' })\n'
+        }
+        return lua
+    }
+
+    function apply(m0, w, h, r, scale) {
+        if (!safe(m0.description)) return
+        const s = Object.assign({}, saved)
+        for (const m of monitors)   // every connected display gets an entry, so all positions are written together
+            if (safe(m.description) && !s[m.description]) s[m.description] = { mode: m.width + "x" + m.height + "@" + m.rate.toFixed(2), scale: m.scale }
+        s[m0.description] = Object.assign({}, s[m0.description], { mode: w + "x" + h + "@" + r, scale: scale })
+        if (!isMain) Object.assign(s[m0.description], { place: pplace, align: palign })
+        saved = s
+        const lay = layout(false), t = Object.assign({}, saved)
+        for (const d in lay) if (t[d]) t[d] = Object.assign({}, t[d], { pos: lay[d].x + "x" + lay[d].y }, lay[d].place ? { place: lay[d].place, align: lay[d].align } : {})
+        saved = t
         persist()
+        Quickshell.execDetached(["hyprctl", "eval", rulesText()])
         reload.restart()
     }
     function persist() {
         store.setText(JSON.stringify(saved))
-        let lua = "-- Written by the shell's display panel; loaded at the end of the monitor rules.\n"
-        for (const d in saved) {
-            if (!safe(d)) continue
-            const pos = d.startsWith("AU Optronics") ? "0x0" : "auto-right"
-            lua += 'hl.monitor({ output = "desc:' + d + '", mode = "' + saved[d].mode + '", position = "' + pos + '", scale = ' + saved[d].scale + ' })\n'
-        }
-        luaFile.setText(lua)
+        luaFile.setText("-- Written by the shell's display panel; loaded at the end of the monitor rules.\n" + rulesText())
     }
 
     // Give Hyprland a moment to apply, then refresh the panel and the X11 DPI (follows the scale).
@@ -65,7 +144,7 @@ Panel {
             onStreamFinished: {
                 try {
                     root.monitors = JSON.parse(text).map(m => ({
-                        name: m.name, description: m.description, width: m.width, height: m.height,
+                        name: m.name, description: m.description, width: m.width, height: m.height, x: m.x, y: m.y,
                         rate: m.refreshRate, scale: m.scale, modes: root.parseModes(m.availableModes)
                     }))
                 } catch (e) {}
@@ -88,7 +167,10 @@ Panel {
     property real pr: 0
     property real pscale: 1
     property bool applied: false
-    function syncPending() { if (mon) { pw = mon.width; ph = mon.height; pr = mon.rate; pscale = mon.scale } }
+    function syncPending() {
+        if (mon) { pw = mon.width; ph = mon.height; pr = mon.rate; pscale = mon.scale }
+        if (mon && mainMon && !isMain) { const p = placeOf(mon, false); pplace = p.place; palign = p.align }
+    }
     onMonChanged: syncPending()
     onSelMonChanged: syncPending()
 
@@ -331,6 +413,67 @@ Panel {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ---- arrangement of the displays (only with more than one) ----
+    Reveal {
+        p: root; index: 5; dy: 12
+        visible: root.monitors.length > 1
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.card }
+        RowLayout {
+            Layout.fillWidth: true; spacing: 24
+            Item {   // map: the displays to scale, the selected one highlighted
+                Layout.preferredWidth: 300; Layout.preferredHeight: 150
+                Rectangle { anchors.fill: parent; radius: 14; color: Theme.card }
+                Repeater {
+                    model: root.monitors
+                    delegate: Rectangle {
+                        required property var modelData
+                        required property int index
+                        readonly property var r: root.preview[modelData.description] ?? { x: 0, y: 0, w: 1920, h: 1080 }
+                        readonly property bool sel: root.selMon === index
+                        x: r.x * root.mapBox.k + root.mapBox.ox; y: r.y * root.mapBox.k + root.mapBox.oy
+                        width: r.w * root.mapBox.k; height: r.h * root.mapBox.k
+                        radius: 6; color: sel ? Theme.accent : Theme.cardHigh
+                        border.width: 2; border.color: sel ? Theme.accent : Qt.alpha(Theme.outline, 0.6)
+                        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Text { anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData.name
+                               color: parent.sel ? Theme.panelBg : Theme.on_surface; font.family: Theme.mono; font.pixelSize: 10; font.bold: true }
+                        MouseArea { anchors.fill: parent; onClicked: root.selMon = index }
+                    }
+                }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 8
+                Text { textFormat: Text.PlainText; text: root.isMain ? "This is the main display. Select another one on the map to move it." : "Position of " + (root.mon ? root.mon.name : "")
+                       color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 11; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                RowLayout {
+                    spacing: 6; enabled: !root.isMain; opacity: root.isMain ? 0.35 : 1
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    Repeater {
+                        model: [{ v: "left", l: "Left" }, { v: "above", l: "Above" }, { v: "below", l: "Below" }, { v: "right", l: "Right" }]
+                        delegate: ToolChip { required property var modelData; label: modelData.l; on: root.pplace === modelData.v
+                                             onClicked: { root.pplace = modelData.v; root.applied = false } }
+                    }
+                }
+                RowLayout {
+                    spacing: 6; enabled: !root.isMain; opacity: root.isMain ? 0.35 : 1
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    readonly property bool horiz: root.pplace === "left" || root.pplace === "right"
+                    Repeater {
+                        model: [{ v: "start", h: "Top", w: "Left" }, { v: "center", h: "Center", w: "Center" }, { v: "end", h: "Bottom", w: "Right" }]
+                        delegate: ToolChip { required property var modelData; label: parent.horiz ? modelData.h : modelData.w; on: root.palign === modelData.v
+                                             onClicked: { root.palign = modelData.v; root.applied = false } }
+                    }
+                }
+                Text { visible: !root.isMain; textFormat: Text.PlainText; text: "Apply saves the position with the other settings."
+                       color: Theme.outline; font.family: Theme.mono; font.pixelSize: 10 }
             }
         }
     }
