@@ -392,6 +392,25 @@ function qsFocusWindow(address)
     hl.dispatch(hl.dsp.focus({ window = "address:" .. address }))
 end
 
+-- Step to the next / previous workspace number that has windows (or is showing now), on every monitor at once.
+-- Global like qsGotoWorkspace so the binds below and the shell can use it.
+function qsCycleWorkspace(dir)
+    local cur = hl.get_active_monitor()
+    local curId = cur.active_workspace and cur.active_workspace.id or 1
+    local here = (curId - 1) % 10 + 1
+    local open, nums = { [here] = true }, {}
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if ws.id > 0 and (ws.windows > 0 or ws.active) then open[(ws.id - 1) % 10 + 1] = true end
+    end
+    for n in pairs(open) do nums[#nums + 1] = n end
+    table.sort(nums)
+    local at = 1
+    for i, n in ipairs(nums) do
+        if n == here then at = i end
+    end
+    qsGotoWorkspace(nums[(at - 1 + dir) % #nums + 1])
+end
+
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace of the monitor it is on with mainMod + SHIFT + [0-9]
 for i = 1, 10 do
@@ -405,8 +424,8 @@ hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + CTRL + Tab",         hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + CTRL + SHIFT + Tab", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + CTRL + Tab",         function() qsCycleWorkspace(1) end)
+hl.bind(mainMod .. " + CTRL + SHIFT + Tab", function() qsCycleWorkspace(-1) end)
 -- Window overview: Alt+Tab / Super+Tab.
 --   * A quick tap (modifier up within ~150 ms) swaps windows right here, with no overview and no round trip to the shell.
 --   * Holding the modifier opens the overview; Tab moves on, releasing the modifier switches.
@@ -457,8 +476,8 @@ hl.bind("ALT + Tab",         function() overviewKey(1,  { "Alt_L", "Alt_R" }) en
 hl.bind("ALT + SHIFT + Tab", function() overviewKey(-1, { "Alt_L", "Alt_R" }) end)
 hl.bind(mainMod .. " + Tab",         function() overviewKey(1,  { "Super_L", "Super_R" }) end)
 hl.bind(mainMod .. " + SHIFT + Tab", function() overviewKey(-1, { "Super_L", "Super_R" }) end)
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + mouse_down", function() qsCycleWorkspace(1) end)
+hl.bind(mainMod .. " + mouse_up",   function() qsCycleWorkspace(-1) end)
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })

@@ -48,7 +48,7 @@ Local, never committed: `~/.config/quickshell-local/calendar.ics` or `calendar-u
 | `Super+Space`, `Alt+Shift` | next keyboard layout (us, de) |
 | `Super+1..9`, `Super+Shift+1..9` | workspace N on **every** monitor at once (laptop 1-10, next monitor 11-20, ...) / move the window to that monitor's workspace N |
 | `Alt+Tab`, `Super+Tab` (+Shift) | window overview (grid of live previews): hold the key, Tab moves on, release picks, Del closes |
-| `Super+Ctrl+Tab` (+Shift) | next / previous workspace |
+| `Super+Ctrl+Tab` (+Shift), `Super+wheel` | next / previous workspace that has windows, on every monitor |
 | `Super+Arrows`, `Super+Shift+Arrows`, `Super+Ctrl+Arrows` | focus / move / resize |
 | `Print`, `Shift+Print`, `Super+Print` | screenshot region / full / window (saved and copied) |
 | `Super+Shift+R` | start/stop a region recording |
