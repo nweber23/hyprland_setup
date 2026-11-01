@@ -1,1 +1,9 @@
+# local files that must never be committed
 monitors-local.*
+*.log
+*.ics
+calendar-url.txt
+settings.json
+notes.txt
+*.db
+.env
