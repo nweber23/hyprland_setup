@@ -134,7 +134,7 @@ Panel {
             Layout.fillWidth: true; spacing: 10
             Icon { name: root.unlocked ? "lock_open" : "lock"; size: 22; color: root.unlocked ? Theme.accent2 : Theme.accent }
             Text { Layout.fillWidth: true; textFormat: Text.PlainText; text: "Passwords"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 16; font.bold: true }
-            SettingButton { visible: root.unlocked && !root.adding; label: "New"; accent: true; onClicked: { root.adding = true; root.note = ""; root.error = "" } }
+            SettingButton { visible: root.unlocked && !root.adding; label: "New"; accent: true; onClicked: { root.form = ({}); root.adding = true; root.note = ""; root.error = "" } }
             SettingButton { visible: root.unlocked; label: "Lock"; onClicked: root.lock() }
         }
     }
@@ -259,6 +259,13 @@ Panel {
     Reveal {
         p: root; index: 1; dy: 12
         visible: root.unlocked && root.adding
+        // built fresh every time it opens, so the fields never keep what was typed for the previous entry
+        Loader {
+            Layout.fillWidth: true
+            active: root.adding
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: 8
         Text { textFormat: Text.PlainText; text: "New entry"; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12 }
         Repeater {
             model: [{ k: "title", h: "Title (e.g. GitHub)" }, { k: "username", h: "User name or e-mail" }, { k: "url", h: "Address (https://…)" }]
@@ -294,7 +301,11 @@ Panel {
                             } }
             SettingButton { label: "Cancel"; onClicked: { root.adding = false; root.form = ({}) } }
         }
+                }
+            }
+        }
     }
+
     property var form: ({})
 
     // ---- status line ----
