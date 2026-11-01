@@ -6,7 +6,7 @@ import Quickshell.Services.SystemTray
 import QtQuick
 
 ShellRoot {
-    Component.onCompleted: Battery.init()
+    Component.onCompleted: { Battery.init(); SysMon.init() }
     // Keybinds call:  quickshell ipc call shell toggle <panel>
     IpcHandler {
         target: "shell"

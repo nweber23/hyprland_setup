@@ -12,7 +12,9 @@ Singleton {
     property real mem: 0          // %
     property real memUsedGb: 0
     property real memTotalGb: 0
-    property real temp: 0         // degrees C
+    property real temp: 0         // CPU, degrees C
+    property real gpuTemp: 0
+    property real ssdTemp: 0
     property real disk: 0         // % of /
     property real down: 0         // bytes per second
     property real up: 0
@@ -29,7 +31,7 @@ Singleton {
     Process {
         id: sample
         command: ["sh", "-c", 'head -1 /proc/stat; echo "--"; awk "/MemTotal|MemAvailable/{print \\$2}" /proc/meminfo; echo "--"; '
-                 + 'cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | sort -n | tail -1; echo "--"; df -B1 --output=used,size / | tail -1; echo "--"; '
+                 + 'for d in /sys/class/hwmon/hwmon*; do n=$(cat "$d/name" 2>/dev/null); case "$n" in k10temp|amdgpu|nvme) echo "$n $(cat "$d/temp1_input" 2>/dev/null)";; esac; done; echo "--"; df -B1 --output=used,size / | tail -1; echo "--"; '
                  + 'awk "/:/ && \\$1 !~ /^lo:/ {rx+=\\$2; tx+=\\$10} END {print rx+0, tx+0}" /proc/net/dev; echo "--"; '
                  + 'ps -eo comm=,pcpu= --sort=-pcpu | head -5; echo "--"; cut -d" " -f1 /proc/uptime']
         stdout: StdioCollector {
@@ -44,7 +46,9 @@ Singleton {
                 root.lastCpu = { idle: idle, total: total }
                 const m = sec[1].trim().split("\n").map(Number)         // MemTotal, MemAvailable (kB)
                 root.memTotalGb = m[0] / 1048576; root.memUsedGb = (m[0] - m[1]) / 1048576; root.mem = 100 * (m[0] - m[1]) / m[0]
-                root.temp = (+sec[2].trim() || 0) / 1000
+                const heat = {}
+                for (const l of sec[2].trim().split("\n")) { const q = l.trim().split(" "); heat[q[0]] = (+q[1] || 0) / 1000 }
+                root.temp = heat.k10temp ?? 0; root.gpuTemp = heat.amdgpu ?? 0; root.ssdTemp = heat.nvme ?? 0
                 const d = sec[3].trim().split(/\s+/).map(Number); root.disk = d[1] > 0 ? 100 * d[0] / d[1] : 0
                 const n = sec[4].trim().split(/\s+/).map(Number)
                 if (root.lastNet && now > root.lastT) { const s = (now - root.lastT) / 1000; root.down = Math.max(0, (n[0] - root.lastNet[0]) / s); root.up = Math.max(0, (n[1] - root.lastNet[1]) / s) }
@@ -58,4 +62,21 @@ Singleton {
         }
     }
     Timer { interval: 1000; repeat: true; running: root.active; triggeredOnStart: true; onTriggered: if (!sample.running) sample.running = true }
+
+    // Overheating: checked every 20 s even when no panel is open; one warning, re-armed once it has cooled down.
+    property bool hot: false
+    function init() {}   // referencing the singleton starts the watcher
+    Process {
+        id: heatCheck
+        command: ["sh", "-c", 'for d in /sys/class/hwmon/hwmon*; do [ "$(cat "$d/name" 2>/dev/null)" = k10temp ] && cat "$d/temp1_input"; done']
+        stdout: StdioCollector { onStreamFinished: {
+            const t = (+text.trim() || 0) / 1000
+            if (t >= 90 && !root.hot) {
+                root.hot = true
+                Quickshell.execDetached(["notify-send", "-u", "critical", "-a", "System", "-i", "dialog-warning", "The CPU is very hot: " + Math.round(t) + " \u00b0C",
+                                         "Close heavy programs or check that the vents are free."])
+            } else if (t < 82) root.hot = false
+        } }
+    }
+    Timer { interval: 20000; repeat: true; running: true; triggeredOnStart: true; onTriggered: if (!heatCheck.running) heatCheck.running = true }
 }

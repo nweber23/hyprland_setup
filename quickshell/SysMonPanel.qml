@@ -8,7 +8,7 @@ Panel {
     backdrop: "Grid"
     panelWidth: 640
     centered: false
-    fixedH: 560
+    fixedH: 640
     onShownChanged: SysMon.active = shown
 
     function fmtRate(b) { return b > 1048576 ? (b / 1048576).toFixed(1) + " MB/s" : b > 1024 ? (b / 1024).toFixed(0) + " kB/s" : Math.round(b) + " B/s" }
@@ -58,8 +58,19 @@ Panel {
         }
     }
 
-    Reveal {
+    Reveal {   // temperatures; this laptop reports no fan speed
         p: root; index: 2; dy: 14
+        RowLayout {
+            Layout.fillWidth: true; spacing: 12
+            StatCard { Layout.fillWidth: true; caption: "CPU"; value: Math.round(SysMon.temp) + " \u00b0C"; valueColor: SysMon.temp >= 85 ? Theme.error : Theme.on_surface }
+            StatCard { Layout.fillWidth: true; caption: "GPU"; value: Math.round(SysMon.gpuTemp) + " \u00b0C"; valueColor: SysMon.gpuTemp >= 85 ? Theme.error : Theme.on_surface }
+            StatCard { Layout.fillWidth: true; caption: "SSD"; value: Math.round(SysMon.ssdTemp) + " \u00b0C"; valueColor: SysMon.ssdTemp >= 70 ? Theme.error : Theme.on_surface }
+            StatCard { Layout.fillWidth: true; caption: "FAN"; value: "n/a"; sub: "not reported" }
+        }
+    }
+
+    Reveal {
+        p: root; index: 3; dy: 14
         RowLayout {
             Layout.fillWidth: true; spacing: 12
             Rectangle {
@@ -78,7 +89,7 @@ Panel {
     }
 
     Reveal {
-        p: root; index: 3; dy: 14
+        p: root; index: 4; dy: 14
         Rectangle {
             Layout.fillWidth: true; implicitHeight: procCol.implicitHeight + 28; radius: 12; color: Theme.card
             ColumnLayout {
