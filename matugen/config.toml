@@ -11,3 +11,12 @@ output_path = "~/.cache/hypr-colors.lua"
 [templates.kitty]
 input_path = "~/dotfiles/matugen/templates/kitty-colors.conf"
 output_path = "~/.cache/kitty-colors.conf"
+
+# GTK4 / libadwaita apps (Files, Settings, ...) and GTK3 apps whose theme uses the named colours.
+[templates.gtk4]
+input_path = "~/dotfiles/matugen/templates/gtk-colors.css"
+output_path = "~/.config/gtk-4.0/gtk.css"
+
+[templates.gtk3]
+input_path = "~/dotfiles/matugen/templates/gtk-colors.css"
+output_path = "~/.config/gtk-3.0/gtk.css"

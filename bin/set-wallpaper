@@ -14,6 +14,8 @@ case "${img,,}" in
     *) still="$img" ;;
 esac
 matugen image "$still" -m "${THEME_MODE:-dark}" --prefer saturation >/dev/null   # colours first, so the UI never shows a stale palette
+# GTK apps follow the same dark/light choice (this also applies in the GNOME fallback session)
+command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface color-scheme "prefer-${THEME_MODE:-dark}" 2>/dev/null || true
 printf '%s\n' "$still" > "$out/wallpaper-still.txt"
 printf '%s\n' "$img" > "$out/wallpaper.txt"
 hyprctl eval "$(grep -v "^--" "$HOME/.cache/hypr-colors.lua")" >/dev/null 2>&1 || true   # no-op outside Hyprland (comment lines would parse as options)
