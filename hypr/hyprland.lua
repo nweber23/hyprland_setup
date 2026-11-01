@@ -335,6 +335,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("nightlight"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle capture"))   -- screenshot / recording options
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("quickshell ipc call shell toggle tools"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("quickshell ipc call shell dock"))   -- show / hide the dock
+hl.bind(mainMod .. " + SHIFT + G", function() qsGameMode(not qsGameModeOn) end)   -- game mode: no blur, no animations
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call shell toggle shortcuts"))   -- all shortcuts
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle workspaces"))   -- workspace overview
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
@@ -403,6 +404,20 @@ function qsFocusWindow(address)
     end
     hl.dispatch(hl.dsp.focus({ window = "address:" .. address }))
 end
+
+-- Game mode: no blur and no animations, for games and video on the small iGPU. The shell reads the state from
+-- ~/.cache/quickshell/gamemode.txt (it also pauses an animated wallpaper). Global: the bar button and the key bind call it.
+qsGameModeOn = false
+function qsGameMode(on)
+    qsGameModeOn = on and true or false
+    hl.config({
+        animations = { enabled = not qsGameModeOn },
+        decoration = { blur = { enabled = not qsGameModeOn } },
+    })
+    local f = io.open(os.getenv("HOME") .. "/.cache/quickshell/gamemode.txt", "w")
+    if f then f:write(qsGameModeOn and "1" or "0"); f:close() end
+end
+qsGameMode(false)   -- a fresh session always starts normal
 
 -- Move a window to workspace number n of the monitor it is on (the workspace overview calls this when you drop a window on a card).
 function qsMoveWindow(address, n)

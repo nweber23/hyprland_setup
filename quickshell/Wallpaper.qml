@@ -32,7 +32,7 @@ PanelWindow {
 
     // ---- video ----
     // Playing only when it can be seen and is worth it: not locked, no fullscreen window, and (by default) not on battery.
-    readonly property bool shouldPlay: isVideo && !Popups.locked
+    readonly property bool shouldPlay: isVideo && !Popups.locked && !Popups.gameMode
         && !(Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.hasFullscreen)
         && (Settings.liveOnBattery || !UPower.onBattery)
     onShouldPlayChanged: if (shouldPlay) player.play(); else player.pause()

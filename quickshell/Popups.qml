@@ -1,14 +1,17 @@
 pragma Singleton
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 // Which panel is open, on which screen, and where it should hang (x in screen coordinates).
 Singleton {
+    id: root
     property int initSteps: 0         // Tab presses made before the overview opened (the first one selects the previous window)
     property real earlyConfirm: 0     // ms timestamp of an Alt/Super release that came before the overview opened
     signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
+    property bool gameMode: false     // no blur, no animations (Super+Shift+G); mirrored from hyprland.lua through a file
     property bool dockPinned: false   // dock held open (Super+D)
     property bool keepAwake: false    // no auto-lock, screen-off or suspend while on (the coffee button in the bar)
     property bool dnd: false          // do not disturb: notification popups hidden
@@ -35,5 +38,11 @@ Singleton {
     function close() {
         if (current !== "") { lastClosed = current; lastClosedAt = Date.now() }
         current = ""
+    }
+    FileView {
+        path: Quickshell.env("HOME") + "/.cache/quickshell/gamemode.txt"
+        watchChanges: true; printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.gameMode = text().trim() === "1"
     }
 }

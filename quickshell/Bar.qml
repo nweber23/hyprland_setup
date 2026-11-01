@@ -213,6 +213,12 @@ PanelWindow {
                 MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: m => { if (m.button === Qt.RightButton) Updates.check(); else Updates.install() } }
             }
+            Icon {   // game mode: no blur, no animations
+                id: gameIcon; name: "sports_esports"; size: 17
+                color: Popups.gameMode ? Theme.accent : Theme.on_surface
+                fill: Popups.gameMode ? 1 : 0
+                MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["hyprctl", "eval", "qsGameMode(" + (Popups.gameMode ? "false" : "true") + ")"]) }
+            }
             Icon {   // on-screen keyboard for the touch screen
                 id: oskIcon; name: "keyboard_alt"; size: 17
                 MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["osk"]) }
