@@ -203,6 +203,12 @@ PanelWindow {
                                 NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } } }
                 MouseArea { anchors.fill: parent; onClicked: Recorder.stop() }
             }
+            Icon {   // keep awake: no auto-lock, screen-off or suspend while it is on
+                id: awakeIcon; name: "local_cafe"; size: 17
+                color: Popups.keepAwake ? Theme.accent : Theme.on_surface
+                fill: Popups.keepAwake ? 1 : 0
+                MouseArea { anchors.fill: parent; onClicked: Popups.keepAwake = !Popups.keepAwake }
+            }
             Item {   // tools: timer, stopwatch, notes, calculator; shows the running time
                 implicitWidth: toolsRow.implicitWidth; implicitHeight: 22
                 RowLayout { id: toolsRow; anchors.centerIn: parent; spacing: 4

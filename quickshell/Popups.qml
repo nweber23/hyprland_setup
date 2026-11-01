@@ -9,6 +9,7 @@ Singleton {
     signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
+    property bool keepAwake: false    // no auto-lock, screen-off or suspend while on (the coffee button in the bar)
     property bool dnd: false          // do not disturb: notification popups hidden
     property var trayItem: null       // SystemTrayItem whose menu the "traymenu" panel shows
     property string tab: ""           // sub-view of a panel, e.g. "wifi" / "bluetooth" for the network panel

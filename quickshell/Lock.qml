@@ -42,11 +42,11 @@ Scope {
     // Idle: lock after 5 minutes without input (apps that inhibit idle, e.g. video playback, are respected).
     // Enabled after unlocking with the real password was confirmed.
     property bool autoLock: true
-    IdleMonitor { enabled: root.autoLock && Settings.lockMinutes > 0; timeout: Math.max(60, Settings.lockMinutes * 60); respectInhibitors: true; onIsIdleChanged: if (isIdle) root.lock() }
+    IdleMonitor { enabled: root.autoLock && Settings.lockMinutes > 0 && !Popups.keepAwake; timeout: Math.max(60, Settings.lockMinutes * 60); respectInhibitors: true; onIsIdleChanged: if (isIdle) root.lock() }
 
     // Screen off after 6 minutes without input while locked; any input switches it back on.
     IdleMonitor {
-        enabled: Settings.screenOffMinutes > 0
+        enabled: Settings.screenOffMinutes > 0 && !Popups.keepAwake
         timeout: Math.max(60, Settings.screenOffMinutes * 60); respectInhibitors: true
         onIsIdleChanged: {
             if (isIdle && root.locked) Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "off" })'])

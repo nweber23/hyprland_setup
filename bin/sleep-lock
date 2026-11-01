@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Lock the screen before the machine sleeps (lid closed, idle suspend, anything that suspends).
+# It holds a logind "delay" inhibitor so the suspend waits; once the lock request is sent the inhibitor is
+# released and the sleep goes ahead. After waking up it takes the inhibitor again.
+# LOCK_CMD and SIGNAL_SOURCE can be overridden for testing.
+set -u
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/sleep-lock.lock"
+flock -n 9 || exit 0   # one instance per session
+
+LOCK_CMD=${LOCK_CMD:-quickshell ipc call shell lock}
+SIGNAL_SOURCE=${SIGNAL_SOURCE:-dbus-monitor --system "type='signal',interface='org.freedesktop.login1.Manager',member='PrepareForSleep'"}
+inhibitor=""
+
+take() {
+    if [ -n "$inhibitor" ] && kill -0 "$inhibitor" 2>/dev/null; then return; fi
+    systemd-inhibit --what=sleep --mode=delay --who="Quickshell" --why="Lock the screen before sleep" sleep infinity &
+    inhibitor=$!
+}
+release() { [ -n "$inhibitor" ] && kill "$inhibitor" 2>/dev/null; inhibitor=""; }
+
+trap release EXIT
+take
+# process substitution keeps the loop in this shell, so `inhibitor` is shared with the trap
+while read -r line; do
+    case "$line" in
+        *"boolean true"*)  $LOCK_CMD; sleep 1; release ;;   # going to sleep: lock first, then let it go
+        *"boolean false"*) take ;;                           # woke up
+    esac
+done < <($SIGNAL_SOURCE)

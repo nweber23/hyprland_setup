@@ -61,7 +61,7 @@ Singleton {
     }
 
     IdleMonitor {
-        enabled: root.onBattery && Settings.suspendMinutes > 0
+        enabled: root.onBattery && Settings.suspendMinutes > 0 && !Popups.keepAwake
         timeout: Math.max(60, Settings.suspendMinutes * 60); respectInhibitors: true
         onIsIdleChanged: if (isIdle) Quickshell.execDetached(["systemctl", "suspend"])
     }

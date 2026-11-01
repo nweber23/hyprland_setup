@@ -40,6 +40,7 @@ ShellRoot {
         function charge(plugged: bool): void { chargeOsd.play(plugged) }   // preview: quickshell ipc call shell charge true
     }
     Process { running: true; command: ["screentime-daemon"] }
+    Process { running: true; command: ["sleep-lock"] }   // locks the screen before any suspend (lid, idle)
     // Feeds the clipboard history: clip-store runs once per newly copied text.
     Process { running: true; command: ["wl-paste", "--type", "text", "--watch", "clip-store"] }
     Notifications {}
