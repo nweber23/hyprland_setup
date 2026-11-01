@@ -155,7 +155,7 @@ Panel {
                         required property int index
                         readonly property bool active: root.isToday && index === root.activeSlot
                         readonly property int rel: root.isToday ? index - root.activeSlot : index
-                        readonly property real ang: root.isToday ? 65 + rel * 30 + Math.sin(root.osc + index) * 2.5 + root.spin
+                        readonly property real ang: root.isToday ? 90 + rel * 45 + Math.sin(root.osc + index) * 2.5 + root.spin   // the current slot at the front, the others evenly all the way round
                                                                  : index * 45 + root.orbitAngle + root.spin
                         readonly property real rad: ang * Math.PI / 180
                         readonly property real depth: (Math.sin(rad) + 1) / 2
