@@ -17,6 +17,7 @@ PanelWindow {
     margins { top: 6; left: 8; right: 8 }
     implicitHeight: 34
     color: "transparent"
+    visible: !Popups.focusMode   // focus mode hides the bar, and windows take its space
     WlrLayershell.namespace: "qs-bar"
 
     readonly property font textFont: Qt.font({ family: Theme.mono, pixelSize: 12, bold: true })

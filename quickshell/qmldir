@@ -71,6 +71,7 @@ ToolsPanel 1.0 ToolsPanel.qml
 ToolRound 1.0 ToolRound.qml
 DesktopWidgets 1.0 DesktopWidgets.qml
 Dock 1.0 Dock.qml
+FocusMode 1.0 FocusMode.qml
 ShortcutRow 1.0 ShortcutRow.qml
 ShortcutsPanel 1.0 ShortcutsPanel.qml
 ProjectorPanel 1.0 ProjectorPanel.qml

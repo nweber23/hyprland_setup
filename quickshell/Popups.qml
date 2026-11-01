@@ -11,6 +11,7 @@ Singleton {
     signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
+    property bool focusMode: false    // bar hidden, notifications silenced, a countdown running (Super+Z)
     property bool gameMode: false     // no blur, no animations (Super+Shift+G); mirrored from hyprland.lua through a file
     property bool dockPinned: false   // dock held open (Super+D)
     property bool keepAwake: false    // no auto-lock, screen-off or suspend while on (the coffee button in the bar)
@@ -45,4 +46,15 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root.gameMode = text().trim() === "1"
     }
+
+    // Focus mode on: silence notifications and start a 25 minute countdown; off: bring back what was there before.
+    property bool dndBefore: false
+    function setFocus(on) {
+        if (on === focusMode) return
+        focusMode = on
+        if (on) { dndBefore = dnd; dnd = true; Tools.setTotal(1500); Tools.start() }
+        else { dnd = dndBefore; if (Tools.running) Tools.reset() }
+    }
+    // the countdown ending (or being stopped) ends the focus mode too
+    Connections { target: Tools; function onRunningChanged() { if (!Tools.running && root.focusMode) root.setFocus(false) } }
 }

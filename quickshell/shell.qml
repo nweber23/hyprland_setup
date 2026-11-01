@@ -15,6 +15,7 @@ ShellRoot {
             if (m) Popups.toggle(name, m.name, m.width / m.scale / 2)
         }
         function lock(): void { lockScreen.lock() }
+        function focus(): void { Popups.setFocus(!Popups.focusMode) }   // focus mode: no bar, no notifications, a 25 minute countdown
         function dock(): void { Popups.dockPinned = !Popups.dockPinned }   // hold the dock open / let it hide again
         function switcherConfirm(): void {
             if (Popups.current === "switcher") Popups.switchConfirm(); else Popups.earlyConfirm = Date.now()
@@ -60,6 +61,13 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         DesktopWidgets {
+            required property var modelData
+            screen: modelData
+        }
+    }
+    Variants {
+        model: Quickshell.screens
+        FocusMode {
             required property var modelData
             screen: modelData
         }
