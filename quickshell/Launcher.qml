@@ -7,7 +7,8 @@ import QtQuick.Layouts
 
 // App launcher: type to filter, Up/Down to choose, Enter to start, Esc to close.
 // Extras: "2+2*3" calculates, "5 km in mi" and "20 usd in eur" convert, "timer 10m" starts a timer, ":cat" searches emoji,
-// "f name" finds files, "r name" lists recent files (Enter opens), and any text offers a web search. Enter copies results.
+// "f name" finds files, "r name" lists recent files (Enter opens), ";name" lists pinned clipboard entries (snippets),
+// and any text offers a web search. Enter copies results.
 PanelWindow {
     id: win
     property string screenName: ""
@@ -40,6 +41,14 @@ PanelWindow {
         } }
     }
     Timer { id: emojiDelay; interval: 120; onTriggered: { emojiSearch.command = ["emoji-search"].concat(input.text.trim().slice(1).split(/\s+/).filter(w => w)); emojiSearch.running = true } }
+    // ---- snippets: the pinned texts of the clipboard history ----
+    property var snippets: []
+    FileView {
+        path: Quickshell.env("HOME") + "/.local/share/clipboard/history.json"
+        printErrors: false; watchChanges: true
+        onFileChanged: reload()
+        onLoaded: { try { win.snippets = JSON.parse(text()).filter(i => i && i.pin && typeof i.t === "string").map(i => i.t) } catch (e) { win.snippets = [] } }
+    }
     // ---- conversions, timer, files ----
     property string currencyText: ""      // "20 USD = 17.90 EUR" once the rate arrived
     property string currencyValue: ""
@@ -99,6 +108,13 @@ PanelWindow {
     }
     function refresh() {
         const raw = input.text.trim(), q = raw.toLowerCase()
+        if (raw.startsWith(";")) {
+            const sq = raw.slice(1).trim().toLowerCase()
+            results = snippets.filter(t => sq === "" || t.toLowerCase().includes(sq)).slice(0, 30)
+                      .map(t => copyEntry(t, t.replace(/\s+/g, " ").trim().slice(0, 80), "edit-paste"))
+            if (results.length === 0) results = [{ name: snippets.length === 0 ? "No snippets yet" : "No snippet matches", comment: "Pin a text in the clipboard history (Super+Shift+V) to make it a snippet", icon: "edit-paste", execute: () => {} }]
+            list.currentIndex = 0; return
+        }
         if (/^f\s+\S/.test(input.text)) { results = fileHits; list.currentIndex = 0; return }
         if (/^r\s/.test(input.text)) { results = recentHits; list.currentIndex = 0; return }
         if (raw.startsWith(":") && raw.length > 1) {

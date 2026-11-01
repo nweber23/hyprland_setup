@@ -5,31 +5,44 @@ import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 
-// Clipboard history (text). Type to filter, Up/Down to choose, Enter copies the entry back, Delete removes it.
+// Clipboard history (text and pictures). Type to filter, Up/Down to choose, Enter copies the entry back, Delete removes it,
+// the pin keeps an entry for good (pinned texts are also snippets: `;name` in the launcher).
 PanelWindow {
     id: win
     property string screenName: ""
     readonly property bool shown: Popups.current === "clipboard" && Popups.screenName === screenName
     readonly property string file: Quickshell.env("HOME") + "/.local/share/clipboard/history.json"
 
-    property var all: []
+    property var all: []          // [{ t | img, ts, pin }] as stored by clip-store
     property var results: []
+    readonly property string imageDir: Quickshell.env("HOME") + "/.local/share/clipboard/images/"
+    function isText(e) { return e.t !== undefined }
+    function imagePath(e) { return /^[0-9a-f]{16}\.png$/.test(e.img) ? imageDir + e.img : "" }   // only names clip-store makes
+    function same(a, b) { return a.t !== undefined ? a.t === b.t : a.img === b.img }
     function refresh() {
         const q = input.text.trim().toLowerCase()
-        results = (q === "" ? all : all.filter(t => t.toLowerCase().includes(q))).slice(0, 50)
+        // pinned first; a search looks at texts only
+        const pool = all.filter(e => q === "" || (isText(e) && e.t.toLowerCase().includes(q)))
+        results = pool.filter(e => e.pin).concat(pool.filter(e => !e.pin)).slice(0, 60)
         list.currentIndex = 0
     }
-    function copy(text) {
-        // text goes in as an argument, never into the shell string
-        Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" | wl-copy", "sh", text])
+    function copy(e) {
+        if (isText(e)) {
+            // text goes in as an argument, never into the shell string
+            Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" | wl-copy", "sh", e.t])
+        } else if (imagePath(e) !== "") {
+            Quickshell.execDetached(["sh", "-c", 'wl-copy --type image/png < "$1"', "sh", imagePath(e)])
+        }
         Popups.close()
     }
-    function remove(text) {
-        // keep the timestamps: rewrite from the file's own entries
+    // rewrite the file from what is stored now: the file watcher reloads the list
+    function edit(fn) {
         let raw = []
         try { raw = JSON.parse(store.text()) } catch (e) {}
-        store.setText(JSON.stringify(raw.filter(i => i.t !== text)))   // the file watcher reloads the list
+        store.setText(JSON.stringify(fn(raw)))
     }
+    function remove(e) { edit(raw => raw.filter(i => !same(i, e))) }
+    function togglePin(e) { edit(raw => raw.map(i => same(i, e) ? Object.assign({}, i, { pin: !i.pin }) : i)) }
 
     visible: shown || card.opacity > 0.01
     anchors { top: true }
@@ -48,7 +61,7 @@ PanelWindow {
         printErrors: false
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: { try { win.all = JSON.parse(text()).map(i => i.t) } catch (e) { win.all = [] } win.refresh() }
+        onLoaded: { try { win.all = JSON.parse(text()).filter(i => i && (typeof i.t === "string" || typeof i.img === "string")) } catch (e) { win.all = [] } win.refresh() }
     }
     onShownChanged: if (shown) { input.text = ""; store.reload(); refresh(); input.forceActiveFocus() }
 
@@ -94,35 +107,47 @@ PanelWindow {
             ListView {
                 id: list
                 Layout.fillWidth: true
-                implicitHeight: Math.min(count, 7) * 46
+                implicitHeight: Math.min(contentHeight, 340)
                 clip: true
                 model: win.results
                 highlightMoveDuration: 120
                 onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
                 delegate: Rectangle {
-                    required property string modelData
+                    id: row
+                    required property var modelData
                     required property int index
-                    width: ListView.view.width; height: 46; radius: 16
+                    readonly property bool isImage: modelData.img !== undefined
+                    width: ListView.view.width; height: isImage ? 96 : 46; radius: 16
                     color: ListView.isCurrentItem ? Theme.primary_container : (hover.containsMouse ? Theme.surface_container_high : "transparent")
                     Behavior on color { ColorAnimation { duration: 120 } }
                     RowLayout {
-                        anchors { fill: parent; leftMargin: 14; rightMargin: 10 }
+                        anchors { fill: parent; leftMargin: 14; rightMargin: 10; topMargin: row.isImage ? 8 : 0; bottomMargin: row.isImage ? 8 : 0 }
                         spacing: 10
+                        Image {   // pictures: a thumbnail
+                            visible: row.isImage
+                            Layout.preferredWidth: 110; Layout.fillHeight: true
+                            fillMode: Image.PreserveAspectFit; asynchronous: true; sourceSize: Qt.size(220, 160)
+                            source: row.isImage && win.imagePath(row.modelData) !== "" ? "file://" + win.imagePath(row.modelData) : ""
+                        }
                         Text {
                             Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText
                             maximumLineCount: 1
-                            text: modelData.replace(/\s+/g, " ").trim()   // one line preview
+                            text: row.isImage ? "Picture" : row.modelData.t.replace(/\s+/g, " ").trim()   // one line preview
                             color: ListView.isCurrentItem ? Theme.on_primary_container : Theme.on_surface
                             font.family: "JetBrains Mono"; font.pixelSize: 12
                         }
+                        Icon { name: "push_pin"; size: 18; fill: row.modelData.pin ? 1 : 0
+                               color: row.modelData.pin ? Theme.accent : Theme.on_surface_variant
+                               opacity: row.modelData.pin || hover.containsMouse ? 1 : 0
+                               MouseArea { anchors.fill: parent; anchors.margins: -4; onClicked: win.togglePin(row.modelData) } }
                         Icon { name: "close"; size: 18; color: Theme.on_surface_variant; opacity: hover.containsMouse ? 1 : 0
-                               MouseArea { anchors.fill: parent; onClicked: win.remove(modelData) } }
+                               MouseArea { anchors.fill: parent; anchors.margins: -4; onClicked: win.remove(row.modelData) } }
                     }
                     MouseArea {
                         id: hover
                         anchors.fill: parent; hoverEnabled: true; z: -1
                         onEntered: list.currentIndex = index
-                        onClicked: win.copy(modelData)
+                        onClicked: win.copy(row.modelData)
                     }
                 }
             }

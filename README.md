@@ -74,6 +74,7 @@ Every panel can also be opened with `quickshell ipc call shell toggle <name>`
   lets a new client take over a crashed lock.
 * **Modes**: `Super+Z` focus (no bar, no notifications, 25 min timer), `Super+Shift+G` game mode (no blur, no animations), `Super+P` projection
   (duplicate / extend / one screen), ``Super+` `` drop-down terminal. The bar shows a dot with the app's name while the microphone, camera or screen is in use.
+* **Clipboard** (`Super+Shift+V`): text and pictures; the pin keeps an entry for good, and pinned texts are snippets (`;name` in the launcher). Sensitive copies (password managers) are never stored.
 * **Audio**: the mixer (`Super+Shift+…` via the bar's volume chip) also has microphone noise suppression (a virtual "Clean microphone" from PipeWire's WebRTC module, `pipewire/qs-mic.conf`) and a per-app choice of output device.
 * **Launcher** (`Super+R`): maths, `5 km in mi`, `20 usd in eur` (ECB rates from frankfurter.dev), `timer 10m`, `f name` file search, `r name` recent files, `:cat` emoji.
 * **GTK colours**: matugen also writes `~/.config/gtk-4.0/gtk.css` and `gtk-3.0/gtk.css`, so libadwaita apps follow the wallpaper (the global GTK theme is not touched).

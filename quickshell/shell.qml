@@ -57,7 +57,9 @@ ShellRoot {
     Process { running: true; command: ["usb-mount"] }       // mounts USB sticks when plugged in, with an Open/Eject notification
     Process { running: true; command: ["sleep-lock"] }   // locks the screen before any suspend (lid, idle)
     // Feeds the clipboard history: clip-store runs once per newly copied text.
-    Process { running: true; command: ["wl-paste", "--type", "text", "--watch", "clip-store"] }
+    // flock: a shell restart must not leave a second watcher behind (every copy would be stored several times)
+    Process { running: true; command: ["flock", "-n", "/run/user/1000/qs-clip-text.lock", "wl-paste", "--type", "text", "--watch", "clip-store"] }
+    Process { running: true; command: ["flock", "-n", "/run/user/1000/qs-clip-image.lock", "wl-paste", "--type", "image/png", "--watch", "clip-store", "image"] }
     Notifications {}
     Lock { id: lockScreen }
     Osd {}

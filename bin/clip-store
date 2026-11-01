@@ -1,33 +1,77 @@
 #!/usr/bin/env python3
-"""Add the text on stdin to the clipboard history (called by `wl-paste --watch`).
+"""Add what was just copied to the clipboard history (called by `wl-paste --watch`).
 
-Keeps the newest 100 entries in ~/.local/share/clipboard/history.json (mode 600), newest first,
-without duplicates, as [{"t": text, "ts": unix time}]. Entries expire after 24 h. Empty or very
-large (> 20 kB) texts are ignored, and so is anything wl-paste marks as sensitive (password
-managers set the hint), cleared or empty: CLIPBOARD_STATE must be "data".
+    clip-store          the text on stdin is added (wl-paste --type text --watch clip-store)
+    clip-store image    the PNG on stdin is added (wl-paste --type image/png --watch clip-store image)
+
+History: ~/.local/share/clipboard/history.json (mode 600), newest first, without duplicates, as
+[{"t": text, "ts": time, "pin": true}] for text and [{"img": "<name>.png", "ts": time}] for pictures
+(files in ~/.local/share/clipboard/images, mode 600). The newest 100 unpinned entries are kept and they
+expire after 24 h; pinned entries stay (up to 50). Empty or very large texts and pictures are ignored,
+and so is anything wl-paste marks as sensitive (password managers set the hint), cleared or empty:
+CLIPBOARD_STATE must be "data".
 """
-import json, os, sys, time
+import hashlib, json, os, sys, time
 from pathlib import Path
 
 DIR = Path.home() / ".local" / "share" / "clipboard"
+IMAGES = DIR / "images"
 FILE = DIR / "history.json"
-LIMIT, MAX_LEN, TTL = 100, 20_000, 24 * 3600
+LIMIT, MAX_TEXT, MAX_IMAGE, MAX_IMAGES, MAX_PINS, TTL = 100, 20_000, 8_000_000, 20, 50, 24 * 3600
 
 if os.environ.get("CLIPBOARD_STATE") != "data":
     sys.exit(0)
-text = sys.stdin.read()
-if not text.strip() or len(text) > MAX_LEN:
-    sys.exit(0)
+image_mode = len(sys.argv) > 1 and sys.argv[1] == "image"
 
-DIR.mkdir(parents=True, exist_ok=True)
+def write(path, data):   # history can hold secrets: owner only, replaced atomically
+    tmp = path.with_name(path.name + ".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
+    os.replace(tmp, path)
+
+DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+IMAGES.mkdir(parents=True, exist_ok=True, mode=0o700)
 try:
-    items = json.loads(FILE.read_text())
+    items = [i for i in json.loads(FILE.read_text()) if isinstance(i, dict) and ("t" in i or "img" in i)]
 except (OSError, ValueError):
     items = []
 now = time.time()
-items = [{"t": text, "ts": now}] + [i for i in items if isinstance(i, dict) and i["t"] != text and now - i["ts"] < TTL]
-tmp = FILE.with_suffix(".tmp")
-fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)   # history can hold secrets: owner only
-with os.fdopen(fd, "w") as f:
-    json.dump(items[:LIMIT], f)
-os.replace(tmp, FILE)
+
+if image_mode:
+    data = sys.stdin.buffer.read()
+    if not data.startswith(b"\x89PNG") or len(data) > MAX_IMAGE:
+        sys.exit(0)
+    name = hashlib.sha1(data).hexdigest()[:16] + ".png"
+    if not (IMAGES / name).exists():
+        write(IMAGES / name, data)
+    old = next((i for i in items if i.get("img") == name), None)
+    new = {"img": name, "ts": now}
+    if old and old.get("pin"):
+        new["pin"] = True
+    items = [new] + [i for i in items if i.get("img") != name]
+else:
+    text = sys.stdin.read()
+    if not text.strip() or len(text) > MAX_TEXT:
+        sys.exit(0)
+    old = next((i for i in items if i.get("t") == text), None)
+    new = {"t": text, "ts": now}
+    if old and old.get("pin"):
+        new["pin"] = True   # copying a pinned text again keeps it pinned
+    items = [new] + [i for i in items if i.get("t") != text]
+
+# expiry and limits: pinned entries are exempt from both
+pinned = [i for i in items if i.get("pin")][:MAX_PINS]
+loose = [i for i in items if not i.get("pin") and now - i.get("ts", 0) < TTL]
+texts, pics = [], []
+for i in loose:
+    (pics if "img" in i else texts).append(i)
+keep = set(id(i) for i in texts[:LIMIT]) | set(id(i) for i in pics[:MAX_IMAGES])
+items = [i for i in items if i in pinned or id(i) in keep]
+write(FILE, json.dumps(items).encode())
+
+# pictures nothing refers to any more are deleted
+used = {i["img"] for i in items if "img" in i}
+for f in IMAGES.glob("*.png"):
+    if f.name not in used:
+        f.unlink(missing_ok=True)
