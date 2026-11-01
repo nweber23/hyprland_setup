@@ -336,6 +336,7 @@ hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle cap
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("quickshell ipc call shell toggle tools"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("quickshell ipc call shell dock"))   -- show / hide the dock
 hl.bind(mainMod .. " + SHIFT + G", function() qsGameMode(not qsGameModeOn) end)   -- game mode: no blur, no animations
+hl.bind(mainMod .. " + code:49", function() qsDropdown() end)   -- drop-down terminal (the key left of 1)
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call shell toggle shortcuts"))   -- all shortcuts
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle workspaces"))   -- workspace overview
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
@@ -418,6 +419,17 @@ function qsGameMode(on)
     if f then f:write(qsGameModeOn and "1" or "0"); f:close() end
 end
 qsGameMode(false)   -- a fresh session always starts normal
+
+-- Show / hide the drop-down terminal; the first call starts it.
+function qsDropdown()
+    for _, w in ipairs(hl.get_windows()) do
+        if w.class == "dropterm" then
+            hl.dispatch(hl.dsp.workspace.toggle_special("drop"))
+            return
+        end
+    end
+    hl.exec_cmd("kitty --class dropterm")
+end
 
 -- Move a window to workspace number n of the monitor it is on (the workspace overview calls this when you drop a window on a card).
 function qsMoveWindow(address, n)
@@ -555,6 +567,15 @@ hl.window_rule({
     match = { title = "^(Open File|Open Files|Open Folder|Save As|Save File|Save Image|File Upload|Select .*|Choose .*)$" },
     float = true,
     center = true,
+})
+-- Drop-down terminal (Super+grave): a kitty on a special workspace that slides over the top of the screen.
+hl.window_rule({
+    name      = "dropdown-terminal",
+    match     = { class = "^dropterm$" },
+    float     = true,
+    workspace = "special:drop",
+    size      = "monitor_w*0.8 monitor_h*0.45",
+    move      = "monitor_w*0.1 40",
 })
 hl.window_rule({
     name  = "picture-in-picture",
