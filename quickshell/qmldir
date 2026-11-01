@@ -72,6 +72,7 @@ DesktopWidgets 1.0 DesktopWidgets.qml
 Dock 1.0 Dock.qml
 ShortcutRow 1.0 ShortcutRow.qml
 ShortcutsPanel 1.0 ShortcutsPanel.qml
+ProjectorPanel 1.0 ProjectorPanel.qml
 singleton Shortcuts 1.0 Shortcuts.qml
 ToolChip 1.0 ToolChip.qml
 singleton Audio Audio.qml

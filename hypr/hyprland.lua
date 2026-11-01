@@ -342,7 +342,8 @@ hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle wor
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call shell toggle sysmon"))   -- system monitor
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
-hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("quickshell ipc call shell toggle projector"))   -- projection menu: extend, mirror, one screen
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 
 -- Move focus with mainMod + arrow keys
@@ -431,6 +432,42 @@ function qsDropdown()
     hl.exec_cmd("kitty --class dropterm")
 end
 
+-- Projection mode (Super+P menu): "extend" (the saved layout), "mirror", "first" (laptop only), "second" (external only).
+-- Global: the projector panel calls it through `hyprctl eval`.
+function qsProjector(mode)
+    local main, others = nil, {}
+    for _, m in ipairs(hl.get_monitors({ all = true })) do
+        if m.name:sub(1, 3) == "eDP" then main = m else others[#others + 1] = m end
+    end
+    if not main or #others == 0 then return end
+    -- start from a clean slate: every monitor on, side by side, then the saved arrangement on top
+    for _, m in ipairs(hl.get_monitors({ all = true })) do
+        hl.monitor({ output = m.name, mode = "preferred", position = "auto", scale = 1 })
+    end
+    pcall(dofile, os.getenv("HOME") .. "/.config/hypr/monitors-local.lua")
+    if mode == "mirror" then
+        for _, o in ipairs(others) do hl.monitor({ output = o.name, mode = "preferred", position = "auto", scale = 1, mirror = main.name }) end
+    elseif mode == "first" then
+        for _, o in ipairs(others) do hl.monitor({ output = o.name, disabled = true }) end
+    elseif mode == "second" then
+        hl.monitor({ output = main.name, disabled = true })
+    else
+        -- back to extended: every workspace returns to its own monitor (mirroring pulls them all onto the laptop panel)
+        local names = {}
+        for _, o in ipairs(others) do names[#names + 1] = o.name end
+        table.sort(names)
+        for _, ws in ipairs(hl.get_workspaces()) do
+            if ws.id and ws.id > 0 then   -- special workspaces have no number
+                local idx = (ws.id - 1) // 10
+                local want = idx == 0 and main.name or names[idx]
+                if want and ws.monitor and ws.monitor.name ~= want then
+                    hl.dispatch(hl.dsp.workspace.move({ workspace = ws.id, monitor = want }))
+                end
+            end
+        end
+    end
+end
+
 -- Move a window to workspace number n of the monitor it is on (the workspace overview calls this when you drop a window on a card).
 function qsMoveWindow(address, n)
     for _, w in ipairs(hl.get_windows()) do
@@ -449,7 +486,7 @@ function qsCycleWorkspace(dir)
     local here = (curId - 1) % 10 + 1
     local open, nums = { [here] = true }, {}
     for _, ws in ipairs(hl.get_workspaces()) do
-        if ws.id > 0 and (ws.windows > 0 or ws.active) then open[(ws.id - 1) % 10 + 1] = true end
+        if ws.id and ws.id > 0 and (ws.windows > 0 or ws.active) then open[(ws.id - 1) % 10 + 1] = true end
     end
     for n in pairs(open) do nums[#nums + 1] = n end
     table.sort(nums)

@@ -2,7 +2,7 @@
 # Session wrapper for the locally built Hyprland (referenced by system/hyprland-local.desktop).
 # It (1) copies the compositor log from tmpfs to disk, so it survives a reboot, and
 # (2) records the devices and monitors Hyprland sees. Logs: ~/.cache/hyprland-session/
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:/snap/bin"   # /snap/bin: snap-installed tools (go, ...)
 # Quickshell modules and the prebuilt Qt live under ~/.local
 export QML2_IMPORT_PATH="$HOME/.local/lib/qt6/qml"
 LOGDIR="$HOME/.cache/hyprland-session"; mkdir -p "$LOGDIR"

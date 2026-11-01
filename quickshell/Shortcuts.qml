@@ -23,7 +23,8 @@ Singleton {
             ["Super+Shift+C", "Pick a colour"] ] },
         { title: "System", icon: "settings_power", items: [
             ["Super+L", "Lock"], ["Super+M", "Log out"], ["Super+Space", "Next keyboard layout"], ["Alt+Shift", "Next keyboard layout"],
-            ["Super+Shift+N", "Night light"], ["Super+F1", "This list"] ] },
+            ["Super+Shift+N", "Night light"], ["Super+Shift+G", "Game mode (no blur, no animations)"], ["Super+P", "Projection: duplicate, extend, one screen"],
+            ["Super+`", "Drop-down terminal"], ["Super+F1", "This list"] ] },
         { title: "Keys on the keyboard", icon: "keyboard", items: [
             ["Volume keys", "Volume, mute"], ["Brightness keys", "Screen brightness"], ["Media keys", "Play, pause, next, previous"], ["Mic key", "Mute the microphone"] ] }
     ]
