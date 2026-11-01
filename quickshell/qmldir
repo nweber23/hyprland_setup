@@ -76,6 +76,7 @@ FocusMode 1.0 FocusMode.qml
 ShortcutRow 1.0 ShortcutRow.qml
 ShortcutsPanel 1.0 ShortcutsPanel.qml
 ProjectorPanel 1.0 ProjectorPanel.qml
+QuickPanel 1.0 QuickPanel.qml
 singleton Shortcuts 1.0 Shortcuts.qml
 ToolChip 1.0 ToolChip.qml
 singleton Audio Audio.qml

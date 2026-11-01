@@ -16,14 +16,14 @@ Singleton {
         { title: "Workspaces", icon: "grid_view", items: [
             ["Super+1..0", "Workspace on every screen"], ["Super+Shift+1..0", "Move window there"], ["Super+Ctrl+Tab", "Next workspace"],
             ["Super+Wheel", "Next / previous"], ["Super+O", "Workspace overview"], ["Super+S", "Scratchpad"], ["Super+Shift+S", "Send to scratchpad"],
-            ["3 fingers", "Swipe sideways: workspace"] ] },
+            ["3 fingers", "Swipe sideways: workspace (all screens), up: workspaces, down: windows"] ] },
         { title: "Capture", icon: "photo_camera", items: [
             ["Print", "Screenshot, region"], ["Shift+Print", "Whole screen"], ["Super+Print", "Window"], ["Super+X", "Capture panel"],
             ["Super+Shift+R", "Record a region"], ["Super+Shift+T", "Copy text from the screen (OCR)"], ["Super+Shift+Q", "Read a QR code"],
             ["Super+Shift+C", "Pick a colour"] ] },
         { title: "System", icon: "settings_power", items: [
             ["Super+L", "Lock"], ["Super+M", "Log out"], ["Super+Space", "Next keyboard layout"], ["Alt+Shift", "Next keyboard layout"],
-            ["Super+Shift+N", "Night light"], ["Super+Shift+G", "Game mode (no blur, no animations)"], ["Super+Z", "Focus mode (no bar, no notifications, timer)"], ["Super+P", "Projection: duplicate, extend, one screen"],
+            ["Super+A", "Quick menu"], ["Super+Shift+N", "Night light"], ["Super+Shift+G", "Game mode (no blur, no animations)"], ["Super+Z", "Focus mode (no bar, no notifications, timer)"], ["Super+P", "Projection: duplicate, extend, one screen"],
             ["Super+`", "Drop-down terminal"], ["Super+F1", "This list"] ] },
         { title: "Keys on the keyboard", icon: "keyboard", items: [
             ["Volume keys", "Volume, mute"], ["Brightness keys", "Screen brightness"], ["Media keys", "Play, pause, next, previous"], ["Mic key", "Mute the microphone"] ] }

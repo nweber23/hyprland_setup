@@ -193,8 +193,12 @@ PanelWindow {
                     }
                 }
             }
-            Icon { id: monIcon; name: "monitor_heart"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("sysmon", monIcon) } }
-            Icon { id: setIcon; name: "settings"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("settings", setIcon) } }
+            Icon { id: quickIcon; name: "apps"; size: 18   // everything else lives here
+                   MouseArea { anchors.fill: parent; onClicked: bar.openPanel("quick", quickIcon) } }
+            Icon { visible: Popups.keepAwake; name: "local_cafe"; size: 16; fill: 1; color: Theme.accent   // only while on: click to switch off
+                   MouseArea { anchors.fill: parent; onClicked: Popups.keepAwake = false } }
+            Icon { visible: Popups.gameMode; name: "sports_esports"; size: 16; fill: 1; color: Theme.accent
+                   MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["hyprctl", "eval", "qsGameMode(false)"]) } }
             // a recording must never run unnoticed: red, pulsing, click to stop
             Rectangle {
                 visible: Recorder.recording
@@ -232,32 +236,14 @@ PanelWindow {
                 MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: m => { if (m.button === Qt.RightButton) Updates.check(); else Updates.install() } }
             }
-            Icon {   // game mode: no blur, no animations
-                id: gameIcon; name: "sports_esports"; size: 17
-                color: Popups.gameMode ? Theme.accent : Theme.on_surface
-                fill: Popups.gameMode ? 1 : 0
-                MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["hyprctl", "eval", "qsGameMode(" + (Popups.gameMode ? "false" : "true") + ")"]) }
-            }
-            Icon {   // on-screen keyboard for the touch screen
-                id: oskIcon; name: "keyboard_alt"; size: 17
-                MouseArea { anchors.fill: parent; onClicked: Quickshell.execDetached(["osk"]) }
-            }
-            Icon {   // keep awake: no auto-lock, screen-off or suspend while it is on
-                id: awakeIcon; name: "local_cafe"; size: 17
-                color: Popups.keepAwake ? Theme.accent : Theme.on_surface
-                fill: Popups.keepAwake ? 1 : 0
-                MouseArea { anchors.fill: parent; onClicked: Popups.keepAwake = !Popups.keepAwake }
-            }
-            Item {   // tools: timer, stopwatch, notes, calculator; shows the running time
+            Item {   // a running timer or stopwatch, with its time; click for the tools
+                visible: Tools.barText !== ""
                 implicitWidth: toolsRow.implicitWidth; implicitHeight: 22
                 RowLayout { id: toolsRow; anchors.centerIn: parent; spacing: 4
                     Icon { id: toolsIcon; name: "timer"; size: 17; color: Tools.barText !== "" ? Theme.accent : Theme.on_surface }
                     Text { visible: Tools.barText !== ""; textFormat: Text.PlainText; text: Tools.barText; color: Theme.accent; font.family: Theme.mono; font.pixelSize: 11; font.bold: true } }
                 MouseArea { anchors.fill: parent; onClicked: bar.openPanel("tools", toolsIcon) }
             }
-            Icon { id: capIcon; name: "photo_camera"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("capture", capIcon) } }
-            Icon { id: dispIcon; name: "desktop_windows"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("display", dispIcon) } }
-            Icon { id: timeIcon; name: "hourglass_top"; size: 17; MouseArea { anchors.fill: parent; onClicked: bar.openPanel("screentime", timeIcon) } }
         }
 
         BarGroup {

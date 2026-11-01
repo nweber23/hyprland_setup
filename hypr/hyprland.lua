@@ -288,13 +288,14 @@ hl.config({
     },
 })
 
-hl.gesture({
-    fingers = 3,
-    direction = "horizontal",
-    action = "workspace"
-})
+-- three fingers sideways: next / previous workspace on EVERY monitor (the built-in "workspace" gesture only moves one)
+hl.gesture({ fingers = 3, direction = "left",
+    action = { finish = function() qsCycleWorkspace(1) end } })
+hl.gesture({ fingers = 3, direction = "right",
+    action = { finish = function() qsCycleWorkspace(-1) end } })
 
 -- three fingers up: workspace overview, three fingers down: window overview (the same as Super+O and Alt+Tab held, tap to choose)
+-- (sideways: next / previous workspace on every monitor, see below)
 hl.gesture({ fingers = 3, direction = "up",
     action = { finish = function() hl.exec_cmd("quickshell ipc call shell toggle workspaces") end } })
 hl.gesture({ fingers = 3, direction = "down",
@@ -338,6 +339,7 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("quickshell ipc call shell dock"))   
 hl.bind(mainMod .. " + SHIFT + G", function() qsGameMode(not qsGameModeOn) end)   -- game mode: no blur, no animations
 hl.bind(mainMod .. " + code:49", function() qsDropdown() end)   -- drop-down terminal (the key left of 1)
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("quickshell ipc call shell focus"))   -- focus mode: no bar, no notifications, 25 min timer
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("quickshell ipc call shell toggle quick"))   -- quick menu
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call shell toggle shortcuts"))   -- all shortcuts
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle workspaces"))   -- workspace overview
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
