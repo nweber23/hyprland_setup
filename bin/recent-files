@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""recent-files [words...] -- print the paths of recently used files (GTK's recently-used.xbel), newest first.
+Words filter by file name. At most 30 lines; files that no longer exist are skipped."""
+import os, re, sys, urllib.parse
+words = [w.lower() for w in sys.argv[1:]]
+path = os.path.expanduser("~/.local/share/recently-used.xbel")
+try:
+    xml = open(path, encoding="utf-8", errors="replace").read()
+except OSError:
+    sys.exit(0)
+seen, out = set(), []
+for m in reversed(re.findall(r'<bookmark href="file://([^"]+)"', xml)):   # the file lists oldest first
+    p = urllib.parse.unquote(m)
+    if p in seen or not os.path.exists(p):
+        continue
+    seen.add(p)
+    if all(w in os.path.basename(p).lower() for w in words):
+        out.append(p)
+    if len(out) >= 30:
+        break
+print("\n".join(out))

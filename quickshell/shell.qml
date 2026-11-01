@@ -16,6 +16,11 @@ ShellRoot {
         }
         function lock(): void { lockScreen.lock() }
         function focus(): void { Popups.setFocus(!Popups.focusMode) }   // focus mode: no bar, no notifications, a 25 minute countdown
+        function launcher(query: string): void {   // open the launcher with a ready-made query
+            Popups.launcherPrefill = query
+            const m = Hyprland.focusedMonitor
+            if (m) Popups.toggle("launcher", m.name, m.width / m.scale / 2)
+        }
         function dock(): void { Popups.dockPinned = !Popups.dockPinned }   // hold the dock open / let it hide again
         function switcherConfirm(): void {
             if (Popups.current === "switcher") Popups.switchConfirm(); else Popups.earlyConfirm = Date.now()

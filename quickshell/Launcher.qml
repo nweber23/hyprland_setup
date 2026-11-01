@@ -6,7 +6,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // App launcher: type to filter, Up/Down to choose, Enter to start, Esc to close.
-// Extras: "2+2*3" calculates (Enter copies the result), ":cat" searches emoji (Enter copies), and any text offers a web search.
+// Extras: "2+2*3" calculates, "5 km in mi" and "20 usd in eur" convert, "timer 10m" starts a timer, ":cat" searches emoji,
+// "f name" finds files, "r name" lists recent files (Enter opens), and any text offers a web search. Enter copies results.
 PanelWindow {
     id: win
     property string screenName: ""
@@ -39,8 +40,67 @@ PanelWindow {
         } }
     }
     Timer { id: emojiDelay; interval: 120; onTriggered: { emojiSearch.command = ["emoji-search"].concat(input.text.trim().slice(1).split(/\s+/).filter(w => w)); emojiSearch.running = true } }
+    // ---- conversions, timer, files ----
+    property string currencyText: ""      // "20 USD = 17.90 EUR" once the rate arrived
+    property string currencyValue: ""
+    property var fileHits: []             // for "f name"
+    property var recentHits: []           // for "r name"
+    function pathEntry(path) {
+        const i = path.lastIndexOf("/")
+        return { name: path.slice(i + 1), comment: path.slice(0, i).replace(Quickshell.env("HOME"), "~"), icon: "text-x-generic",
+                 execute: () => Quickshell.execDetached(["xdg-open", path]) }
+    }
+    // "timer 10m", "t 90s", "timer 1.5h"
+    function timerSpec(raw) {
+        const m = /^(?:timer|t)\s+(\d+(?:[.,]\d+)?)\s*(s|sec|m|min|h)?$/i.exec(raw)
+        if (!m) return 0
+        const n = parseFloat(m[1].replace(",", ".")), u = (m[2] || "m").toLowerCase()
+        return Math.round(n * (u === "h" ? 3600 : (u === "s" || u === "sec") ? 1 : 60))
+    }
+    Process {
+        id: rate
+        stdout: StdioCollector { onStreamFinished: {
+            try {
+                const j = JSON.parse(text), to = Object.keys(j.rates)[0]
+                win.currencyValue = String(Number(j.rates[to].toFixed(2)))
+                win.currencyText = j.amount + " " + j.base + " = " + win.currencyValue + " " + to
+            } catch (e) { win.currencyText = "" }
+            win.refresh()
+        } }
+    }
+    Process {
+        id: fileSearch
+        stdout: StdioCollector { onStreamFinished: { win.fileHits = text.split("\n").filter(l => l).map(win.pathEntry); win.refresh() } }
+    }
+    Process {
+        id: recentSearch
+        stdout: StdioCollector { onStreamFinished: { win.recentHits = text.split("\n").filter(l => l).map(win.pathEntry); win.refresh() } }
+    }
+    Timer { id: lookupDelay; interval: 350; onTriggered: {
+        const t = input.text.trim(), cv = Convert.parse(t)
+        if (cv && cv.kind === "currency") {   // codes and amount were validated by Convert.parse: three letters each, a plain number
+            rate.command = ["curl", "-sL", "-m", "6", "https://api.frankfurter.dev/v1/latest?amount=" + cv.amount + "&base=" + cv.from + "&symbols=" + cv.to]
+            rate.running = true
+        }
+        const f = /^f\s+(.+)$/.exec(t)
+        if (f) {   // the name goes in as an argument, never into the shell string
+            fileSearch.command = ["sh", "-c", 'find "$HOME" -maxdepth 7 \\( -name ".*" -o -name node_modules -o -name snap \\) -prune -o -iname "*$1*" -print 2>/dev/null | head -40', "sh", f[1]]
+            fileSearch.running = true
+        }
+        const r = /^r\s*(.*)$/.exec(t)
+        if (r && /^r\s/.test(input.text)) { recentSearch.command = ["recent-files"].concat(r[1].split(/\s+/).filter(w => w)); recentSearch.running = true }
+    } }
+    function onQuery() {
+        const t = input.text
+        if (t.startsWith(":")) { emojis = []; emojiDelay.restart() }
+        currencyText = ""
+        if (/^f\s+\S/.test(t)) fileHits = []
+        if (/^[a-z]{3}\s*\d|^\d/.test(t.trim()) || /^f\s+\S/.test(t) || /^r\s/.test(t)) lookupDelay.restart()
+    }
     function refresh() {
         const raw = input.text.trim(), q = raw.toLowerCase()
+        if (/^f\s+\S/.test(input.text)) { results = fileHits; list.currentIndex = 0; return }
+        if (/^r\s/.test(input.text)) { results = recentHits; list.currentIndex = 0; return }
         if (raw.startsWith(":") && raw.length > 1) {
             results = emojis
             list.currentIndex = 0
@@ -63,6 +123,14 @@ PanelWindow {
         let list_ = out.slice(0, 60).map(o => o.entry)
         const c = Tools.calc(raw)
         if (c !== null) list_.unshift(copyEntry(c, "= " + c, "accessories-calculator"))
+        const cv = Convert.parse(raw)
+        if (cv && cv.kind === "unit") list_.unshift(copyEntry(cv.value, cv.text, "accessories-calculator"))
+        else if (cv && cv.kind === "currency")
+            list_.unshift(currencyText !== "" ? copyEntry(currencyValue, currencyText, "accessories-calculator")
+                                              : { name: "Looking up the rate\u2026", comment: "ECB rates from frankfurter.dev", icon: "accessories-calculator", execute: () => {} })
+        const secs = timerSpec(raw)
+        if (secs > 0) list_.unshift({ name: "Start a " + Tools.fmt(secs) + " timer", comment: "Enter starts it, it shows in the bar", icon: "alarm-clock",
+                                      execute: () => { if (Tools.running) Tools.reset(); Tools.setTotal(secs); Tools.start() } })
         if (raw !== "")
             list_.push({ name: "Search the web for \u201c" + raw + "\u201d", comment: "DuckDuckGo", icon: "web-browser",
                          execute: () => Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(raw)]) })
@@ -72,7 +140,7 @@ PanelWindow {
     function launch(entry) { if (!entry) return; entry.execute(); Popups.close() }
     // Entries are scanned asynchronously; rebuild once they arrive.
     Connections { target: DesktopEntries.applications; function onValuesChanged() { if (win.shown) win.refresh() } }
-    onShownChanged: if (shown) { input.text = ""; refresh(); input.forceActiveFocus() }
+    onShownChanged: if (shown) { input.text = Popups.launcherPrefill; Popups.launcherPrefill = ""; onQuery(); refresh(); input.forceActiveFocus() }
 
     Rectangle {
         id: card
@@ -105,7 +173,7 @@ PanelWindow {
                     font.family: "JetBrains Mono"; font.pixelSize: 16
                     selectionColor: Theme.primary
                     clip: true
-                    onTextChanged: { if (text.startsWith(":")) { win.emojis = []; emojiDelay.restart() } win.refresh() }
+                    onTextChanged: { win.onQuery(); win.refresh() }
                     Keys.onEscapePressed: Popups.close()
                     Keys.onReturnPressed: win.launch(win.results[list.currentIndex])
                     Keys.onEnterPressed: win.launch(win.results[list.currentIndex])

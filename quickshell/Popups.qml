@@ -11,6 +11,7 @@ Singleton {
     signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)
+    property string launcherPrefill: "" // text the launcher opens with (quickshell ipc call shell launcher "...")
     property bool focusMode: false    // bar hidden, notifications silenced, a countdown running (Super+Z)
     property bool gameMode: false     // no blur, no animations (Super+Shift+G); mirrored from hyprland.lua through a file
     property bool dockPinned: false   // dock held open (Super+D)

@@ -23,7 +23,7 @@ Singleton {
         const two = n => (n < 10 ? "0" : "") + n
         return (h > 0 ? h + ":" + two(m) : two(m)) + ":" + two(x)
     }
-    function setTotal(sec) { if (running) return; pomodoro = false; total = Math.max(60, sec); left = total }
+    function setTotal(sec) { if (running) return; pomodoro = false; total = Math.max(5, sec); left = total }
     function togglePomodoro() {
         if (running) return
         pomodoro = !pomodoro; phase = "focus"; cycles = 0

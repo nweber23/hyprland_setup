@@ -6,7 +6,7 @@ import QtQuick
 Singleton {
     readonly property var groups: [
         { title: "Apps", icon: "apps", items: [
-            ["Super+R", "Launcher, calculator, emoji (:)"], ["Super+Q", "Terminal"], ["Super+B", "Browser"], ["Super+E", "Files"],
+            ["Super+R", "Launcher: apps, math, units, timer, files (f), recent (r), emoji (:)"], ["Super+Q", "Terminal"], ["Super+B", "Browser"], ["Super+E", "Files"],
             ["Super+D", "Dock"], ["Super+W", "Wallpaper"], ["Super+Y", "Timer, notes, calculator"], ["Super+Shift+V", "Clipboard history"],
             ["Super+,", "Settings"], ["Super+Esc", "System monitor"], ["Super+T", "Screen time"] ] },
         { title: "Windows", icon: "web_asset", items: [
