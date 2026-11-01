@@ -2,8 +2,7 @@
 
 Hyprland desktop on Ubuntu 24.04 with a custom [Quickshell](https://quickshell.org) shell, themed from the wallpaper
 with matugen. Hyprland, Quickshell and their libraries are built from source into `~/.local` (see `build/`),
-GNOME stays installed as a fallback session. The look and the panels follow the *Serpantinum* desktop by ilyamiro
-(<https://github.com/ilyamiro/serpantinum>, AGPL-3.0); this repository contains no code copied from it.
+GNOME stays installed as a fallback session.
 
 ## Install
 
