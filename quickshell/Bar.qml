@@ -203,6 +203,16 @@ PanelWindow {
                                 NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } } }
                 MouseArea { anchors.fill: parent; onClicked: Recorder.stop() }
             }
+            Item {   // pending updates: click to install them in a terminal, right click to count again
+                visible: Updates.count > 0
+                implicitWidth: updRow.implicitWidth; implicitHeight: 22
+                RowLayout { id: updRow; anchors.centerIn: parent; spacing: 3
+                    Icon { name: "system_update_alt"; size: 17; color: Updates.security > 0 ? Theme.accent2 : Theme.on_surface }
+                    Text { textFormat: Text.PlainText; text: Updates.count; color: Updates.security > 0 ? Theme.accent2 : Theme.on_surface_variant
+                           font.family: Theme.mono; font.pixelSize: 11; font.bold: true } }
+                MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: m => { if (m.button === Qt.RightButton) Updates.check(); else Updates.install() } }
+            }
             Icon {   // keep awake: no auto-lock, screen-off or suspend while it is on
                 id: awakeIcon; name: "local_cafe"; size: 17
                 color: Popups.keepAwake ? Theme.accent : Theme.on_surface

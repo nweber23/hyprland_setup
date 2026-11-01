@@ -327,6 +327,7 @@ hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("quickshell ipc call shell toggle cap
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("quickshell ipc call shell toggle tools"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("quickshell ipc call shell dock"))   -- show / hide the dock
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call shell toggle shortcuts"))   -- all shortcuts
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("quickshell ipc call shell toggle workspaces"))   -- workspace overview
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call shell toggle settings"))   -- settings
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call shell toggle sysmon"))   -- system monitor
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("google-chrome-stable --ozone-platform-hint=auto"))
@@ -392,6 +393,16 @@ function qsFocusWindow(address)
         hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
     end
     hl.dispatch(hl.dsp.focus({ window = "address:" .. address }))
+end
+
+-- Move a window to workspace number n of the monitor it is on (the workspace overview calls this when you drop a window on a card).
+function qsMoveWindow(address, n)
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address == address then
+            local mon = w.monitor and w.monitor.name or hl.get_active_monitor().name
+            hl.dispatch(hl.dsp.window.move({ workspace = n + wsOffset(mon), window = "address:" .. address }))
+        end
+    end
 end
 
 -- Step to the next / previous workspace number that has windows (or is showing now), on every monitor at once.

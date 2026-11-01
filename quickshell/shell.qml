@@ -84,6 +84,7 @@ ShellRoot {
             DisplayPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             ClipboardPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             WindowSwitcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            WorkspaceOverview { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NotificationCenter { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             VolumePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
