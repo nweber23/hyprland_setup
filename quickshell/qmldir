@@ -66,6 +66,7 @@ singleton Recorder Recorder.qml
 singleton Battery 1.0 Battery.qml
 singleton Tools 1.0 Tools.qml
 singleton Updates 1.0 Updates.qml
+singleton Privacy 1.0 Privacy.qml
 ToolsPanel 1.0 ToolsPanel.qml
 ToolRound 1.0 ToolRound.qml
 DesktopWidgets 1.0 DesktopWidgets.qml

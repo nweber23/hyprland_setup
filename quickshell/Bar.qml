@@ -203,6 +203,24 @@ PanelWindow {
                                 NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } } }
                 MouseArea { anchors.fill: parent; onClicked: Recorder.stop() }
             }
+            Repeater {   // privacy: shown only while the microphone, the camera or the screen is in use, with the app's name
+                model: [
+                    { icon: "mic", apps: Privacy.mic, color: Theme.accent2 },
+                    { icon: "videocam", apps: Privacy.camera, color: "#6fd36f" },
+                    { icon: "screen_share", apps: Privacy.screen, color: Theme.error }
+                ]
+                delegate: Item {
+                    required property var modelData
+                    visible: modelData.apps.length > 0
+                    implicitWidth: visible ? privRow.implicitWidth : 0; implicitHeight: 22
+                    RowLayout { id: privRow; anchors.centerIn: parent; spacing: 3
+                        Rectangle { width: 7; height: 7; radius: 3.5; color: modelData.color
+                                    SequentialAnimation on opacity { running: parent.visible; loops: Animation.Infinite
+                                        NumberAnimation { to: 0.3; duration: 800; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 800; easing.type: Easing.InOutSine } } }
+                        Icon { name: modelData.icon; size: 16; color: modelData.color; fill: 1 }
+                        Text { textFormat: Text.PlainText; text: modelData.apps.join(", "); color: modelData.color; font.family: Theme.mono; font.pixelSize: 10; font.bold: true } }
+                }
+            }
             Item {   // pending updates: click to install them in a terminal, right click to count again
                 visible: Updates.count > 0
                 implicitWidth: updRow.implicitWidth; implicitHeight: 22
