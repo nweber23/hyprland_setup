@@ -13,6 +13,11 @@ Singleton {
     // UPower reports 0..100 on D-Bus; guard in case a build exposes 0..1.
     readonly property real pct: dev ? (dev.percentage > 1 ? dev.percentage : dev.percentage * 100) : 100
     readonly property bool onBattery: UPower.onBattery
+    // At login the shell can ask before UPower has any data: the percentage is then 0 and would look like an empty battery.
+    // A reading counts only when the device is present, loaded and has a known state, and a few seconds have passed.
+    property bool settled: false
+    readonly property bool valid: settled && dev && dev.ready && dev.isPresent && dev.state !== UPowerDeviceState.Unknown && pct > 0
+    Timer { interval: 15000; running: true; onTriggered: { root.settled = true; root.check() } }
     property int health: 0        // % of the design capacity the battery still holds, 0 = unknown
     property int cycles: 0
     property int warned: 0        // 1 low (20), 2 very low (10), 3 critical (5); reset when charging
@@ -35,13 +40,14 @@ Singleton {
         Quickshell.execDetached(["notify-send", "-u", "critical", "-a", "Battery", "-i", "battery-caution", title, body])
     }
     function check() {
-        if (!ready) return
+        if (!ready || !valid) return
         if (!onBattery) {
             warned = 0
             if (before !== "") { Quickshell.execDetached(["powerprofilesctl", "set", before]); before = "" }
             return
         }
         const p = Math.round(pct)
+        if (p > 25 && warned > 0) warned = 0   // clearly fine again: start fresh, whatever an old file says
         if (p <= 5 && warned < 3) { warned = 3; notify("Battery critical: " + p + " %", "Plug in the charger now.") }
         else if (p <= 10 && warned < 2) { warned = 2; notify("Battery very low: " + p + " %", "Power saver is on. Plug in soon.") }
         else if (p <= 20 && warned < 1) { warned = 1; notify("Battery low: " + p + " %", Settings.autoSaver ? "Switching to power saver." : "Plug in soon.") }
@@ -49,6 +55,7 @@ Singleton {
     }
     onPctChanged: check()
     onOnBatteryChanged: check()
+    onValidChanged: check()
 
     // remember the current profile once, then switch; restored by check() when the charger is back
     Process {
