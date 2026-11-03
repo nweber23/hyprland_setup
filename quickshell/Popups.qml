@@ -14,6 +14,7 @@ Singleton {
     property string launcherPrefill: "" // text the launcher opens with (quickshell ipc call shell launcher "...")
     property bool focusMode: false    // bar hidden, notifications silenced, a countdown running (Super+Z)
     property bool gameMode: false     // no blur, no animations (Super+Shift+G); mirrored from hyprland.lua through a file
+    property bool builtinKbdOff: false  // the laptop keyboard is switched off (kbd-builtin), until Hyprland restarts
     property bool dockPinned: false   // dock held open (Super+D)
     property bool keepAwake: false    // no auto-lock, screen-off or suspend while on (the coffee button in the bar)
     property bool dnd: false          // do not disturb: notification popups hidden

@@ -33,6 +33,8 @@ Panel {
                          onToggled: { Popups.close(); Popups.setFocus(!Popups.focusMode) } }
             ToggleTile { Layout.fillWidth: true; icon: "keyboard_command_key"; label: "Shortcuts"; onToggled: root.open("shortcuts") }
             ToggleTile { Layout.fillWidth: true; icon: "key"; label: "Passwords"; onToggled: root.open("vault") }
+            ToggleTile { Layout.fillWidth: true; icon: "keyboard_hide"; label: "Laptop keys"; on: Popups.builtinKbdOff
+                         onToggled: { Popups.builtinKbdOff = !Popups.builtinKbdOff; Quickshell.execDetached(["kbd-builtin", Popups.builtinKbdOff ? "off" : "on"]) } }
         }
     }
 }

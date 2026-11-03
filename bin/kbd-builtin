@@ -1,0 +1,13 @@
+#!/bin/sh
+# kbd-builtin on|off -- switch the laptop's built-in keyboard off for this Hyprland session (a restart brings it back).
+# Refuses to switch it off while no other keyboard is connected.
+DEV=at-translated-set-2-keyboard
+case "$1" in
+  off)
+    others=$(hyprctl devices -j | python3 -c "import json,sys; print(sum(1 for k in json.load(sys.stdin)['keyboards'] if 'keyboard' in k['name'] and not k['name'].startswith('at-translated') and 'control' not in k['name']))")
+    if [ "$others" -lt 1 ]; then notify-send -a Keyboard "Built-in keyboard stays on" "No external keyboard is connected."; exit 1; fi
+    en=false ;;
+  on) en=true ;;
+  *) echo "usage: kbd-builtin on|off"; exit 2 ;;
+esac
+hyprctl eval "hl.device({ name = \"$DEV\", enabled = $en })"
