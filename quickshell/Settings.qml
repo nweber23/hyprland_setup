@@ -15,6 +15,19 @@ Singleton {
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
     property bool visualizer: true       // the music widget shows live audio bars while something plays
+    property string wallpaperEffect: "circle"   // how a new wallpaper arrives: circle | fade | wipe | zoom | random
+    property bool clickEffect: false     // a ring at every left click (for screen recordings)
+    property string barPosition: "top"   // "top" | "bottom"
+    property bool barAutohide: false     // the bar slides away and comes back when the pointer touches the screen edge
+    property var barHidden: []           // bar modules that are switched off: search bell workspaces media clock weather tray status
+    property var dockApps: [             // the app dock: name, desktop id, window class, icon
+        { name: "Spotify", id: "spotify_spotify", cls: "spotify", icon: "spotify" },
+        { name: "Chrome", id: "google-chrome", cls: "google-chrome", icon: "google-chrome" },
+        { name: "Discord", id: "discord_discord", cls: "discord", icon: "discord" },
+        { name: "VS Code", id: "com.microsoft.VSCode", cls: "com.microsoft.VSCode", icon: "vscode" }
+    ]
+    onClickEffectChanged: Quickshell.execDetached(["sh", "-c", 'mkdir -p "$HOME/.cache/quickshell"; echo "$1" > "$HOME/.cache/quickshell/ripple.txt"', "sh", clickEffect ? "1" : "0"])   // read by the click bind in hyprland.lua
+    property var widgetLayout: ({})      // where the desktop widgets were dragged to: { "<screen>:<widget>": { x, y, s } }
     property var mutedApps: []           // notifications from these apps skip the pop-up but stay in the history
     property bool noiseSuppression: false // the "Clean microphone" is the default microphone
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
@@ -28,10 +41,10 @@ Singleton {
     property int repeatRate: 25          // key repeats per second
     property int repeatDelay: 600        // ms before a held key repeats
 
-    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets", "visualizer",
+    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets", "visualizer", "wallpaperEffect", "clickEffect", "barPosition", "barAutohide", "barHidden", "dockApps", "widgetLayout",
                                  "liveOnBattery", "noiseSuppression", "mutedApps", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
                                  "repeatRate", "repeatDelay"]
-    readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"] })
+    readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"], wallpaperEffect: ["circle", "fade", "wipe", "zoom", "random"], barPosition: ["top", "bottom"] })
 
 
     FileView {

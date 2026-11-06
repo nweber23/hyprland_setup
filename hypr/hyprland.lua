@@ -553,6 +553,32 @@ local function settleSoon()
 end
 hl.on("monitor.added", settleSoon)
 hl.on("monitor.removed", settleSoon)
+-- Tablet mode: folding the ENVY x360 over (the "HP WMI hotkeys" switch) turns the keyboard and the touchpad off and brings up the
+-- on-screen keyboard; unfolding reverses it. Always re-enabled when the switch goes off.
+function qsTablet(on)
+    hl.device({ name = "at-translated-set-2-keyboard", enabled = not on })
+    hl.device({ name = "syna32a1:00-06cb:ce17-touchpad", enabled = not on })
+    if on then
+        hl.exec_cmd("sh -c 'pgrep -x wvkbd-mobintl >/dev/null || exec wvkbd-mobintl -L 280 --fn \"JetBrains Mono 14\"'")
+    else
+        hl.exec_cmd("pkill -x wvkbd-mobintl")
+    end
+end
+hl.bind("switch:on:HP WMI hotkeys", function() qsTablet(true) end, { locked = true })
+hl.bind("switch:off:HP WMI hotkeys", function() qsTablet(false) end, { locked = true })
+
+-- Click effect: every left click sends its position to the shell, which draws a ring there. The shell keeps the on/off state in a
+-- file, so a config reload does not forget it.
+hl.bind("mouse:272", function()
+    local f = io.open(os.getenv("HOME") .. "/.cache/quickshell/ripple.txt")
+    if not f then return end
+    local on = f:read("*l") == "1"
+    f:close()
+    if not on then return end
+    local p = hl.get_cursor_pos()
+    hl.exec_cmd("quickshell ipc call shell ripple " .. math.floor(p.x) .. " " .. math.floor(p.y))
+end, { non_consuming = true })
+
 hl.bind("switch:on:Lid Switch", function()
     qsLidClosed = true
     local _, others = panelAndOthers()
@@ -825,6 +851,8 @@ hl.on("hyprland.start", function()
 end)
 
 -- Blur what is behind the bar pills; ignore_alpha keeps fully transparent gaps unblurred.
+-- The click ring and the screenshot editor appear without the compositor sliding them in.
+hl.layer_rule({ name = "qs-ripple-noanim", match = { namespace = "qs-ripple" }, no_anim = true })
 hl.layer_rule({
     name        = "qs-bar-blur",
     match       = { namespace = "qs-bar" },

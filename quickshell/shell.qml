@@ -34,6 +34,7 @@ ShellRoot {
             Popups.current = ""
             Popups.toggle("annotate", m.name, 0)
         }
+        function ripple(x: int, y: int): void { Popups.rippleAt(x, y) }   // called by the click bind in hyprland.lua
         function noise(on: bool): void { Mic.set(on) }   // microphone noise suppression on / off
         function dock(): void { Popups.dockPinned = !Popups.dockPinned }   // hold the dock open / let it hide again
         function switcherConfirm(): void {
@@ -115,6 +116,7 @@ ShellRoot {
             WindowSwitcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             WorkspaceOverview { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             Annotate { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            Ripple { screen: perScreen.modelData }
             TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NotificationCenter { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             VolumePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

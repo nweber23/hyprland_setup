@@ -95,3 +95,5 @@ BackAurora 1.0 BackAurora.qml
 singleton Spectrum 1.0 Spectrum.qml
 AnnotateCanvas 1.0 AnnotateCanvas.qml
 Annotate 1.0 Annotate.qml
+RippleRing 1.0 RippleRing.qml
+Ripple 1.0 Ripple.qml

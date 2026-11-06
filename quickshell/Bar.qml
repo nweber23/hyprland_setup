@@ -13,12 +13,19 @@ import QtQuick.Layouts
 // Floating top bar made of separate pills.
 PanelWindow {
     id: bar
-    anchors { top: true; left: true; right: true }
+    anchors { top: Settings.barPosition === "top"; bottom: Settings.barPosition === "bottom"; left: true; right: true }
     // slides in from above when the screen appears (shell start, a monitor being plugged in)
     property bool entered: false
     Component.onCompleted: Qt.callLater(() => entered = true)
-    margins { top: bar.entered ? 6 : -40; left: 8; right: 8 }
+    // edge distance: slid out while it has not arrived yet, or while "hide the bar" is on and nothing needs it (4 px stay as the hover strip)
+    readonly property bool tucked: Settings.barAutohide && !edgeHover.hovered && Popups.current === ""
+    readonly property real edge: !entered ? -40 : (tucked ? -30 : 6)
+    margins { top: Settings.barPosition === "top" ? bar.edge : 0; bottom: Settings.barPosition === "bottom" ? bar.edge : 0; left: 8; right: 8 }
     Behavior on margins.top { NumberAnimation { duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+    Behavior on margins.bottom { NumberAnimation { duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+    exclusionMode: Settings.barAutohide ? ExclusionMode.Ignore : ExclusionMode.Auto
+    function shows(id) { return Settings.barHidden.indexOf(id) < 0 }
+    Item { anchors.fill: parent; HoverHandler { id: edgeHover } }
     implicitHeight: 34
     color: "transparent"
     visible: !Popups.focusMode   // focus mode hides the bar, and windows take its space
@@ -80,11 +87,13 @@ PanelWindow {
 
         BarGroup {
             id: searchBtn
+            visible: bar.shows("search")
             implicitWidth: 34; padding: 0
             BarChip { Layout.fillWidth: true; Icon { name: "search"; size: 18 } onClicked: bar.openPanel("launcher", searchBtn) }
         }
         BarGroup {
             id: bellBtn
+            visible: bar.shows("bell")
             implicitWidth: 34; padding: 0
             BarChip { Layout.fillWidth: true; active: Popups.current === "notifications"
                 // left click: notification center, right click: do not disturb; a dot marks unread ones
@@ -94,6 +103,7 @@ PanelWindow {
         }
 
         BarGroup {
+            visible: bar.shows("workspaces")
             spacing: 2
             Repeater {
                 model: 8
@@ -115,7 +125,7 @@ PanelWindow {
 
         BarGroup {
             id: mediaGroup
-            visible: bar.player !== null
+            visible: bar.shows("media") && bar.player !== null
             padding: 5; spacing: 8
             onClicked: bar.openPanel("music", mediaGroup)
             ClippingRectangle {
@@ -146,6 +156,7 @@ PanelWindow {
         spacing: 6
         BarGroup {
             id: clockGroup
+            visible: bar.shows("clock")
             padding: 12
             implicitHeight: 34
             onClicked: bar.openPanel("calendar", clockGroup)
@@ -158,7 +169,7 @@ PanelWindow {
             }
         }
         BarGroup {
-            visible: Weather.temp !== ""
+            visible: bar.shows("weather") && Weather.temp !== ""
             padding: 10; spacing: 6
             onClicked: bar.openPanel("calendar", clockGroup)
             Icon { name: Weather.icon; size: 18; fill: 1; color: Theme.on_surface }
@@ -173,6 +184,7 @@ PanelWindow {
         spacing: 6
 
         BarGroup {
+            visible: bar.shows("tray")
             padding: 6; spacing: 8
             Repeater {
                 model: SystemTray.items
@@ -251,6 +263,7 @@ PanelWindow {
         }
 
         BarGroup {
+            visible: bar.shows("status")
             spacing: 4
             BarChip {
                 // click or scroll: next layout (Super+Space and Alt+Shift also switch)

@@ -28,6 +28,8 @@ PanelWindow {
     property real cx: width / 2        // where the circle starts: the pointer, kept inside this screen
     property real cy: height / 2
     property real radius: 0
+    property string eff: "circle"      // the effect of the change running now (see Settings.wallpaperEffect)
+    readonly property real p: maxRadius > 0 ? radius / maxRadius : 0   // progress 0..1
     readonly property real maxRadius: Math.hypot(width, height)
 
     onImgSrcChanged: {
@@ -41,6 +43,8 @@ PanelWindow {
     function startGrow() {
         if (!pendingReveal) return
         pendingReveal = false; fallback.stop()
+        const e = Settings.wallpaperEffect
+        eff = e === "random" ? ["circle", "fade", "wipe", "zoom"][Math.floor(Math.random() * 4)] : e
         revealing = true; radius = 0; grow.restart()
     }
     function finish() { revealing = false; radius = 0 }
@@ -113,10 +117,18 @@ PanelWindow {
         anchors.fill: parent
         visible: false
         layer.enabled: root.revealing
-        Rectangle { x: root.cx - root.radius; y: root.cy - root.radius; width: root.radius * 2; height: width; radius: width / 2 }
+        Rectangle {   // circle: grows from the pointer; wipe: a growing strip from the left; fade and zoom: the whole picture (they fade it themselves)
+            x: root.eff === "circle" ? root.cx - root.radius : 0
+            y: root.eff === "circle" ? root.cy - root.radius : 0
+            width: root.eff === "circle" ? root.radius * 2 : (root.eff === "wipe" ? root.width * root.p : root.width)
+            height: root.eff === "circle" ? width : root.height
+            radius: root.eff === "circle" ? width / 2 : 0
+        }
     }
     Layer {
         id: fresh
+        opacity: root.eff === "fade" || root.eff === "zoom" ? root.p : 1
+        scale: root.eff === "zoom" ? 1.25 - 0.25 * root.p : 1
         visible: root.revealing
         layer.enabled: root.revealing
         layer.effect: MultiEffect { maskEnabled: true; maskSource: circle; maskThresholdMin: 0.5; maskSpreadAtMin: 1.0 }

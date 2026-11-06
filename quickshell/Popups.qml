@@ -8,6 +8,7 @@ Singleton {
     id: root
     property int initSteps: 0         // Tab presses made before the overview opened (the first one selects the previous window)
     property real earlyConfirm: 0     // ms timestamp of an Alt/Super release that came before the overview opened
+    signal rippleAt(real x, real y)   // a left click at global position x, y (the click effect)
     signal switchConfirm()            // Alt/Super released while the window overview is open
     signal switchStep(int dir)        // Alt+Tab pressed again while the window switcher is open
     property bool locked: false       // the lock screen is up (set by Lock.qml)

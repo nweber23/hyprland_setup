@@ -145,6 +145,37 @@ Panel {
                     SettingRow { title: "Music bars"; hint: "Live audio bars above the music widget while something plays"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.visualizer; onPicked: v => Settings.set("visualizer", v) } }
+                    SettingRow { title: "Wallpaper change"; hint: "How a new wallpaper arrives"
+                        SettingChips { chipW: 58; model: [{ label: "Circle", value: "circle" }, { label: "Fade", value: "fade" }, { label: "Wipe", value: "wipe" }, { label: "Zoom", value: "zoom" }, { label: "Mix", value: "random" }]
+                                       current: Settings.wallpaperEffect; onPicked: v => Settings.set("wallpaperEffect", v) } }
+                    SettingRow { title: "Click effect"; hint: "A ring at every left click, handy for screen recordings"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.clickEffect; onPicked: v => Settings.set("clickEffect", v) } }
+                    SettingRow { title: "Bar position"; hint: "Panels still open from the top"
+                        SettingChips { chipW: 66; model: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
+                                       current: Settings.barPosition; onPicked: v => Settings.set("barPosition", v) } }
+                    SettingRow { title: "Hide the bar"; hint: "It slides away and returns when the pointer touches the screen edge"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.barAutohide; onPicked: v => Settings.set("barAutohide", v) } }
+                    SettingRow { title: "Bar modules"; hint: "Click to show or hide"
+                        Flow {
+                            spacing: 6; width: 360
+                            Repeater {
+                                model: ["search", "bell", "workspaces", "media", "clock", "weather", "tray", "status"]
+                                delegate: Rectangle {
+                                    required property string modelData
+                                    readonly property bool on: Settings.barHidden.indexOf(modelData) < 0
+                                    implicitWidth: lbl.implicitWidth + 20; implicitHeight: 28; radius: 9
+                                    color: on ? Theme.accent : Theme.card
+                                    border.width: on ? 0 : 1; border.color: Theme.outline_variant
+                                    Behavior on color { ColorAnimation { duration: 160 } }
+                                    Text { id: lbl; anchors.centerIn: parent; textFormat: Text.PlainText; text: modelData; font.family: Theme.mono; font.pixelSize: 11; font.bold: true
+                                           color: parent.on ? Theme.panelBg : Theme.on_surface_variant }
+                                    MouseArea { anchors.fill: parent
+                                        onClicked: { const h = Settings.barHidden.filter(x => x !== modelData); if (parent.on) h.push(modelData); Settings.set("barHidden", h) } }
+                                }
+                            }
+                        } }
                     SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
                         SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
                     SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."
