@@ -181,6 +181,8 @@ hl.curve("linear",                   { type = "bezier", points = { {0, 0}, {1, 1
 
 hl.animation({ leaf = "global",        enabled = true, speed = 10,  bezier = "default" })
 hl.animation({ leaf = "border",        enabled = true, speed = 6,   bezier = "standardDecel" })
+-- On every focus change the gradient of the border runs once around the window, like a streak of light (the colours come from matugen).
+hl.animation({ leaf = "borderangle",   enabled = true, speed = 14,  bezier = "easeOutQuint", style = "once" })
 hl.animation({ leaf = "windows",       enabled = true, speed = 3.5, bezier = "expressiveDefaultSpatial" })
 hl.animation({ leaf = "windowsIn",     enabled = true, speed = 3.8, bezier = "expressiveFastSpatial", style = "popin 55%" })   -- grows out of the middle and settles with a small bounce
 hl.animation({ leaf = "windowsOut",    enabled = true, speed = 2.4, bezier = "emphasizedAccel",       style = "popin 70%" })
