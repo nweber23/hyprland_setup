@@ -50,7 +50,7 @@ Panel {
                     anchors { fill: parent; leftMargin: 10; rightMargin: 8 }
                     spacing: 10
                     Image { Layout.preferredWidth: 28; Layout.preferredHeight: 28; sourceSize: Qt.size(56, 56)
-                            source: Quickshell.iconPath(modelData.icon, "application-x-executable") }
+                            source: modelData.icon.indexOf("/") === 0 ? "file://" + modelData.icon : Quickshell.iconPath(modelData.icon, "application-x-executable") }
                     Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: modelData.name
                            color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12 }
                     Repeater {
@@ -97,7 +97,7 @@ Panel {
                     anchors { fill: parent; leftMargin: 8; rightMargin: 8 }
                     spacing: 10
                     Image { Layout.preferredWidth: 24; Layout.preferredHeight: 24; sourceSize: Qt.size(48, 48)
-                            source: Quickshell.iconPath(modelData.icon, "application-x-executable") }
+                            source: modelData.icon.indexOf("/") === 0 ? "file://" + modelData.icon : Quickshell.iconPath(modelData.icon, "application-x-executable") }
                     Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: modelData.name
                            color: inDock ? Theme.outline : Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12 }
                     Icon { name: inDock ? "check" : "add"; size: 18; color: inDock ? Theme.outline : Theme.accent }

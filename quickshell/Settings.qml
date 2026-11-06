@@ -47,6 +47,19 @@ Singleton {
     readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"], wallpaperEffect: ["circle", "fade", "wipe", "zoom", "random"], barPosition: ["top", "bottom"] })
 
 
+    // Lists are checked item by item, so a damaged file cannot put wrong data into the shell:
+    // plain lists hold text, the dock holds { name, id, cls, icon }, the widget layout holds { x, y, s } per widget.
+    function clean(key, v) {
+        if (key === "dockApps")
+            return v.filter(a => a && typeof a.name === "string" && typeof a.id === "string" && typeof a.cls === "string" && typeof a.icon === "string")
+        if (key === "widgetLayout") {
+            const out = {}
+            for (const n in v) if (v[n] && typeof v[n].x === "number" && typeof v[n].y === "number") out[n] = { x: v[n].x, y: v[n].y, s: typeof v[n].s === "number" ? v[n].s : 1 }
+            return out
+        }
+        return Array.isArray(v) ? v.filter(x => typeof x === "string") : v
+    }
+
     FileView {
         id: file
         path: Quickshell.env("HOME") + "/.config/quickshell-local/settings.json"
@@ -57,7 +70,7 @@ Singleton {
                 for (const k of root.keys) {
                     if (d[k] === undefined || typeof d[k] !== typeof root[k] || Array.isArray(d[k]) !== Array.isArray(root[k])) continue   // unknown or wrongly typed: keep the default
                     if (root.allowed[k] && root.allowed[k].indexOf(d[k]) < 0) continue
-                    root[k] = Array.isArray(d[k]) ? d[k].filter(x => typeof x === "string") : d[k]
+                    root[k] = root.clean(k, d[k])
                 }
             } catch (e) { console.warn("Settings: bad settings.json:", e) }
         }

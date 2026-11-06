@@ -94,7 +94,7 @@ PanelWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: 2; width: 44; height: 44
                             sourceSize: Qt.size(88, 88)
-                            source: Quickshell.iconPath(tile.modelData.icon, "application-x-executable")
+                            source: tile.modelData.icon.indexOf("/") === 0 ? "file://" + tile.modelData.icon : Quickshell.iconPath(tile.modelData.icon, "application-x-executable")
                             transformOrigin: Item.Bottom
                             scale: ma.pressed ? 0.9 : (ma.containsMouse ? 1.25 : 1)
                             Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 2 } }
