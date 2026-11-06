@@ -117,6 +117,15 @@ Item {
                 }
             }
         }
+        RowLayout {   // fingerprint hint: what the sensor says, pulsing while it waits for a finger
+            visible: view.lock.fpAvailable
+            Layout.alignment: Qt.AlignHCenter; spacing: 8
+            Icon { name: "fingerprint"; size: 22; color: view.lock.fpError ? Theme.error : Theme.primary
+                   SequentialAnimation on opacity { running: view.lock.fpActive && !view.lock.fpError; loops: Animation.Infinite
+                       NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine } } }
+            Text { textFormat: Text.PlainText; text: view.lock.fpMessage !== "" ? view.lock.fpMessage : "Touch the sensor"
+                   color: view.lock.fpError ? Theme.error : Qt.alpha("white", 0.75); font.family: "JetBrains Mono"; font.pixelSize: 12 }
+        }
         Text { Layout.alignment: Qt.AlignHCenter; textFormat: Text.PlainText
                text: view.lock.error; opacity: view.lock.error !== "" ? 1 : 0; color: Theme.error
                font.family: "JetBrains Mono"; font.pixelSize: 13; Behavior on opacity { NumberAnimation { duration: 160 } } }
