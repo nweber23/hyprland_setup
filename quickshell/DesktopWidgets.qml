@@ -31,11 +31,39 @@ PanelWindow {
 
     Item { id: desk; anchors.fill: parent }
 
+    // ---- where the widgets sit: defaults, or what was dragged (stored per screen in Settings.widgetLayout) ----
+    property bool editing: false
+    property string dragId: ""          // the widget being dragged right now, with its live offset and scale
+    property real dragDx: 0
+    property real dragDy: 0
+    property real dragS: 1
+    readonly property var defaults: ({
+        clock: { x: 56, y: 96 },
+        battery: { x: 56, y: win.height - 76 - 56 },
+        music: { x: 56 + 210 + 16, y: win.height - 76 - 56 }
+    })
+    function stored(id) { return Settings.widgetLayout[win.screen.name + ":" + id] ?? null }
+    function baseX(id) { const l = stored(id); return l ? l.x : defaults[id].x }
+    function baseY(id) { const l = stored(id); return l ? l.y : defaults[id].y }
+    function scaleOf(id) { if (dragId === id) return dragS; const l = stored(id); return l && l.s ? l.s : 1 }
+    function posX(id) { return baseX(id) + (dragId === id ? dragDx : 0) }
+    function posY(id) { return baseY(id) + (dragId === id ? dragDy : 0) }
+    function commit(id, x, y, s) {
+        const m = Object.assign({}, Settings.widgetLayout)
+        m[win.screen.name + ":" + id] = { x: Math.round(x), y: Math.round(y), s: Math.round(s * 100) / 100 }
+        Settings.set("widgetLayout", m)
+    }
+    function resetLayout() {
+        const m = {}
+        for (const k in Settings.widgetLayout) if (k.indexOf(win.screen.name + ":") !== 0) m[k] = Settings.widgetLayout[k]
+        Settings.set("widgetLayout", m)
+    }
+
     // ---- clock + weather ----
     ColumnLayout {
         id: clockBox
         visible: Settings.widgets
-        x: 56; y: 96
+        x: win.posX("clock"); y: win.posY("clock"); scale: win.scaleOf("clock"); transformOrigin: Item.TopLeft
         spacing: 0
         layer.enabled: true
         layer.effect: MultiEffect { shadowEnabled: true; shadowColor: "#99000000"; shadowBlur: 0.8; shadowVerticalOffset: 3 }
@@ -55,7 +83,7 @@ PanelWindow {
     Rectangle {
         id: batBox
         visible: Settings.widgets
-        x: 56; y: win.height - height - 56
+        x: win.posX("battery"); y: win.posY("battery"); scale: win.scaleOf("battery"); transformOrigin: Item.TopLeft
         width: 210; height: 76; radius: 18
         color: Qt.alpha(Theme.surface_container, 0.75)
         border.width: 1; border.color: Qt.alpha("white", 0.1)
@@ -84,7 +112,7 @@ PanelWindow {
     Row {
         id: vizBox
         visible: Settings.widgets && win.player !== null
-        x: musicBox.x + 8; y: musicBox.y - height - 6
+        x: musicBox.x + 8 * musicBox.scale; y: musicBox.y - (height + 6) * musicBox.scale; scale: musicBox.scale; transformOrigin: Item.TopLeft
         width: musicBox.width - 16; height: 58
         spacing: 3
         opacity: Spectrum.levels.length > 0 ? 1 : 0
@@ -110,7 +138,7 @@ PanelWindow {
     Rectangle {
         id: musicBox
         visible: Settings.widgets && win.player !== null
-        x: batBox.x + batBox.width + 16; y: batBox.y
+        x: win.posX("music"); y: win.posY("music"); scale: win.scaleOf("music"); transformOrigin: Item.TopLeft
         width: 360; height: 76; radius: 18
         color: Qt.alpha(Theme.surface_container, 0.75)
         border.width: 1; border.color: Qt.alpha("white", 0.1)
@@ -144,6 +172,52 @@ PanelWindow {
         }
     }
 
+    // ---- edit mode: drag a widget to move it, scroll over it to resize it ----
+    Repeater {
+        model: win.editing ? [{ id: "clock", item: clockBox }, { id: "battery", item: batBox }, { id: "music", item: musicBox }] : []
+        delegate: Rectangle {
+            required property var modelData
+            readonly property var it: modelData.item
+            visible: it.visible
+            x: it.x; y: it.y; width: it.implicitWidth * it.scale; height: it.implicitHeight * it.scale
+            z: 30; radius: 14; color: Qt.alpha(Theme.accent, ma.pressed ? 0.18 : 0.08)
+            border.width: 2; border.color: Theme.accent
+            MouseArea {
+                id: ma
+                anchors.fill: parent
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                property real sx: 0
+                property real sy: 0
+                onPressed: mouse => { const g = mapToItem(null, mouse.x, mouse.y); sx = g.x; sy = g.y
+                                      win.dragId = modelData.id; win.dragDx = 0; win.dragDy = 0; win.dragS = win.scaleOf(modelData.id) }
+                onPositionChanged: mouse => { if (!pressed) return; const g = mapToItem(null, mouse.x, mouse.y); win.dragDx = g.x - sx; win.dragDy = g.y - sy }
+                onReleased: { const id = modelData.id; win.commit(id, win.baseX(id) + win.dragDx, win.baseY(id) + win.dragDy, win.dragS); win.dragId = "" }
+                onWheel: wheel => {
+                    const id = modelData.id, s = Math.max(0.6, Math.min(2.2, win.scaleOf(id) + (wheel.angleDelta.y > 0 ? 0.1 : -0.1)))
+                    if (win.dragId === id) win.dragS = s; else win.commit(id, win.baseX(id), win.baseY(id), s)
+                }
+            }
+        }
+    }
+    Rectangle {   // the strip at the bottom while editing
+        visible: win.editing
+        z: 40
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 40 }
+        width: strip.implicitWidth + 28; height: 48; radius: 24
+        color: Qt.alpha(Theme.surface_container, 0.92); border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.7)
+        RowLayout {
+            id: strip
+            anchors.centerIn: parent; spacing: 14
+            Text { textFormat: Text.PlainText; text: "Drag to move  ·  scroll to resize"; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12 }
+            Rectangle { implicitWidth: rl.implicitWidth + 24; implicitHeight: 30; radius: 15; color: rm.containsMouse ? Theme.cardHigh : Theme.card
+                Text { id: rl; anchors.centerIn: parent; textFormat: Text.PlainText; text: "Reset"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12 }
+                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; onClicked: win.resetLayout() } }
+            Rectangle { implicitWidth: dl.implicitWidth + 24; implicitHeight: 30; radius: 15; color: Theme.primary
+                Text { id: dl; anchors.centerIn: parent; textFormat: Text.PlainText; text: "Done"; color: Theme.on_primary; font.family: Theme.mono; font.pixelSize: 12; font.bold: true }
+                MouseArea { anchors.fill: parent; onClicked: win.editing = false } }
+        }
+    }
+
     // ---- right-click menu on the bare desktop ----
     property real menuX: 0
     property real menuY: 0
@@ -159,6 +233,7 @@ PanelWindow {
         { sep: true },
         { icon: "desktop_windows", text: "Display", run: () => Popups.toggle("display", win.screen.name, win.menuX) },
         { icon: "widgets", text: Settings.widgets ? "Hide widgets" : "Show widgets", run: () => Settings.set("widgets", !Settings.widgets) },
+        { icon: "drag_pan", text: "Edit widgets", run: () => { if (!Settings.widgets) Settings.set("widgets", true); win.editing = true } },
         { icon: "settings", text: "Settings", run: () => Popups.toggle("settings", win.screen.name, win.menuX) },
         { sep: true },
         { icon: "lock", text: "Lock", run: () => Quickshell.execDetached(["quickshell", "ipc", "call", "shell", "lock"]) }

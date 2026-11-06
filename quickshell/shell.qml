@@ -116,6 +116,7 @@ ShellRoot {
             WindowSwitcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             WorkspaceOverview { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             Annotate { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            DockAppsPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             Ripple { screen: perScreen.modelData }
             TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NotificationCenter { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

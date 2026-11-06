@@ -8,12 +8,7 @@ import QtQuick.Layouts
 // slides away again afterwards. Click starts an app or brings its window to the front; a dot marks running apps.
 PanelWindow {
     id: win
-    readonly property var apps: [
-        { name: "Spotify", id: "spotify_spotify", cls: "spotify", icon: "spotify" },
-        { name: "Chrome", id: "google-chrome", cls: "google-chrome", icon: "google-chrome" },
-        { name: "Discord", id: "discord_discord", cls: "discord", icon: "discord" },
-        { name: "VS Code", id: "com.microsoft.VSCode", cls: "com.microsoft.VSCode", icon: "vscode" }
-    ]
+    readonly property var apps: Settings.dockApps   // edited in the dock panel (the "+" at the end, or a right click)
     property bool touched: false      // opened by tapping the handle
     readonly property bool revealed: hv.hovered || touched || Popups.dockPinned
 
@@ -68,6 +63,7 @@ PanelWindow {
             Behavior on opacity { NumberAnimation { duration: 180 } }
         }
         TapHandler { enabled: !win.revealed; onTapped: win.touched = true }
+        TapHandler { acceptedButtons: Qt.RightButton; onTapped: { win.touched = false; Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) } }   // right click: edit the dock
         DragHandler { target: null; enabled: !win.revealed; onTranslationChanged: if (translation.y < -24) win.touched = true }   // swipe up from the bottom edge
 
         Rectangle {
@@ -130,6 +126,14 @@ PanelWindow {
                             onClicked: mouse => { bounce.restart(); if (mouse.button === Qt.MiddleButton) win.launch(tile.modelData); else win.open(tile.modelData) }
                         }
                     }
+                }
+                Rectangle {   // "+": opens the dock editor
+                    Layout.preferredWidth: 34; Layout.preferredHeight: 34; Layout.alignment: Qt.AlignVCenter
+                    radius: 17; color: pm.containsMouse ? Theme.cardHigh : "transparent"
+                    border.width: 1; border.color: Qt.alpha(Theme.outline, 0.6)
+                    Icon { anchors.centerIn: parent; name: "add"; size: 20; color: Theme.on_surface_variant }
+                    MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true
+                                onClicked: { win.touched = false; Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) } }
                 }
             }
         }

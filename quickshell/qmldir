@@ -97,3 +97,4 @@ AnnotateCanvas 1.0 AnnotateCanvas.qml
 Annotate 1.0 Annotate.qml
 RippleRing 1.0 RippleRing.qml
 Ripple 1.0 Ripple.qml
+DockAppsPanel 1.0 DockAppsPanel.qml
