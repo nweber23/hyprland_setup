@@ -20,7 +20,7 @@ Singleton {
             if (!p) continue
             const cls = p["media.class"] ?? ""
             const name = root.appName(p)
-            if (name === "Quickshell" || String(p["node.name"] ?? "").startsWith("qs_eq")) continue   // our own equalizer
+            if (name === "Quickshell" || String(p["node.name"] ?? "").startsWith("qs_eq") || String(p["node.name"] ?? "").startsWith("qs_spectrum")) continue   // our own equalizer and music bars
             if (cls === "Stream/Input/Audio") mic.push(name)
             else if (cls === "Stream/Input/Video") (p["media.role"] === "Camera" ? cam : scr).push(name)
             else if (cls === "Stream/Output/Video") scr.push(name)   // the portal's screencast source

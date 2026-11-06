@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""spectrum -- audio levels for the desktop music widget: records what the speakers play (the default output's monitor)
+and prints one line per frame, 24 numbers 0..100 for bands from 60 Hz to 10 kHz, about 30 times a second.
+
+    spectrum          record the current output through pw-record
+    spectrum -        read raw mono s16 audio at 22050 Hz from stdin instead (for tests)
+
+The recording stream is named qs_spectrum so the shell's privacy indicator ignores it."""
+import subprocess, sys
+import numpy as np
+
+RATE, WIN, HOP, BANDS = 22050, 1024, 735, 24      # 735 samples = 1/30 s
+LO, HI = 60.0, 10000.0
+
+def band_edges():
+    freqs = np.fft.rfftfreq(WIN, 1 / RATE)
+    edges = np.geomspace(LO, HI, BANDS + 1)
+    return [(np.searchsorted(freqs, a), max(np.searchsorted(freqs, b), np.searchsorted(freqs, a) + 1)) for a, b in zip(edges[:-1], edges[1:])]
+
+def frames(stream):
+    """Yield WIN-sample windows, advancing by HOP."""
+    buf = np.zeros(0, dtype=np.float32)
+    while True:
+        data = stream.read(HOP * 2)
+        if not data:
+            return
+        buf = np.concatenate([buf, np.frombuffer(data[:len(data) // 2 * 2], dtype="<i2").astype(np.float32) / 32768])
+        while len(buf) >= WIN:
+            yield buf[:WIN]
+            buf = buf[HOP:]
+
+def run(stream, out=sys.stdout):
+    edges, hann, peak = band_edges(), np.hanning(WIN).astype(np.float32), 1e-3
+    for win in frames(stream):
+        mag = np.abs(np.fft.rfft(win * hann)) / WIN
+        lv = np.array([mag[a:b].max() for a, b in edges])
+        peak = max(peak * 0.995, lv.max(), 1e-3)             # automatic gain: loud and quiet music both fill the bars
+        level = np.clip(np.log10(lv / peak + 1e-4) / 4 + 1, 0, 1) if lv.max() > 2e-4 else np.zeros(BANDS)   # silence stays flat
+        out.write(" ".join(str(int(v * 100)) for v in level) + "\n")
+        out.flush()
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["-"]:
+        run(sys.stdin.buffer)
+    else:
+        p = subprocess.Popen(["pw-record", "--rate", str(RATE), "--channels", "1", "--format", "s16", "--latency", "30ms",
+                              "-P", "{ stream.capture.sink = true node.name = qs_spectrum }", "-"],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        try:
+            run(p.stdout)
+        finally:
+            p.kill()

@@ -22,7 +22,7 @@ packages() {
     say "apt packages (sudo)"
     local runtime="grim slurp wl-clipboard brightnessctl playerctl wlsunset wf-recorder xdg-desktop-portal-wlr xdg-desktop-portal-gtk
         network-manager-gnome libnotify-bin power-profiles-daemon pipewire wireplumber pipewire-pulse jq ffmpeg mpv kitty
-        python3-pil python3-venv python3-pip fonts-jetbrains-mono papirus-icon-theme curl git
+        python3-pil python3-numpy python3-venv python3-pip fonts-jetbrains-mono papirus-icon-theme curl git
         tesseract-ocr tesseract-ocr-deu zbar-tools wvkbd udisks2 keepassxc wtype"
     local build="build-essential gcc-14 g++-14 ninja-build meson pkg-config bison flex xcb-proto hwdata
         clang-20 libc++-20-dev libc++abi-20-dev glslang-tools glslang-dev libre2-dev libmuparser-dev libcanberra-dev libeis-dev

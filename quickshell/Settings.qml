@@ -14,6 +14,7 @@ Singleton {
     property bool autoSaver: true        // switch to the power-saver profile at 20 % and below
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
+    property bool visualizer: true       // the music widget shows live audio bars while something plays
     property var mutedApps: []           // notifications from these apps skip the pop-up but stay in the history
     property bool noiseSuppression: false // the "Clean microphone" is the default microphone
     property bool liveOnBattery: false   // false: an animated wallpaper pauses while on battery
@@ -27,7 +28,7 @@ Singleton {
     property int repeatRate: 25          // key repeats per second
     property int repeatDelay: 600        // ms before a held key repeats
 
-    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets",
+    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets", "visualizer",
                                  "liveOnBattery", "noiseSuppression", "mutedApps", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
                                  "repeatRate", "repeatDelay"]
     readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"] })

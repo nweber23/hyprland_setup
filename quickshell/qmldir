@@ -92,3 +92,6 @@ BackParticles 1.0 BackParticles.qml
 BackOrbits 1.0 BackOrbits.qml
 BackViewfinder 1.0 BackViewfinder.qml
 BackAurora 1.0 BackAurora.qml
+singleton Spectrum 1.0 Spectrum.qml
+AnnotateCanvas 1.0 AnnotateCanvas.qml
+Annotate 1.0 Annotate.qml

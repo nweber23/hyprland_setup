@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# Usage: screenshot [region|full|window]
+# Usage: screenshot [region|full|window|annotate]   (annotate: pick a region, then mark it up in the shell's editor)
 # Saves to ~/Pictures/Screenshots, copies the image to the clipboard and shows a notification with a preview.
 set -euo pipefail
 dir="$HOME/Pictures/Screenshots"; mkdir -p "$dir"
 file="$dir/screenshot-$(date +%F-%H%M%S).png"
+if [ "${1:-}" = annotate ]; then   # the editor saves and copies the result itself
+    geo=$(slurp -d) || exit 0
+    tmp="$HOME/.cache/quickshell/annotate-$$.png"; mkdir -p "$(dirname "$tmp")"
+    grim -g "$geo" "$tmp"
+    quickshell ipc call shell annotate "$tmp"
+    ( sleep 600; rm -f "$tmp" ) >/dev/null 2>&1 &   # the editor has long loaded it by then
+    exit 0
+fi
 case "${1:-region}" in
     region) geo=$(slurp -d) || exit 0            # Esc / right click cancels
             grim -g "$geo" "$file" ;;

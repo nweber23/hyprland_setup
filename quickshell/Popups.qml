@@ -19,6 +19,7 @@ Singleton {
     property bool keepAwake: false    // no auto-lock, screen-off or suspend while on (the coffee button in the bar)
     property bool dnd: false          // do not disturb: notification popups hidden
     property var trayItem: null       // SystemTrayItem whose menu the "traymenu" panel shows
+    property string annotatePath: ""  // the screenshot the editor opens (set by quickshell ipc call shell annotate)
     property string tab: ""           // sub-view of a panel, e.g. "wifi" / "bluetooth" for the network panel
     property string current: ""
     property string screenName: ""

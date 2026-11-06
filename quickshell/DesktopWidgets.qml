@@ -76,6 +76,32 @@ PanelWindow {
         }
     }
 
+    // the bars rise out of the top of the music card
+    Row {
+        id: vizBox
+        visible: win.player !== null
+        x: musicBox.x + 8; y: musicBox.y - height - 6
+        width: musicBox.width - 16; height: 58
+        spacing: 3
+        opacity: Spectrum.levels.length > 0 ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 400 } }
+        Repeater {
+            model: 24
+            delegate: Item {   // a fixed-size cell: items inside a Row cannot be anchored
+                required property int index
+                readonly property real v: Spectrum.levels.length > index ? Spectrum.levels[index] / 100 : 0
+                width: (vizBox.width - 23 * 3) / 24; height: vizBox.height
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width; height: Math.max(3, parent.height * parent.v)
+                    radius: width / 2
+                    color: Qt.alpha(Theme.accent, 0.45 + 0.55 * parent.v)
+                    Behavior on height { NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }
+                }
+            }
+        }
+    }
+
     // ---- music ----
     Rectangle {
         id: musicBox

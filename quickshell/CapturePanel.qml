@@ -35,6 +35,7 @@ Panel {
             CaptureTile { icon: "crop"; label: "Region"; onActivated: root.shoot("region") }
             CaptureTile { icon: "desktop_windows"; label: "Full screen"; onActivated: root.shoot("full") }
             CaptureTile { icon: "web_asset"; label: "Window"; onActivated: root.shoot("window") }
+            CaptureTile { icon: "draw"; label: "Annotate"; onActivated: root.shoot("annotate") }
         }
         // delay before the shot: lets you open a menu first
         RowLayout {

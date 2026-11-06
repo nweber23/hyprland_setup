@@ -6,7 +6,7 @@ import Quickshell.Services.SystemTray
 import QtQuick
 
 ShellRoot {
-    Component.onCompleted: { Battery.init(); SysMon.init(); Mic.init() }
+    Component.onCompleted: { Battery.init(); SysMon.init(); Mic.init(); Spectrum.init() }
     // Keybinds call:  quickshell ipc call shell toggle <panel>
     IpcHandler {
         target: "shell"
@@ -26,6 +26,13 @@ ShellRoot {
             Popups.launcherPrefill = query
             const m = Hyprland.focusedMonitor
             if (m) Popups.toggle("launcher", m.name, m.width / m.scale / 2)
+        }
+        function annotate(path: string): void {   // open the screenshot editor on an image file
+            const m = Hyprland.focusedMonitor
+            if (!m || !/^[\/A-Za-z0-9_.@ -]+$/.test(path)) return
+            Popups.annotatePath = path
+            Popups.current = ""
+            Popups.toggle("annotate", m.name, 0)
         }
         function noise(on: bool): void { Mic.set(on) }   // microphone noise suppression on / off
         function dock(): void { Popups.dockPinned = !Popups.dockPinned }   // hold the dock open / let it hide again
@@ -107,6 +114,7 @@ ShellRoot {
             ClipboardPanel { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             WindowSwitcher { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             WorkspaceOverview { screen: perScreen.modelData; screenName: perScreen.modelData.name }
+            Annotate { screen: perScreen.modelData; screenName: perScreen.modelData.name }
             TrayMenu { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             NotificationCenter { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }
             VolumePanel { screen: perScreen.modelData; screenName: perScreen.modelData.name; screenWidth: perScreen.modelData.width }

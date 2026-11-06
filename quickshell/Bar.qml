@@ -14,7 +14,11 @@ import QtQuick.Layouts
 PanelWindow {
     id: bar
     anchors { top: true; left: true; right: true }
-    margins { top: 6; left: 8; right: 8 }
+    // slides in from above when the screen appears (shell start, a monitor being plugged in)
+    property bool entered: false
+    Component.onCompleted: Qt.callLater(() => entered = true)
+    margins { top: bar.entered ? 6 : -40; left: 8; right: 8 }
+    Behavior on margins.top { NumberAnimation { duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
     implicitHeight: 34
     color: "transparent"
     visible: !Popups.focusMode   // focus mode hides the bar, and windows take its space

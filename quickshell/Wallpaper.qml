@@ -101,6 +101,10 @@ PanelWindow {
 
     Layer {
         id: base
+        opacity: root.started ? 1 : 0      // a screen that appears gets its wallpaper with a soft zoom-in
+        scale: root.started ? 1 : 1.08
+        Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 1400; easing.type: Easing.OutCubic } }
         onStatusChanged: if (status === Image.Ready && root.revealing && source == fresh.source) root.finish()
     }
     // the new picture, shown only through a growing circle

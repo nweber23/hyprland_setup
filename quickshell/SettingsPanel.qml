@@ -142,6 +142,9 @@ Panel {
                     SettingRow { title: "Desktop widgets"; hint: "Clock, battery and the playing track on the bare desktop"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.widgets; onPicked: v => Settings.set("widgets", v) } }
+                    SettingRow { title: "Music bars"; hint: "Live audio bars above the music widget while something plays"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.visualizer; onPicked: v => Settings.set("visualizer", v) } }
                     SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
                         SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
                     SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."
