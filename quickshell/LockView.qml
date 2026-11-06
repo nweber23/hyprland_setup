@@ -19,21 +19,32 @@ Item {
     Rectangle { anchors.fill: parent; color: Theme.surface }
 
     // wallpaper, blurred and dimmed; fades in once decoded so there is never a black flash after the plain colour
-    Image {
-        id: bg
+    // The blur is rendered once and only faded in: animating the blur itself costs a full-screen pass every frame
+    // and made the lock screen stutter on the small GPU.
+    Item {
         anchors.fill: parent
-        source: view.lock.wallpaper !== "" ? "file://" + view.lock.wallpaper : ""
-        fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(view.width, view.height)
-        asynchronous: true
-        opacity: status === Image.Ready ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-        // starts sharp like the desktop wallpaper, then melts into the blurred lock screen (and back on unlock)
         property real melt: view.up ? 1 : 0
-        Behavior on melt { NumberAnimation { duration: 1100; easing.type: Easing.OutCubic } }
-        scale: 1.06 - 0.06 * melt
-        layer.enabled: true
-        layer.effect: MultiEffect { blurEnabled: true; blur: bg.melt; blurMax: 64; brightness: -0.1 * bg.melt; saturation: 0.15 * bg.melt }
+        Behavior on melt { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+        opacity: sharp.status === Image.Ready ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+        Image {   // the wallpaper as it is on the desktop
+            id: sharp
+            anchors.fill: parent
+            source: view.lock.wallpaper !== "" ? "file://" + view.lock.wallpaper : ""
+            fillMode: Image.PreserveAspectCrop
+            sourceSize: Qt.size(view.width, view.height)
+            asynchronous: true
+        }
+        Image {   // the same, blurred and dimmed (cached as one texture), faded in over it
+            anchors.fill: parent
+            source: sharp.source
+            fillMode: Image.PreserveAspectCrop
+            sourceSize: Qt.size(view.width, view.height)
+            asynchronous: true
+            opacity: parent.melt
+            layer.enabled: true
+            layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: -0.1; saturation: 0.15 }
+        }
     }
     // darker towards the edges, brighter behind the clock
     Rectangle {
@@ -117,12 +128,10 @@ Item {
                 }
             }
         }
-        RowLayout {   // fingerprint hint: what the sensor says, pulsing while it waits for a finger
+        RowLayout {   // fingerprint hint: a short fixed sentence, never the finger name
             visible: view.lock.fpAvailable
             Layout.alignment: Qt.AlignHCenter; spacing: 8
-            Icon { name: "fingerprint"; size: 22; color: view.lock.fpError ? Theme.error : Theme.primary
-                   SequentialAnimation on opacity { running: view.lock.fpActive && !view.lock.fpError; loops: Animation.Infinite
-                       NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine } } }
+            Icon { name: "fingerprint"; size: 22; color: view.lock.fpError ? Theme.error : Theme.primary }
             Text { textFormat: Text.PlainText; text: view.lock.fpMessage !== "" ? view.lock.fpMessage : "Touch the sensor"
                    color: view.lock.fpError ? Theme.error : Qt.alpha("white", 0.75); font.family: "JetBrains Mono"; font.pixelSize: 12 }
         }

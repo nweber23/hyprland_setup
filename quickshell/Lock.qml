@@ -55,7 +55,10 @@ Scope {
         configDirectory: Quickshell.shellDir + "/pam"
         config: "fingerprint.conf"
         user: Quickshell.env("USER")
-        onMessageChanged: if (message !== "") { root.fpMessage = message; root.fpError = /fail|unable|error|not /i.test(message) }   // messageIsError is also set on the plain prompt
+        onMessageChanged: if (message !== "") {   // the reader's own sentences name the finger: show short fixed ones instead
+            root.fpError = /fail|unable|error|not /i.test(message)
+            root.fpMessage = root.fpError ? "Fingerprint not recognised" : "Touch the sensor"
+        }
         onCompleted: result => {
             if (result === PamResult.Success) { root.succeed(); return }
             root.fpMessage = "Fingerprint not recognised"; root.fpError = true
@@ -66,7 +69,7 @@ Scope {
     property alias fpRetry: fpRetryTimer
     Timer { id: fpRetryTimer; interval: 2500; onTriggered: if (root.locked && !root.checking && !root.unlocking && root.fpAvailable && !fp.active) fp.start() }
 
-    Timer { id: leave; interval: 480; onTriggered: { root.locked = false; root.unlocking = false } }   // lets the screen melt away first
+    Timer { id: leave; interval: 380; onTriggered: { root.locked = false; root.unlocking = false } }   // lets the screen melt away first
 
     // Idle: lock after 5 minutes without input (apps that inhibit idle, e.g. video playback, are respected).
     // Enabled after unlocking with the real password was confirmed.
