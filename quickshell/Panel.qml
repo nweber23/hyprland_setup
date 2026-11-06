@@ -24,6 +24,7 @@ PanelWindow {
     property real panelWidth: 380
     property bool centered: false           // true: centre on the screen instead of hanging under the chip
     property real pad: 20
+    signal wheeled(real dy)                  // the mouse wheel or two-finger scrolling over the card
     property string backdrop: ""              // animated background: Waves, Rings, Dots, Grid, Bars, Bubbles, Particles, Orbits, Viewfinder, Aurora; empty = the drifting circles
     property bool animateHeight: true       // false when the content animates its own height
     // Resizing the window costs a compositor round trip per frame (measured: 30 fps while it animated).
@@ -104,6 +105,12 @@ PanelWindow {
         color: Qt.tint(Theme.panelBg, Qt.alpha(Theme.on_surface, 0.30 * (1 - Math.min(1, win.grow * 1.6))))
         opacity: win.intro
 
+        // Panels that scroll listen to wheeled(): the wheel is reported here and still passed on to whatever lies underneath.
+        // (A WheelHandler on the card never received anything in this window, a MouseArea does.)
+        MouseArea {
+            anchors.fill: parent; z: 100; acceptedButtons: Qt.NoButton
+            onWheel: wheel => { win.wheeled(wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y * 0.6); wheel.accepted = false }
+        }
         Item {
             id: wrapper
             width: win.width; height: win.smoothH

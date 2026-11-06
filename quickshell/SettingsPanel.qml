@@ -18,6 +18,8 @@ Panel {
     fixedH: 640
 
     property int page: 0
+    // scrolling works anywhere in the window (mouse wheel, two fingers on the touchpad), also over the sidebar
+    onWheeled: dy => pages.scroll = Math.max(0, Math.min(pages.maxScroll(), pages.scroll - dy))
     readonly property var pages: [
         { name: "Appearance", icon: "palette" }, { name: "Desktop", icon: "dashboard" }, { name: "Display", icon: "desktop_windows" }, { name: "Sound", icon: "volume_up" },
         { name: "Network", icon: "wifi" }, { name: "Keyboard", icon: "keyboard" }, { name: "Mouse & touchpad", icon: "mouse" }, { name: "Night light", icon: "nightlight" },
@@ -99,14 +101,6 @@ Panel {
         p: root; index: 0; dy: 10
         RowLayout {
             Layout.fillWidth: true; spacing: 20
-            // scrolling works anywhere in the window (mouse wheel, two fingers on the touchpad), also over the sidebar
-            WheelHandler {
-                onWheel: event => {
-                    const d = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y * 0.6
-                    pages.scroll = Math.max(0, Math.min(pages.maxScroll(), pages.scroll - d))
-                }
-            }
-
             // ---------- sidebar ----------
             Item {
                 Layout.preferredWidth: 200; Layout.preferredHeight: root.pages.length * 44; Layout.alignment: Qt.AlignTop
