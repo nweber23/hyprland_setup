@@ -18,7 +18,7 @@ PanelWindow {
         target: Popups
         function onRippleAt(gx, gy) {
             const x = gx - win.screen.x, y = gy - win.screen.y
-            if (x < 0 || y < 0 || x > win.width || y > win.height) return   // another screen's click
+            if (x < 0 || y < 0 || x > win.screen.width || y > win.screen.height) return   // another screen's click
             const ring = [r0, r1, r2][win.next]
             win.next = (win.next + 1) % 3
             ring.fire(x, y)
