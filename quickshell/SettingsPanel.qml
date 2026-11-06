@@ -99,6 +99,13 @@ Panel {
         p: root; index: 0; dy: 10
         RowLayout {
             Layout.fillWidth: true; spacing: 20
+            // scrolling works anywhere in the window (mouse wheel, two fingers on the touchpad), also over the sidebar
+            WheelHandler {
+                onWheel: event => {
+                    const d = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y * 0.6
+                    pages.scroll = Math.max(0, Math.min(pages.maxScroll(), pages.scroll - d))
+                }
+            }
 
             // ---------- sidebar ----------
             Item {
@@ -139,7 +146,6 @@ Panel {
                     return 0
                 }
                 Connections { target: root; function onPageChanged() { pages.scroll = 0 } }
-                WheelHandler { onWheel: event => pages.scroll = Math.max(0, Math.min(pages.maxScroll(), pages.scroll - event.angleDelta.y * 0.6)) }
                 Behavior on scroll { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                 Rectangle {   // scroll bar, only on a page that needs it
                     visible: pages.maxScroll() > 0
