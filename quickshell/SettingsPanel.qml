@@ -19,7 +19,7 @@ Panel {
 
     property int page: 0
     readonly property var pages: [
-        { name: "Appearance", icon: "palette" }, { name: "Display", icon: "desktop_windows" }, { name: "Sound", icon: "volume_up" },
+        { name: "Appearance", icon: "palette" }, { name: "Desktop", icon: "dashboard" }, { name: "Display", icon: "desktop_windows" }, { name: "Sound", icon: "volume_up" },
         { name: "Network", icon: "wifi" }, { name: "Keyboard", icon: "keyboard" }, { name: "Mouse & touchpad", icon: "mouse" }, { name: "Night light", icon: "nightlight" },
         { name: "Power & lock", icon: "lock_clock" }, { name: "Notifications", icon: "notifications" }, { name: "Calendar", icon: "calendar_month" },
         { name: "Shortcuts", icon: "keyboard_command_key" }, { name: "About", icon: "info" }
@@ -132,10 +132,32 @@ Panel {
             Item {
                 id: pages
                 Layout.fillWidth: true; Layout.preferredHeight: 580; clip: true
+                // a page taller than the window scrolls with the mouse wheel
+                property real scroll: 0
+                function maxScroll() {
+                    for (let i = 0; i < children.length; i++) if (children[i].on) return Math.max(0, children[i].implicitHeight - height + 8)
+                    return 0
+                }
+                Connections { target: root; function onPageChanged() { pages.scroll = 0 } }
+                WheelHandler { onWheel: event => pages.scroll = Math.max(0, Math.min(pages.maxScroll(), pages.scroll - event.angleDelta.y * 0.6)) }
+                Behavior on scroll { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Rectangle {   // scroll bar, only on a page that needs it
+                    visible: pages.maxScroll() > 0
+                    x: parent.width - 5; width: 3; radius: 1.5; color: Qt.alpha(Theme.on_surface, 0.3); z: 5
+                    height: Math.max(30, parent.height * parent.height / (parent.height + pages.maxScroll()))
+                    y: pages.maxScroll() > 0 ? (parent.height - height) * pages.scroll / pages.maxScroll() : 0
+                }
 
                 SettingPage { idx: 0; current: root.page; title: "Appearance"
                     SettingRow { title: "Theme"; hint: "Colours come from the wallpaper, in a dark or a light variant"
                         SettingChips { model: [{ label: "Dark", value: "dark" }, { label: "Light", value: "light" }]; current: Settings.themeMode; onPicked: v => root.applyTheme(v) } }
+                    SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
+                        SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
+                    SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."
+                        SettingChips { chipW: 110; model: [{ label: "Pause on battery", value: false }, { label: "Always play", value: true }]
+                                       current: Settings.liveOnBattery; onPicked: v => Settings.set("liveOnBattery", v) } }
+                }
+                SettingPage { idx: 1; current: root.page; title: "Desktop"
                     SettingRow { title: "Dock"; hint: "Spotify, Chrome, Discord and VS Code at the bottom edge; it slides up when you touch the edge"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.dock; onPicked: v => Settings.set("dock", v) } }
@@ -176,17 +198,14 @@ Panel {
                                 }
                             }
                         } }
-                    SettingRow { title: "Wallpaper"; hint: "Choose one from ~/Pictures/Wallpapers"
-                        SettingButton { label: "Choose…"; accent: true; onClicked: root.open("wallpaper") } }
-                    SettingRow { title: "Animated wallpaper"; hint: "Videos from ~/Videos/Hidamari or ~/Videos/Wallpapers. They always pause in fullscreen and while locked."
-                        SettingChips { chipW: 110; model: [{ label: "Pause on battery", value: false }, { label: "Always play", value: true }]
-                                       current: Settings.liveOnBattery; onPicked: v => Settings.set("liveOnBattery", v) } }
+                    SettingRow { title: "Dock apps"; hint: "Add, remove and reorder the apps in the dock (also the + in the dock)"
+                        SettingButton { label: "Edit…"; accent: true; onClicked: root.open("dockapps") } }
                 }
-                SettingPage { idx: 1; current: root.page; title: "Display"
+                SettingPage { idx: 2; current: root.page; title: "Display"
                     SettingRow { title: "Resolution, refresh rate and scale"; hint: "Applies at once and is remembered"
                         SettingButton { label: "Open"; accent: true; onClicked: root.open("display") } }
                 }
-                SettingPage { idx: 2; current: root.page; title: "Sound"
+                SettingPage { idx: 3; current: root.page; title: "Sound"
                     SettingRow { title: "Volume"; hint: Audio.sink ? Audio.sink.description : ""
                         MSlider { implicitWidth: 260; knob: true; value: Math.min(1, Audio.volume)
                                   onMoved: v => Audio.setVolume(v) } }
@@ -195,7 +214,7 @@ Panel {
                     SettingRow { title: "Music and equalizer"
                         SettingButton { label: "Open"; onClicked: root.open("music") } }
                 }
-                SettingPage { idx: 3; current: root.page; title: "Network"
+                SettingPage { idx: 4; current: root.page; title: "Network"
                     SettingRow { title: "Wi-Fi"
                         SettingChips { chipW: 64; model: [{ label: "On", value: true }, { label: "Off", value: false }]; current: Networking.wifiEnabled; onPicked: v => Networking.wifiEnabled = v } }
                     SettingRow { title: "Bluetooth"; visible: Bluetooth.defaultAdapter !== null
@@ -207,7 +226,7 @@ Panel {
                         SettingButton { label: "Menu"; onClicked: { const it = SystemTray.items.values.find(i => i.id === "nm-applet"); if (it) { Popups.trayItem = it; root.open("traymenu") } } }
                         SettingButton { label: "Edit connections"; onClicked: { Popups.close(); Quickshell.execDetached(["nm-connection-editor"]) } } }
                 }
-                SettingPage { idx: 4; current: root.page; title: "Keyboard"
+                SettingPage { idx: 5; current: root.page; title: "Keyboard"
                     SettingRow { title: "Layouts"; hint: "The first one is the default. At least one stays."
                         Flow {
                             Layout.preferredWidth: 330; spacing: 6
@@ -233,7 +252,7 @@ Panel {
                     SettingRow { title: "Apply"; hint: "Active layout now: " + Keyboard.name
                         SettingButton { label: "Apply"; accent: true; onClicked: root.applyKeyboard() } }
                 }
-                SettingPage { idx: 5; current: root.page; title: "Mouse & touchpad"
+                SettingPage { idx: 6; current: root.page; title: "Mouse & touchpad"
                     SettingRow { title: "Natural scrolling"; hint: "Touchpad: content follows your fingers"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.naturalScroll; onPicked: v => root.setInput("naturalScroll", v) } }
@@ -256,7 +275,7 @@ Panel {
                         SettingChips { chipW: 70; model: [{ label: "Slow", value: 15 }, { label: "Normal", value: 25 }, { label: "Fast", value: 40 }]
                                        current: Settings.repeatRate; onPicked: v => root.setInput("repeatRate", v) } }
                 }
-                SettingPage { idx: 6; current: root.page; title: "Night light"
+                SettingPage { idx: 7; current: root.page; title: "Night light"
                     SettingRow { title: "Night light"; hint: "Warms the screen colour"
                         SettingChips { chipW: 64; model: [{ label: "On", value: true }, { label: "Off", value: false }]; current: root.nlOn
                                        onPicked: v => { root.nlOn = v; Quickshell.execDetached(["nightlight", v ? "on" : "off"]) } } }
@@ -268,7 +287,7 @@ Panel {
                                        current: Math.abs(root.nlTemp - 3000) < 50 ? 3000 : Math.abs(root.nlTemp - 3800) < 50 ? 3800 : Math.abs(root.nlTemp - 4600) < 50 ? 4600 : -1
                                        onPicked: v => { root.nlTemp = v; nlSet.restart() } } }
                 }
-                SettingPage { idx: 7; current: root.page; title: "Power & lock"
+                SettingPage { idx: 8; current: root.page; title: "Power & lock"
                     SettingRow { title: "Lock after"; hint: "Minutes without input"
                         SettingChips { chipW: 66; model: [{ label: "Never", value: 0 }, { label: "3", value: 3 }, { label: "5", value: 5 }, { label: "10", value: 10 }, { label: "15", value: 15 }]
                                        current: Settings.lockMinutes; onPicked: v => Settings.set("lockMinutes", v) } }
@@ -288,7 +307,7 @@ Panel {
                     SettingRow { title: "Power panel"; hint: "Battery, brightness, profile, session"
                         SettingButton { label: "Open"; onClicked: root.open("power") } }
                 }
-                SettingPage { idx: 8; current: root.page; title: "Notifications"
+                SettingPage { idx: 9; current: root.page; title: "Notifications"
                     SettingRow { title: "Muted apps"; hint: "No pop-up from these; they stay in the history. Click one to let it speak again."
                         Flow {
                             Layout.preferredWidth: 300; spacing: 6
@@ -315,7 +334,7 @@ Panel {
                         SettingButton { label: "Clear"; onClicked: NotifHistory.clear() }
                         SettingButton { label: "Open"; onClicked: root.open("notifications") } }
                 }
-                SettingPage { idx: 9; current: root.page; title: "Calendar"
+                SettingPage { idx: 10; current: root.page; title: "Calendar"
                     SettingRow { title: "Calendar link (iCal)"; hint: Events.configured ? "Source found, " + Events.upcoming.length + " upcoming events" : "No source yet. Paste a private iCal link."
                         Rectangle {
                             implicitWidth: 300; implicitHeight: 32; radius: 10; color: Theme.cardHigh
@@ -331,11 +350,11 @@ Panel {
                     SettingRow { title: "Calendar panel"
                         SettingButton { label: "Open"; onClicked: root.open("calendar") } }
                 }
-                SettingPage { idx: 10; current: root.page; title: "Shortcuts"
+                SettingPage { idx: 11; current: root.page; title: "Shortcuts"
                     SettingRow { title: "All shortcuts"; hint: "Every key combination of this desktop, grouped. Also on Super+F1"
                         SettingButton { label: "Open"; accent: true; onClicked: root.open("shortcuts") } }
                 }
-                SettingPage { idx: 11; current: root.page; title: "About"
+                SettingPage { idx: 12; current: root.page; title: "About"
                     SettingRow { title: "Software"; hint: root.hyprVersion }
                     SettingRow { title: "Configuration"; hint: "~/dotfiles  (Hyprland, Quickshell, matugen)"
                         SettingButton { label: "Open folder"; onClicked: { Popups.close(); Quickshell.execDetached(["xdg-open", Quickshell.env("HOME") + "/dotfiles"]) } } }
