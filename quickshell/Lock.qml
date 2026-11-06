@@ -11,10 +11,11 @@ Scope {
     property bool locked: false
     onLockedChanged: Popups.locked = locked
     property bool checking: false
+    property bool unlocking: false      // the unlock animation is playing
     property string error: ""
     signal failed()
 
-    function lock() { if (!locked) { error = ""; locked = true } }
+    function lock() { if (!locked) { error = ""; unlocking = false; locked = true } }
 
     // Checks one password. Exposed as a function so the PAM stack can be tested without typing.
     function attempt(password) {
@@ -33,11 +34,13 @@ Scope {
         onCompleted: result => {
             root.checking = false
             root.pending = ""
-            if (result === PamResult.Success) { root.locked = false }
+            if (result === PamResult.Success) { root.unlocking = true; leave.start() }
             else { root.error = result === PamResult.Failed ? "Wrong password" : "Authentication error"; root.failed() }
         }
         onError: err => { root.checking = false; root.pending = ""; root.error = "Authentication error"; root.failed() }
     }
+
+    Timer { id: leave; interval: 480; onTriggered: { root.locked = false; root.unlocking = false } }   // lets the screen melt away first
 
     // Idle: lock after 5 minutes without input (apps that inhibit idle, e.g. video playback, are respected).
     // Enabled after unlocking with the real password was confirmed.

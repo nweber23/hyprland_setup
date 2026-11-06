@@ -139,11 +139,12 @@ hl.config({
         dim_inactive = true,
         dim_strength = 0.12,
 
+        -- Soft shadows give the windows depth against the blurred glass (a cheap effect; game mode does not need them off).
         shadow = {
-            enabled      = false,
-            range        = 24,
+            enabled      = true,
+            range        = 22,
             render_power = 3,
-            color        = 0x66000000,
+            color        = 0x55000000,
         },
 
         -- Blur is the main GPU cost on the Vega 6 iGPU: size 8 / 3 passes is the
@@ -154,6 +155,8 @@ hl.config({
             passes            = 2,
             noise             = 0.02,
             vibrancy          = 0.17,
+            contrast          = 0.95,   -- the defaults (0.89 / 0.81) grey the glass out; a little lighter keeps the colours alive
+            brightness        = 0.92,
             new_optimizations = true,
             popups            = true,
         },
@@ -173,14 +176,15 @@ hl.curve("emphasizedAccel",          { type = "bezier", points = { {0.30, 0.00},
 hl.curve("standardDecel",            { type = "bezier", points = { {0.00, 0.00}, {0.00, 1.00} } })
 hl.curve("menuDecel",                { type = "bezier", points = { {0.10, 1.00}, {0.00, 1.00} } })
 hl.curve("menuAccel",                { type = "bezier", points = { {0.52, 0.03}, {0.72, 0.08} } })
+hl.curve("easeOutQuint",              { type = "bezier", points = { {0.22, 1.00}, {0.36, 1.00} } })   -- fast start, long soft landing
 hl.curve("linear",                   { type = "bezier", points = { {0, 0}, {1, 1} } })
 
 hl.animation({ leaf = "global",        enabled = true, speed = 10,  bezier = "default" })
 hl.animation({ leaf = "border",        enabled = true, speed = 6,   bezier = "standardDecel" })
 hl.animation({ leaf = "windows",       enabled = true, speed = 3.5, bezier = "expressiveDefaultSpatial" })
-hl.animation({ leaf = "windowsIn",     enabled = true, speed = 3.2, bezier = "expressiveFastSpatial", style = "popin 80%" })
-hl.animation({ leaf = "windowsOut",    enabled = true, speed = 2.2, bezier = "emphasizedAccel",       style = "popin 88%" })
-hl.animation({ leaf = "windowsMove",   enabled = true, speed = 3.5, bezier = "expressiveDefaultSpatial" })
+hl.animation({ leaf = "windowsIn",     enabled = true, speed = 3.8, bezier = "expressiveFastSpatial", style = "popin 55%" })   -- grows out of the middle and settles with a small bounce
+hl.animation({ leaf = "windowsOut",    enabled = true, speed = 2.4, bezier = "emphasizedAccel",       style = "popin 70%" })
+hl.animation({ leaf = "windowsMove",   enabled = true, speed = 3.8, bezier = "expressiveDefaultSpatial" })   -- tiling shifts glide with a slight overshoot
 hl.animation({ leaf = "fade",          enabled = true, speed = 3,   bezier = "standardDecel" })
 hl.animation({ leaf = "fadeIn",        enabled = true, speed = 2.5, bezier = "standardDecel" })
 hl.animation({ leaf = "fadeOut",       enabled = true, speed = 2,   bezier = "menuAccel" })
@@ -189,7 +193,9 @@ hl.animation({ leaf = "layersIn",      enabled = true, speed = 3.5, bezier = "me
 hl.animation({ leaf = "layersOut",     enabled = true, speed = 2,   bezier = "menuAccel",  style = "slide" })
 hl.animation({ leaf = "fadeLayersIn",  enabled = true, speed = 2.5, bezier = "standardDecel" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2,   bezier = "menuAccel" })
-hl.animation({ leaf = "workspaces",    enabled = true, speed = 4,   bezier = "emphasizedDecel", style = "slidefade 20%" })
+hl.animation({ leaf = "workspaces",    enabled = true, speed = 5,   bezier = "easeOutQuint", style = "slidefade 14%" })
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "easeOutQuint", style = "slidefadevert 12%" })   -- the drop-down terminal
+hl.animation({ leaf = "fadeDim",       enabled = true, speed = 4,   bezier = "standardDecel" })   -- the focus dimming fades instead of snapping
 hl.animation({ leaf = "zoomFactor",    enabled = true, speed = 7,   bezier = "standardDecel" })
 
 -- Ref https://wiki.hypr.land/configuring/core/rules/workspace-rules/
@@ -292,11 +298,17 @@ hl.config({
     },
 })
 
--- three fingers sideways: next / previous workspace on EVERY monitor (the built-in "workspace" gesture only moves one)
-hl.gesture({ fingers = 3, direction = "left",
-    action = { finish = function() qsCycleWorkspace(1) end } })
-hl.gesture({ fingers = 3, direction = "right",
-    action = { finish = function() qsCycleWorkspace(-1) end } })
+-- three fingers sideways: the workspace follows the finger (Hyprland's own swipe, on the monitor under the pointer).
+-- The built-in swipe only moves that one monitor, so right after it the others are brought along (see qsSyncWorkspaces).
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.config({
+    gestures = {
+        workspace_swipe_distance     = 350,   -- finger travel for a full workspace
+        workspace_swipe_cancel_ratio = 0.18,  -- a short, slow swipe snaps back
+        workspace_swipe_create_new   = true,
+        workspace_swipe_forever      = false,
+    },
+})
 
 -- three fingers up: workspace overview, three fingers down: window overview (the same as Super+O and Alt+Tab held, tap to choose)
 -- (sideways: next / previous workspace on every monitor, see below)
@@ -577,6 +589,27 @@ function qsCycleWorkspace(dir)
     end
     qsGotoWorkspace(nums[(at - 1 + dir) % #nums + 1])
 end
+
+-- After a swipe (or anything else that changed only one monitor): show the same workspace number on every monitor.
+-- Debounced and idempotent: when everything already lines up it does nothing, so the shell's own switching never loops.
+local syncTimer
+local function qsSyncWorkspaces()
+    local cur = hl.get_active_monitor()
+    local id = cur and cur.active_workspace and cur.active_workspace.id
+    if not id or id < 1 then return end
+    local n = (id - 1) % 10 + 1
+    for _, m in ipairs(hl.get_monitors()) do
+        local aw = m.active_workspace and m.active_workspace.id
+        if aw ~= n + wsOffset(m.name) and not (m.special_workspace and m.special_workspace.id ~= 0) then
+            qsGotoWorkspace(n)
+            return
+        end
+    end
+end
+hl.on("workspace.active", function()
+    if syncTimer then syncTimer:set_enabled(false) end
+    syncTimer = hl.timer(qsSyncWorkspaces, { timeout = 120, type = "oneshot" })
+end)
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace of the monitor it is on with mainMod + SHIFT + [0-9]

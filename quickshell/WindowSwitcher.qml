@@ -34,6 +34,11 @@ PanelWindow {
         const m = Hyprland.monitors.values.find(x => x.id === id)
         return m ? m.name : ""
     }
+    function visibleHere(o) {
+        if (!o.at || !o.size || !o.workspace || o.monitor === undefined) return false
+        const m = Hyprland.monitors.values.find(x => x.id === o.monitor)
+        return !!m && m.name === screenName && !!m.activeWorkspace && m.activeWorkspace.id === o.workspace.id
+    }
     function noPrefix(a) { return String(a).replace(/^0x/, "") }
     function build(json) {
         let clients = []
@@ -45,7 +50,9 @@ PanelWindow {
             out.push({ top: tops.find(t => noPrefix(t.address) === noPrefix(o.address)) ?? null, address: o.address,
                        cls: o.class || "", title: o.title || o.class || "Window",
                        ws: o.workspace ? o.workspace.name : "", mon: monitorName(o.monitor),
-                       ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID })
+                       ratio: o.size && o.size[1] > 0 ? o.size[0] / o.size[1] : 1.6, order: o.focusHistoryID,
+                       // where the window really is on this screen: its tile flies out of there (only for windows that are visible)
+                       box: visibleHere(o) ? { x: o.at[0] - (screen ? screen.x : 0), y: o.at[1] - (screen ? screen.y : 0), w: o.size[0], h: o.size[1] } : null })
         }
         out.sort((a, b) => a.order - b.order)   // most recently used first: index 0 is the focused window
         // A second tap right after a switch: Hyprland may not have moved the focus yet, so trust our own last pick.
@@ -182,12 +189,31 @@ PanelWindow {
                 width: win.cellW; height: win.cellH
                 readonly property bool current: GridView.isCurrentItem
                 property real reveal: 0
-                opacity: reveal
-                transform: Translate { y: 22 * (1 - cell.reveal) }
-                SequentialAnimation {   // tiles come in one after the other
+                property real fly: 0        // 0: the tile sits on its window, 1: in its grid cell
+                property real dx: 0
+                property real dy: 0
+                property real s0: 1
+                readonly property bool flies: modelData.box !== null && modelData.box !== undefined
+                opacity: flies ? Math.min(1, reveal * 4) : reveal
+                transform: [
+                    Scale { origin.x: 12 + tile.width / 2; origin.y: 6 + tile.height / 2
+                            xScale: cell.flies ? cell.s0 + (1 - cell.s0) * cell.fly : 1; yScale: xScale },
+                    Translate { x: cell.flies ? cell.dx * (1 - cell.fly) : 0; y: cell.flies ? cell.dy * (1 - cell.fly) : 22 * (1 - cell.reveal) }
+                ]
+                SequentialAnimation {   // tiles come in one after the other, flying out of their windows
                     running: true
-                    PauseAnimation { duration: Math.min(cell.index, 10) * 32 }
-                    NumberAnimation { target: cell; property: "reveal"; to: 1; duration: 380; easing.type: Easing.OutCubic }
+                    PauseAnimation { duration: cell.flies ? Math.min(cell.index, 6) * 22 : Math.min(cell.index, 10) * 32 }
+                    ScriptAction { script: {
+                        if (cell.flies) {
+                            const g = cell.mapToItem(null, 12 + tile.width / 2, 6 + tile.height / 2)
+                            const b = cell.modelData.box
+                            cell.dx = b.x + b.w / 2 - g.x; cell.dy = b.y + b.h / 2 - g.y
+                            cell.s0 = Math.max(0.1, b.w / tile.width)
+                        } } }
+                    ParallelAnimation {
+                        NumberAnimation { target: cell; property: "reveal"; to: 1; duration: 380; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: cell; property: "fly"; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 0.9 }
+                    }
                 }
 
                 ClippingRectangle {
@@ -196,7 +222,7 @@ PanelWindow {
                     radius: 16; color: Theme.card
                     border.width: cell.current ? 3 : 1; border.color: cell.current ? Theme.accent : Qt.alpha(Theme.outline_variant, 0.7)
                     Behavior on border.color { ColorAnimation { duration: 160 } }
-                    scale: (cell.current ? 1.035 : (hover.containsMouse ? 1.015 : 1)) * (0.94 + 0.06 * cell.reveal)
+                    scale: (cell.current ? 1.035 : (hover.containsMouse ? 1.015 : 1)) * (cell.flies ? 1 : 0.94 + 0.06 * cell.reveal)
                     Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
 
                     Image {   // shown until the first frame arrives

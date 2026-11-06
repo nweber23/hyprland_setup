@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
 import QtQuick
+import QtQuick.Effects
 import QtMultimedia
 
 // Wallpaper layer with a cross-fade. The path comes from ~/.cache/quickshell/wallpaper.txt
@@ -21,13 +22,43 @@ PanelWindow {
     property string still: ""          // an image: the wallpaper itself, or one frame of the video
     readonly property bool isVideo: /\.(mp4|mkv|webm|mov)$/i.test(src)
     readonly property string imgSrc: still !== "" ? still : (isVideo ? "" : src)
-    property bool front: true   // true: image A is visible, false: image B
     property bool started: false
+    property bool revealing: false     // a new picture is growing in as a circle
+    property bool pendingReveal: false
+    property real cx: width / 2        // where the circle starts: the pointer, kept inside this screen
+    property real cy: height / 2
+    property real radius: 0
+    readonly property real maxRadius: Math.hypot(width, height)
 
     onImgSrcChanged: {
         if (imgSrc === "") return
-        if (!started) { a.source = "file://" + imgSrc; started = true; return }
-        (front ? b : a).source = "file://" + imgSrc   // load into the hidden image, swap when ready
+        if (!started) { base.source = "file://" + imgSrc; started = true; return }
+        pendingReveal = true
+        fresh.source = "file://" + imgSrc   // loaded on top, revealed once decoded
+        if (fresh.status === Image.Ready) beginReveal()
+    }
+    function beginReveal() { if (pendingReveal && !cursor.running) { cursor.running = true; fallback.restart() } }
+    function startGrow() {
+        if (!pendingReveal) return
+        pendingReveal = false; fallback.stop()
+        revealing = true; radius = 0; grow.restart()
+    }
+    function finish() { revealing = false; radius = 0 }
+    // pointer position, so the circle grows from where you clicked
+    Process {
+        id: cursor
+        command: ["hyprctl", "-j", "cursorpos"]
+        stdout: StdioCollector { onStreamFinished: {
+            try { const p = JSON.parse(text)
+                  root.cx = Math.max(0, Math.min(root.width, p.x - (root.screen ? root.screen.x : 0)))
+                  root.cy = Math.max(0, Math.min(root.height, p.y - (root.screen ? root.screen.y : 0))) } catch (e) {}
+            root.startGrow() } }
+    }
+    Timer { id: fallback; interval: 400; onTriggered: root.startGrow() }
+    NumberAnimation {
+        id: grow; target: root; property: "radius"; from: 0; to: root.maxRadius
+        duration: 1000; easing.type: Easing.OutCubic
+        onFinished: { if (base.source == fresh.source) root.finish(); else base.source = fresh.source }   // the hidden base takes the picture over
     }
 
     // ---- video ----
@@ -66,18 +97,26 @@ PanelWindow {
         asynchronous: true
         cache: false
         sourceSize: Qt.size(root.width, root.height)   // decode at screen size, not at 4K
-        Behavior on opacity { NumberAnimation { duration: 800; easing.type: Easing.InOutQuad } }
     }
 
     Layer {
-        id: a
-        opacity: root.front ? 1 : 0
-        onStatusChanged: if (status === Image.Ready && root.started && !root.front) root.front = true
+        id: base
+        onStatusChanged: if (status === Image.Ready && root.revealing && source == fresh.source) root.finish()
+    }
+    // the new picture, shown only through a growing circle
+    Item {
+        id: circle
+        anchors.fill: parent
+        visible: false
+        layer.enabled: root.revealing
+        Rectangle { x: root.cx - root.radius; y: root.cy - root.radius; width: root.radius * 2; height: width; radius: width / 2 }
     }
     Layer {
-        id: b
-        opacity: root.front ? 0 : 1
-        onStatusChanged: if (status === Image.Ready && root.front && source != "") root.front = false
+        id: fresh
+        visible: root.revealing
+        layer.enabled: root.revealing
+        layer.effect: MultiEffect { maskEnabled: true; maskSource: circle; maskThresholdMin: 0.5; maskSpreadAtMin: 1.0 }
+        onStatusChanged: if (status === Image.Ready) root.beginReveal()
     }
     // the video fades in over the still once its first frame is there
     VideoOutput {

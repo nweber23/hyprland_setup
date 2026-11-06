@@ -9,6 +9,7 @@ import QtQuick.Layouts
 Item {
     id: view
     required property var lock          // the Lock scope: checking, error, wallpaper, attempt(), failed()
+    readonly property bool up: shown && !lock.unlocking   // unlocking plays the entrance backwards
     property bool shown: false          // drives the fade-in, switched on right after creation
     Component.onCompleted: Qt.callLater(() => shown = true)
     readonly property string user: Quickshell.env("USER") || "user"
@@ -27,8 +28,12 @@ Item {
         asynchronous: true
         opacity: status === Image.Ready ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+        // starts sharp like the desktop wallpaper, then melts into the blurred lock screen (and back on unlock)
+        property real melt: view.up ? 1 : 0
+        Behavior on melt { NumberAnimation { duration: 1100; easing.type: Easing.OutCubic } }
+        scale: 1.06 - 0.06 * melt
         layer.enabled: true
-        layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: -0.1; saturation: 0.15 }
+        layer.effect: MultiEffect { blurEnabled: true; blur: bg.melt; blurMax: 64; brightness: -0.1 * bg.melt; saturation: 0.15 * bg.melt }
     }
     // darker towards the edges, brighter behind the clock
     Rectangle {
@@ -43,8 +48,8 @@ Item {
     ColumnLayout {
         anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: parent.height * 0.14 }
         spacing: 2
-        opacity: view.shown ? 1 : 0
-        transform: Translate { y: view.shown ? 0 : -24; Behavior on y { NumberAnimation { duration: 700; easing.type: Easing.OutQuart } } }
+        opacity: view.up ? 1 : 0
+        transform: Translate { y: view.up ? 0 : -24; Behavior on y { NumberAnimation { duration: 700; easing.type: Easing.OutQuart } } }
         Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
         Text { Layout.alignment: Qt.AlignHCenter; textFormat: Text.PlainText
                text: Qt.formatTime(clock.date, "HH:mm"); color: "white"
@@ -57,8 +62,8 @@ Item {
     ColumnLayout {
         anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: parent.height * 0.14 }
         spacing: 14
-        opacity: view.shown ? 1 : 0
-        transform: Translate { y: view.shown ? 0 : 30; Behavior on y { NumberAnimation { duration: 800; easing.type: Easing.OutQuart } } }
+        opacity: view.up ? 1 : 0
+        transform: Translate { y: view.up ? 0 : 30; Behavior on y { NumberAnimation { duration: 800; easing.type: Easing.OutQuart } } }
         Behavior on opacity { NumberAnimation { duration: 800; easing.type: Easing.OutCubic } }
 
         Rectangle {   // avatar: first letter on the accent colour
@@ -121,7 +126,7 @@ Item {
     RowLayout {
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 36 }
         spacing: 10
-        opacity: view.shown ? 1 : 0
+        opacity: view.up ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
         Repeater {
             model: [
