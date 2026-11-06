@@ -145,13 +145,21 @@ PanelWindow {
             highlightRangeMode: ListView.StrictlyEnforceRange
             preferredHighlightBegin: width / 2 - win.curW / 2
             preferredHighlightEnd: width / 2 + win.curW / 2
-            highlightMoveDuration: 420
+            highlightMoveDuration: 300
             highlightMoveVelocity: -1
-            cacheBuffer: 1600
+            cacheBuffer: 700
+            // One card per wheel notch, and per 80 px of two-finger travel: a touchpad sends dozens of tiny events,
+            // which used to skip a card each.
+            property real wheelAcc: 0
             WheelHandler {
                 onWheel: event => {
-                    const d = (event.angleDelta.y + event.angleDelta.x) > 0 ? -1 : 1
-                    list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex + d))
+                    const raw = event.pixelDelta.y !== 0 || event.pixelDelta.x !== 0 ? (event.pixelDelta.y + event.pixelDelta.x) : (event.angleDelta.y + event.angleDelta.x) * 0.67
+                    list.wheelAcc += raw
+                    while (Math.abs(list.wheelAcc) >= 80) {
+                        const d = list.wheelAcc > 0 ? -1 : 1
+                        list.wheelAcc -= list.wheelAcc > 0 ? 80 : -80
+                        list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex + d))
+                    }
                 }
             }
             delegate: Item {
@@ -163,9 +171,13 @@ PanelWindow {
                 // staggered rise: the further from the middle card, the later it starts
                 readonly property real rise: Math.max(0, Math.min(1, win.intro * 1.6 - Math.min(5, Math.abs(index - list.currentIndex)) * 0.12))
                 z: isCurrent ? 2 : 1
+                property bool settled: false
+                onIsCurrentChanged: { settled = false; if (isCurrent) settleTimer.restart(); else settleTimer.stop() }
+                Component.onCompleted: if (isCurrent) settleTimer.restart()
+                Timer { id: settleTimer; interval: 320; onTriggered: card.settled = card.isCurrent }
                 width: (isCurrent ? win.curW : win.sideW) + 14
                 height: ListView.view.height
-                Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
                 Item {
                     id: shape
@@ -174,17 +186,27 @@ PanelWindow {
                     height: card.isCurrent ? win.curH : win.sideH
                     y: (parent.height - height) / 2 + 70 * (1 - card.rise)
                     opacity: card.rise            // side cards are dimmed by the dark overlay, not by transparency
-                    Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                    Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                     Behavior on opacity { NumberAnimation { duration: 200 } }
                     transform: Matrix4x4 { matrix: Qt.matrix4x4(1, -win.skew, 0, win.skew * shape.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1) }
-                    layer.enabled: true; layer.smooth: true; layer.samples: 4
+                    layer.enabled: true; layer.smooth: true   // no multisampling: it made every card cost four times as much while they animate
 
-                    Image {
+                    Image {   // the thumbnail is always there, so fast scrolling never shows a black card
                         anchors.fill: parent
-                        source: card.isCurrent && !card.modelData.video ? "file://" + card.modelData.path : "file://" + card.modelData.thumb
-                        sourceSize: card.isCurrent ? Qt.size(1040, 600) : Qt.size(300, 500)
+                        source: "file://" + card.modelData.thumb
+                        sourceSize: Qt.size(300, 500)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
+                    }
+                    Image {   // the real picture: only once the card has rested in the middle, faded in over the thumbnail
+                        id: full
+                        anchors.fill: parent
+                        source: card.settled && !card.modelData.video ? "file://" + card.modelData.path : ""
+                        sourceSize: Qt.size(1040, 600)
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        opacity: status === Image.Ready ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 260 } }
                     }
                     Icon { visible: card.modelData.video === true; anchors { right: parent.right; top: parent.top; margins: 8 }
                            name: "play_circle"; size: 22; color: "white"; opacity: 0.9 }   // marks an animated wallpaper
