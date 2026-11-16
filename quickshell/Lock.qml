@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Pam
 import QtQuick
@@ -20,7 +21,8 @@ Scope {
     readonly property bool fpActive: fp.active
     signal failed()
 
-    function lock() { if (!locked) { error = ""; unlocking = false; locked = true; fpCheck.running = true } }
+    property string mainScreen: ""      // the screen with the password field; the others only show the wallpaper
+    function lock() { if (!locked) { mainScreen = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "";  error = ""; unlocking = false; locked = true; fpCheck.running = true } }
     function succeed() { fp.abort(); unlocking = true; leave.start() }
 
     // Checks one password. Exposed as a function so the PAM stack can be tested without typing.
@@ -96,7 +98,10 @@ Scope {
         WlSessionLockSurface {
             id: surface
             color: Theme.surface
-            LockView { anchors.fill: parent; lock: root }
+            readonly property bool main: root.mainScreen === "" || surface.screen.name === root.mainScreen
+            LockView { anchors.fill: parent; lock: root; visible: surface.main }
+            Image { anchors.fill: parent; visible: !surface.main; source: root.wallpaper !== "" ? "file://" + root.wallpaper : ""
+                    fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize: Qt.size(surface.width, surface.height) }
         }
     }
 }

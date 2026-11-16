@@ -754,7 +754,7 @@ hl.window_rule({
     float     = true,
     workspace = "special:drop",
     size      = "monitor_w*0.8 monitor_h*0.45",
-    move      = "monitor_w*0.1 40",
+    move      = "monitor_w*0.1 56",
 })
 hl.window_rule({
     name  = "picture-in-picture",

@@ -24,10 +24,25 @@ Singleton {
         return (h > 0 ? h + ":" + two(m) : two(m)) + ":" + two(x)
     }
     function setTotal(sec) { if (running) return; pomodoro = false; total = Math.max(5, sec); left = total }
+    property int focusMin: 25           // pomodoro lengths, set by the stepper on the desktop widget
+    property int breakMin: 5
+    // pick a phase while idle: Focus / Break starts the pomodoro cycle in that phase
+    function setPhase(ph) {
+        if (running) return
+        pomodoro = true; phase = ph
+        total = (ph === "focus" ? focusMin : breakMin) * 60; left = total
+    }
+    // - / + on the widget: change the length of the shown phase
+    function stepMin(d) {
+        if (running) return
+        if (!pomodoro) pomodoro = true
+        if (phase === "focus") focusMin = Math.max(1, Math.min(120, focusMin + d)); else breakMin = Math.max(1, Math.min(60, breakMin + d))
+        setPhase(phase)
+    }
     function togglePomodoro() {
         if (running) return
         pomodoro = !pomodoro; phase = "focus"; cycles = 0
-        total = pomodoro ? 25 * 60 : 300; left = total
+        total = pomodoro ? focusMin * 60 : 300; left = total
     }
     function start() {
         if (left <= 0) left = total
@@ -46,7 +61,7 @@ Singleton {
         if (pomodoro) {
             if (wasFocus) cycles++
             phase = wasFocus ? "break" : "focus"
-            total = phase === "focus" ? 25 * 60 : 5 * 60; left = total
+            total = (phase === "focus" ? focusMin : breakMin) * 60; left = total
             start()
         } else left = total
     }

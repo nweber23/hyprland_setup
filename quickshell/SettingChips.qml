@@ -10,12 +10,7 @@ Rectangle {
     implicitWidth: model.length * chipW + (model.length - 1) * 4 + 8
     implicitHeight: 34; radius: 11; color: Theme.card
     readonly property int index: { for (let i = 0; i < model.length; i++) if (model[i].value === current) return i; return -1 }
-    Rectangle {
-        visible: root.index >= 0
-        width: root.chipW; height: 26; radius: 8; y: 4; color: Theme.accent
-        x: 4 + Math.max(0, root.index) * (root.chipW + 4)
-        Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
-    }
+    ElasticPill { visible: root.index >= 0; cross: 4; crossSize: 26; radius: 8; target: 4 + Math.max(0, root.index) * (root.chipW + 4); extent: root.chipW }
     Row {
         x: 4; y: 4; spacing: 4
         Repeater {

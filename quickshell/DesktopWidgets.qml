@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
 import Quickshell.Services.UPower
@@ -15,6 +16,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Bottom
     WlrLayershell.namespace: "qs-widgets"
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand   // the to-do input gets keys after a click
     color: "transparent"
     mask: Region { item: desk }   // the whole bare desktop takes the right click; the widgets lie on top and keep theirs
 
@@ -40,7 +42,9 @@ PanelWindow {
     readonly property var defaults: ({
         clock: { x: 56, y: 96 },
         battery: { x: 56, y: win.height - 76 - 56 },
-        music: { x: 56 + 210 + 16, y: win.height - 76 - 56 }
+        music: { x: 56 + 210 + 16, y: win.height - 76 - 56 },
+        pomodoro: { x: win.width - 280 - 56, y: 96 },
+        todo: { x: win.width - 280 - 56, y: 96 + 336 + 16 }
     })
     function stored(id) { return Settings.widgetLayout[win.screen.name + ":" + id] ?? null }
     function baseX(id) { const l = stored(id); return l ? l.x : defaults[id].x }
@@ -57,6 +61,154 @@ PanelWindow {
         const m = {}
         for (const k in Settings.widgetLayout) if (k.indexOf(win.screen.name + ":") !== 0) m[k] = Settings.widgetLayout[k]
         Settings.set("widgetLayout", m)
+    }
+
+    // auto-hide: the launcher is open, or a window sits on this screen's active workspace
+    readonly property bool covered: {
+        const m = Hyprland.monitorFor(win.screen)
+        if (!m || !m.activeWorkspace) return false
+        return Hyprland.toplevels.values.some(t => t.workspace && t.workspace.id === m.activeWorkspace.id)
+    }
+    readonly property real hideAlpha: Settings.autoHideWidgets && (covered || Popups.current === "launcher") ? 0 : 1
+
+    // ---- pomodoro (the Tools timer) ----
+    Rectangle {
+        id: pomoBox
+        visible: Settings.widgets && opacity > 0.01
+        opacity: win.hideAlpha; Behavior on opacity { NumberAnimation { duration: 200 } }
+        x: win.posX("pomodoro"); y: win.posY("pomodoro"); scale: win.scaleOf("pomodoro"); transformOrigin: Item.TopLeft
+        width: 280; height: 336; radius: 24
+        color: Qt.alpha(Theme.surface_container, 0.75)
+        border.width: 1; border.color: Qt.alpha("white", 0.1)
+        ColumnLayout {
+            anchors { fill: parent; margins: 18 }
+            spacing: 12
+            Rectangle {   // Focus / Break switch: starts the 25/5 cycle, or goes back to a plain timer
+                Layout.alignment: Qt.AlignHCenter; implicitWidth: 180; implicitHeight: 32; radius: 16; color: Theme.card
+                ElasticPill { crossSize: parent.height; radius: 16; target: Tools.phase === "break" ? parent.width / 2 : 0; extent: parent.width / 2 }
+                Row { anchors.fill: parent
+                    Repeater { model: ["Focus", "Break"]
+                        delegate: Text { required property string modelData; width: parent.width / 2; height: parent.height
+                            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; textFormat: Text.PlainText; text: modelData
+                            font.family: Theme.mono; font.pixelSize: 12; font.bold: true
+                            color: (modelData === "Break") === (Tools.phase === "break") ? Theme.on_primary : Theme.on_surface_variant } } }
+                MouseArea { anchors.fill: parent; onClicked: m => Tools.setPhase(m.x < width / 2 ? "focus" : "break") }
+            }
+            Item {
+                Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 150; Layout.preferredHeight: 150
+                Canvas {
+                    id: ring
+                    anchors.fill: parent
+                    property real frac: Tools.total > 0 ? Tools.left / Tools.total : 0
+                    Behavior on frac { enabled: !Tools.running; NumberAnimation { duration: 300 } }
+                    onFracChanged: requestPaint()
+                    Connections { target: Theme; function onAccentChanged() { ring.requestPaint() } }
+                    onPaint: {
+                        const c = getContext("2d"); c.reset(); c.lineWidth = 8; c.lineCap = "round"
+                        c.strokeStyle = Theme.cardHigh; c.beginPath(); c.arc(75, 75, 68, 0, 2 * Math.PI); c.stroke()
+                        c.strokeStyle = Theme.accent; c.beginPath(); c.arc(75, 75, 68, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * frac); c.stroke()
+                    }
+                }
+                Column { anchors.centerIn: parent
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; textFormat: Text.PlainText; text: Tools.fmt(Tools.left); color: Theme.on_surface
+                           font.family: Theme.mono; font.pixelSize: 30; font.bold: true }
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; textFormat: Text.PlainText
+                           text: Tools.running ? (Tools.phase === "break" ? "breathe" : "stay with it") : "ready"
+                           color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 11 } }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter; spacing: 14
+                Rectangle { implicitWidth: 40; implicitHeight: 40; radius: 20; color: rb.containsMouse ? Theme.cardHigh : Theme.card
+                    Icon { anchors.centerIn: parent; name: "restart_alt"; size: 22 }
+                    MouseArea { id: rb; anchors.fill: parent; hoverEnabled: true; onClicked: Tools.reset() } }
+                Rectangle { implicitWidth: 56; implicitHeight: 56; radius: 28; color: Theme.accent
+                    Icon { anchors.centerIn: parent; name: Tools.running ? "pause" : "play_arrow"; size: 30; fill: 1; color: Theme.on_primary }
+                    MouseArea { anchors.fill: parent; onClicked: Tools.toggle() } }
+                Rectangle { implicitWidth: 40; implicitHeight: 40; radius: 20; color: sb.containsMouse ? Theme.cardHigh : Theme.card
+                    Icon { anchors.centerIn: parent; name: "skip_next"; size: 22 }
+                    MouseArea { id: sb; anchors.fill: parent; hoverEnabled: true; onClicked: if (Tools.pomodoro) Tools.finish() } }
+            }
+            GridLayout {   // "- 25 min +"
+                rows: 1
+                Layout.alignment: Qt.AlignHCenter; columnSpacing: 10
+                Repeater { model: [-1, 1]
+                    delegate: Rectangle { required property int modelData; implicitWidth: 26; implicitHeight: 26; radius: 13
+                        Layout.row: 0; Layout.column: modelData < 0 ? 0 : 2
+                        color: sm.containsMouse ? Theme.cardHigh : Theme.card; opacity: Tools.running ? 0.4 : 1
+                        Icon { anchors.centerIn: parent; name: modelData < 0 ? "remove" : "add"; size: 16 }
+                        MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; onClicked: Tools.stepMin(modelData) } } }
+                Text { Layout.row: 0; Layout.column: 1; textFormat: Text.PlainText; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12
+                       text: (Tools.phase === "break" ? Tools.breakMin : Tools.focusMin) + " min" }
+            }
+            Row { Layout.alignment: Qt.AlignHCenter; spacing: 8   // four session dots
+                Repeater { model: 4
+                    delegate: Rectangle { required property int index; width: 8; height: 8; radius: 4
+                        color: index < Tools.cycles % 4 || (Tools.cycles > 0 && Tools.cycles % 4 === 0) ? Theme.accent : Theme.cardHigh } } }
+        }
+    }
+
+    // ---- to-do ----
+    Rectangle {
+        id: todoBox
+        visible: Settings.widgets && opacity > 0.01
+        opacity: win.hideAlpha; Behavior on opacity { NumberAnimation { duration: 200 } }
+        x: win.posX("todo"); y: win.posY("todo"); scale: win.scaleOf("todo"); transformOrigin: Item.TopLeft
+        width: 280; height: todoCol.implicitHeight + 36; radius: 24
+        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        color: Qt.alpha(Theme.surface_container, 0.75)
+        border.width: 1; border.color: Qt.alpha("white", 0.1)
+        ColumnLayout {
+            id: todoCol
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
+            spacing: 10
+            RowLayout {
+                Icon { name: "checklist"; size: 22; color: Theme.accent }
+                Text { textFormat: Text.PlainText; text: "To-do"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
+                Item { Layout.fillWidth: true }
+                Text { textFormat: Text.PlainText; text: Todo.left + " left"; color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12 }
+            }
+            ListView {
+                id: todoList
+                Layout.fillWidth: true; Layout.preferredHeight: Math.min(260, contentHeight); visible: count > 0; clip: true; spacing: 4
+                model: Todo.items
+                delegate: Item {
+                    required property var modelData
+                    required property int index
+                    width: ListView.view.width; height: 30
+                    Row { anchors.verticalCenter: parent.verticalCenter; spacing: 10
+                        Rectangle { width: 20; height: 20; radius: 10; color: modelData.done ? Theme.accent : "transparent"
+                            border.width: 2; border.color: modelData.done ? Theme.accent : Theme.outline
+                            Icon { anchors.centerIn: parent; visible: modelData.done; name: "check"; size: 14; color: Theme.on_primary } }
+                        Text { width: todoCol.width - 66; elide: Text.ElideRight; textFormat: Text.PlainText; text: modelData.text
+                               color: modelData.done ? Theme.outline : Theme.on_surface; font.strikeout: modelData.done
+                               font.family: Theme.mono; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter } }
+                    MouseArea { id: rowMa; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: m => m.button === Qt.RightButton ? Todo.remove(index) : Todo.toggle(index) }   // right click deletes
+                    Rectangle {   // × appears on hover
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        width: 24; height: 24; radius: 12
+                        opacity: rowMa.containsMouse || xMa.containsMouse ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 120 } }
+                        color: xMa.containsMouse ? Theme.cardHigh : "transparent"
+                        Icon { anchors.centerIn: parent; name: "close"; size: 16; color: xMa.containsMouse ? Theme.error : Theme.on_surface_variant }
+                        MouseArea { id: xMa; anchors.fill: parent; hoverEnabled: true; onClicked: Todo.remove(index) }
+                    }
+                }
+            }
+            Rectangle {
+                Layout.fillWidth: true; implicitHeight: 36; radius: 18; color: Theme.card
+                border.width: 2; border.color: input.activeFocus ? Theme.accent : "transparent"
+                Behavior on border.color { ColorAnimation { duration: 140 } }
+                TextInput {
+                    id: input
+                    anchors { fill: parent; leftMargin: 14; rightMargin: 14 }
+                    verticalAlignment: TextInput.AlignVCenter; clip: true
+                    color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 12
+                    onAccepted: { Todo.add(text); text = "" }
+                    Text { visible: !input.text && !input.activeFocus; anchors.verticalCenter: parent.verticalCenter; textFormat: Text.PlainText
+                           text: "Type a task, press Enter"; color: Theme.outline; font: input.font }
+                }
+            }
+        }
     }
 
     // ---- clock + weather ----
@@ -174,12 +326,12 @@ PanelWindow {
 
     // ---- edit mode: drag a widget to move it, scroll over it to resize it ----
     Repeater {
-        model: win.editing ? [{ id: "clock", item: clockBox }, { id: "battery", item: batBox }, { id: "music", item: musicBox }] : []
+        model: win.editing ? [{ id: "clock", item: clockBox }, { id: "battery", item: batBox }, { id: "music", item: musicBox }, { id: "pomodoro", item: pomoBox }, { id: "todo", item: todoBox }] : []
         delegate: Rectangle {
             required property var modelData
             readonly property var it: modelData.item
             visible: it.visible
-            x: it.x; y: it.y; width: it.implicitWidth * it.scale; height: it.implicitHeight * it.scale
+            x: it.x; y: it.y; width: it.width * it.scale; height: it.height * it.scale
             z: 30; radius: 14; color: Qt.alpha(Theme.accent, ma.pressed ? 0.18 : 0.08)
             border.width: 2; border.color: Theme.accent
             MouseArea {
