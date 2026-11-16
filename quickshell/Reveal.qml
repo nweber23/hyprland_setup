@@ -28,13 +28,13 @@ ColumnLayout {
 
     SequentialAnimation {
         id: inAnim
-        PauseAnimation { duration: r.base + r.index * r.step }
-        NumberAnimation { target: r; property: "progress"; to: 1; duration: r.duration_
+        PauseAnimation { duration: Theme.d(r.base + r.index * r.step) }
+        NumberAnimation { target: r; property: "progress"; to: 1; duration: Theme.d(r.duration_)
                           easing.type: r.back ? Easing.OutBack : r.easing_; easing.overshoot: 0.9 }
     }
     SequentialAnimation {
         id: outAnim
         PauseAnimation { duration: Math.max(0, 8 - r.index) * 12 }
-        NumberAnimation { target: r; property: "progress"; to: 0; duration: 150; easing.type: r.back ? Easing.InBack : Easing.InCubic }
+        NumberAnimation { target: r; property: "progress"; to: 0; duration: Theme.d(150); easing.type: r.back ? Easing.InBack : Easing.InCubic }
     }
 }

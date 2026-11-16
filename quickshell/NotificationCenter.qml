@@ -58,6 +58,15 @@ Panel {
                     Text { textFormat: Text.PlainText; text: "Do not disturb"; font.family: Theme.mono; font.pixelSize: 11; font.bold: true; color: Popups.dnd ? Theme.panelBg : Theme.on_surface } }
                 MouseArea { id: dArea; anchors.fill: parent; hoverEnabled: true; onClicked: Popups.dnd = !Popups.dnd }
             }
+            Rectangle {   // snooze: do not disturb for an hour, click again to end it
+                implicitHeight: 30; implicitWidth: snzTxt.implicitWidth + 22; radius: 10
+                color: Popups.dndUntil > 0 ? Theme.accent : (sArea.containsMouse ? Theme.cardHigh : Theme.card)
+                Behavior on color { ColorAnimation { duration: Theme.d(160) } }
+                Text { id: snzTxt; anchors.centerIn: parent; textFormat: Text.PlainText; font.family: Theme.mono; font.pixelSize: 11; font.bold: true
+                       color: Popups.dndUntil > 0 ? Theme.panelBg : Theme.on_surface
+                       text: Popups.dndUntil > 0 ? "Until " + Qt.formatTime(new Date(Popups.dndUntil), "HH:mm") : "Snooze 1h" }
+                MouseArea { id: sArea; anchors.fill: parent; hoverEnabled: true; onClicked: { if (Popups.dndUntil > 0) Popups.dnd = false; else Popups.snooze(60) } }
+            }
             Rectangle {
                 implicitHeight: 30; implicitWidth: clrTxt.implicitWidth + 22; radius: 10; opacity: NotifHistory.items.count > 0 ? 1 : 0.4
                 color: cArea.containsMouse ? Theme.cardHigh : Theme.card

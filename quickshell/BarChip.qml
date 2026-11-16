@@ -14,7 +14,10 @@ Rectangle {
     implicitWidth: row.implicitWidth + 16
     radius: 8
     color: fillColor !== "transparent" ? fillColor : (active ? Theme.cardHigh : area.containsMouse ? Theme.card : "transparent")
-    Behavior on color { ColorAnimation { duration: 150 } }
+    Behavior on color { ColorAnimation { duration: Theme.d(150) } }
+    readonly property bool hovered: area.containsMouse
+    scale: area.pressed ? 0.94 : 1
+    Behavior on scale { NumberAnimation { duration: Theme.d(120); easing.type: Easing.OutCubic } }
     RowLayout { id: row; anchors.centerIn: parent; spacing: 6 }
     MouseArea {
         id: area; anchors.fill: parent; hoverEnabled: true

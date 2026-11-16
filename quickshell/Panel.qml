@@ -5,6 +5,7 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
+import QtQuick.Effects
 
 // Popup card that hangs under the bar. Content goes in as children (a ColumnLayout).
 // Closes when the user clicks anywhere else.
@@ -39,22 +40,25 @@ PanelWindow {
     property real intro: 0      // card opacity
     property real grow: 0       // size of the card, 0 = small box, 1 = full
     property real draw: 0       // how much of the outline is drawn
+    property real resolve: 0    // content blur: 0 = strongly blurred, 1 = sharp
     ParallelAnimation {
         id: inAnim
-        NumberAnimation { target: win; property: "intro"; to: 1; duration: 200; easing.type: Easing.OutCubic }
-        NumberAnimation { target: win; property: "grow"; to: 1; duration: 620; easing.type: Easing.OutQuart }
+        NumberAnimation { target: win; property: "intro"; to: 1; duration: Theme.d(200); easing.type: Easing.OutCubic }
+        NumberAnimation { target: win; property: "grow"; to: 1; duration: Theme.d(620); easing.type: Easing.OutQuart }
+        NumberAnimation { target: win; property: "resolve"; to: 1; duration: Theme.d(480); easing.type: Easing.OutCubic }
         SequentialAnimation {
-            PauseAnimation { duration: 420 }
-            NumberAnimation { target: win; property: "draw"; to: 1; duration: 900; easing.type: Easing.InOutCubic }
+            PauseAnimation { duration: Theme.d(420) }
+            NumberAnimation { target: win; property: "draw"; to: 1; duration: Theme.d(900); easing.type: Easing.InOutCubic }
         }
     }
     SequentialAnimation {
         id: outAnim
-        PauseAnimation { duration: 60 }
+        PauseAnimation { duration: Theme.d(60) }
         ParallelAnimation {
-            NumberAnimation { target: win; property: "intro"; to: 0; duration: 190; easing.type: Easing.InQuart }
-            NumberAnimation { target: win; property: "grow"; to: 0.9; duration: 190; easing.type: Easing.InQuart }
-            NumberAnimation { target: win; property: "draw"; to: 0; duration: 160; easing.type: Easing.InCubic }
+            NumberAnimation { target: win; property: "intro"; to: 0; duration: Theme.d(190); easing.type: Easing.InQuart }
+            NumberAnimation { target: win; property: "grow"; to: 0.9; duration: Theme.d(190); easing.type: Easing.InQuart }
+            NumberAnimation { target: win; property: "draw"; to: 0; duration: Theme.d(160); easing.type: Easing.InCubic }
+            NumberAnimation { target: win; property: "resolve"; to: 0; duration: Theme.d(190); easing.type: Easing.InQuart }
         }
         ScriptAction { script: win.grow = 0 }
     }
@@ -66,7 +70,7 @@ PanelWindow {
     // content height, eased so a panel that gains rows does not jump
     readonly property real fullH: body.implicitHeight + pad * 2
     property real smoothH: fullH
-    Behavior on smoothH { enabled: win.animateHeight; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+    Behavior on smoothH { enabled: win.animateHeight; NumberAnimation { duration: Theme.d(250); easing.type: Easing.OutCubic } }
 
     visible: shown || intro > 0.004
     anchors { top: true; left: true }
@@ -115,6 +119,9 @@ PanelWindow {
             id: wrapper
             width: win.width; height: win.smoothH
             x: (card.width - width) / 2
+            // blur resolves to sharp while opening (light mode / game mode: no blur)
+            layer.enabled: win.resolve < 0.99 && !Popups.gameMode
+            layer.effect: MultiEffect { blurEnabled: true; blurMax: 40; blur: 1 - win.resolve }
             Loader {
                 anchors.fill: parent
                 active: win.visible

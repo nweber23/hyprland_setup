@@ -52,12 +52,12 @@ Scope {
             interactive: false
             cacheBuffer: 4000   // build every card even while the window is still 1 px tall (its height follows contentHeight)
             add: Transition { ParallelAnimation {
-                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
-                NumberAnimation { property: "x"; from: 60; to: 0; duration: 280; easing.type: Easing.OutCubic } } }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.d(220); easing.type: Easing.OutCubic }
+                NumberAnimation { property: "x"; from: 60; to: 0; duration: Theme.d(280); easing.type: Easing.OutCubic } } }
             remove: Transition { ParallelAnimation {
-                NumberAnimation { property: "opacity"; to: 0; duration: 180 }
-                NumberAnimation { property: "x"; to: 60; duration: 220; easing.type: Easing.InCubic } } }
-            displaced: Transition { NumberAnimation { property: "y"; duration: 220; easing.type: Easing.OutCubic } }
+                NumberAnimation { property: "opacity"; to: 0; duration: Theme.d(180) }
+                NumberAnimation { property: "x"; to: 60; duration: Theme.d(220); easing.type: Easing.InCubic } } }
+            displaced: Transition { NumberAnimation { property: "y"; duration: Theme.d(220); easing.type: Easing.OutCubic } }
 
             delegate: Rectangle {
                 id: card
@@ -77,6 +77,10 @@ Scope {
                     onTriggered: card.modelData.expire()
                 }
                 MouseArea { id: hover; anchors.fill: parent; hoverEnabled: true; onClicked: card.modelData.dismiss() }
+                // drag the card to the right to dismiss it, short drags spring back
+                NumberAnimation { id: snapBack; target: card; property: "x"; to: 0; duration: Theme.d(200); easing.type: Easing.OutCubic }
+                DragHandler { id: swipe; yAxis.enabled: false; xAxis.minimum: 0
+                              onActiveChanged: { if (active) snapBack.stop(); else if (card.x > 90) card.modelData.dismiss(); else snapBack.restart() } }
 
                 RowLayout {
                     id: col

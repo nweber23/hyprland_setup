@@ -15,9 +15,9 @@ Rectangle {
     color: highlighted ? Theme.primary_container
          : area.containsMouse ? Qt.alpha(Theme.surface_container_high, 0.92)
          : Qt.alpha(Theme.surface_container, 0.78)
-    Behavior on color { ColorAnimation { duration: 180 } }
+    Behavior on color { ColorAnimation { duration: Theme.d(180) } }
     scale: area.pressed ? 0.96 : 1
-    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: Theme.d(120); easing.type: Easing.OutCubic } }
 
     RowLayout {
         id: row

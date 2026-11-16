@@ -115,6 +115,11 @@ PanelWindow {
             if (results.length === 0) results = [{ name: snippets.length === 0 ? "No snippets yet" : "No snippet matches", comment: "Pin a text in the clipboard history (Super+Shift+V) to make it a snippet", icon: "edit-paste", execute: () => {} }]
             list.currentIndex = 0; return
         }
+        if (raw.startsWith(">")) {
+            const aq = raw.slice(1).trim().toLowerCase()
+            results = actions().filter(a => a.name.toLowerCase().includes(aq))
+            list.currentIndex = 0; return
+        }
         if (/^f\s+\S/.test(input.text)) { results = fileHits; list.currentIndex = 0; return }
         if (/^r\s/.test(input.text)) { results = recentHits; list.currentIndex = 0; return }
         if (raw.startsWith(":") && raw.length > 1) {
@@ -133,9 +138,9 @@ PanelWindow {
             else if (n.startsWith(q)) score = 3
             else if (n.includes(q)) score = 2
             else if ((a.genericName + " " + a.comment + " " + a.keywords.join(" ")).toLowerCase().includes(q)) score = 1
-            if (score > 0) out.push({ entry: a, score: score })
+            if (score > 0) out.push({ entry: a, score: score, use: usage[a.id] || 0 })
         }
-        out.sort((x, y) => y.score - x.score || x.entry.name.localeCompare(y.entry.name))
+        out.sort((x, y) => y.score - x.score || y.use - x.use || x.entry.name.localeCompare(y.entry.name))
         let list_ = out.slice(0, 60).map(o => o.entry)
         const c = Tools.calc(raw)
         if (c !== null) list_.unshift(copyEntry(c, "= " + c, "accessories-calculator"))
@@ -153,7 +158,34 @@ PanelWindow {
         results = list_
         list.currentIndex = 0
     }
-    function launch(entry) { if (!entry) return; entry.execute(); Popups.close() }
+    // Frecency: every launch counts for the app, older counts fade, so the apps used most lately come first.
+    property var usage: ({})
+    FileView { path: Quickshell.env("HOME") + "/.cache/quickshell/launch-usage.json"; printErrors: false
+               onLoaded: { try { win.usage = JSON.parse(text()) } catch (e) {} } }
+    function launch(entry) {
+        if (!entry) return
+        if (entry.id) {
+            const u = {}
+            for (const k in usage) u[k] = usage[k] * 0.95
+            u[entry.id] = (u[entry.id] || 0) + 1
+            usage = u
+            Quickshell.execDetached(["sh", "-c", 'mkdir -p "$HOME/.cache/quickshell"; printf %s "$1" > "$HOME/.cache/quickshell/launch-usage.json"', "sh", JSON.stringify(u)])
+        }
+        entry.execute(); Popups.close()
+    }
+    // "> name": quick actions
+    function actions() {
+        const run = c => () => Quickshell.execDetached(c)
+        return [
+            { name: "Lock screen", comment: "Super+L", icon: "system-lock-screen", execute: run(["quickshell", "ipc", "call", "shell", "lock"]) },
+            { name: "Suspend", comment: "Sleep now", icon: "system-suspend", execute: run(["systemctl", "suspend"]) },
+            { name: "Toggle Wi-Fi", comment: "Radio on / off", icon: "network-wireless", execute: run(["sh", "-c", "if nmcli radio wifi | grep -q enabled; then nmcli radio wifi off; else nmcli radio wifi on; fi"]) },
+            { name: "Toggle game mode", comment: "No blur, no animations", icon: "applications-games", execute: run(["hyprctl", "eval", "qsGameMode(" + (Popups.gameMode ? "false" : "true") + ")"]) },
+            { name: "Toggle focus mode", comment: "No bar, no notifications, 25 min timer", icon: "alarm-clock", execute: () => Popups.setFocus(!Popups.focusMode) },
+            { name: "Snooze notifications for 1 hour", comment: "Do not disturb, ends by itself", icon: "notifications-disabled", execute: () => Popups.snooze(60) },
+            { name: "Toggle reduce motion", comment: "Shorter animations", icon: "preferences-desktop", execute: () => Settings.set("reduceMotion", !Settings.reduceMotion) }
+        ]
+    }
     // Entries are scanned asynchronously; rebuild once they arrive.
     Connections { target: DesktopEntries.applications; function onValuesChanged() { if (win.shown) win.refresh() } }
     onShownChanged: if (shown) { input.text = Popups.launcherPrefill; Popups.launcherPrefill = ""; onQuery(); refresh(); input.forceActiveFocus() }
@@ -169,9 +201,9 @@ PanelWindow {
         opacity: win.shown ? 1 : 0
         scale: win.shown ? 1 : 0.95
         transformOrigin: Item.Top
-        Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-        Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.d(160); easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: Theme.d(240); easing.type: Easing.OutCubic } }
+        Behavior on height { NumberAnimation { duration: Theme.d(160); easing.type: Easing.OutCubic } }
 
         ColumnLayout {
             id: col
@@ -198,7 +230,7 @@ PanelWindow {
                     Text {
                         visible: input.text === ""
                         textFormat: Text.PlainText
-                        text: "Search apps…"
+                        text: "Search apps…  ( > actions )"
                         color: Theme.outline
                         font: input.font
                     }
@@ -220,7 +252,7 @@ PanelWindow {
                     width: ListView.view.width
                     height: 48; radius: 16
                     color: ListView.isCurrentItem ? Theme.primary_container : (hover.containsMouse ? Theme.surface_container_high : "transparent")
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Theme.d(120) } }
                     RowLayout {
                         anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                         spacing: 12

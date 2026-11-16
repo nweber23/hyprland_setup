@@ -73,8 +73,8 @@ Scope {
             border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
             opacity: root.shown ? 1 : 0
             scale: root.shown ? 1 : 0.9
-            Behavior on opacity { NumberAnimation { duration: 160 } }
-            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+            Behavior on opacity { NumberAnimation { duration: Theme.d(160) } }
+            Behavior on scale { NumberAnimation { duration: Theme.d(220); easing.type: Easing.OutBack } }
             RowLayout {
                 anchors { fill: parent; leftMargin: 18; rightMargin: 18 }
                 spacing: 12
@@ -85,7 +85,7 @@ Scope {
                     visible: root.label === ""
                     Layout.fillWidth: true; height: 8; radius: 4; color: Theme.surface_container_high
                     Rectangle { width: parent.width * Math.min(1, root.value); height: parent.height; radius: 4; color: Theme.primary
-                                Behavior on width { NumberAnimation { duration: 120 } } }
+                                Behavior on width { NumberAnimation { duration: Theme.d(120) } } }
                 }
                 Text { visible: root.label === ""; textFormat: Text.PlainText; Layout.preferredWidth: 38; horizontalAlignment: Text.AlignRight
                        text: Math.round(root.value * 100) + "%"; color: Theme.on_surface; font.family: "JetBrains Mono"; font.pixelSize: 12 }

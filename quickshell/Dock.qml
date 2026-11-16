@@ -60,7 +60,7 @@ PanelWindow {
             width: 64; height: 5; radius: 2.5
             color: Qt.alpha(Theme.on_surface, 0.35)
             opacity: win.revealed ? 0 : 1
-            Behavior on opacity { NumberAnimation { duration: 180 } }
+            Behavior on opacity { NumberAnimation { duration: Theme.d(180) } }
         }
         TapHandler { enabled: !win.revealed; onTapped: win.touched = true }
         TapHandler { acceptedButtons: Qt.RightButton; onTapped: { win.touched = false; Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) } }   // right click: edit the dock
@@ -71,12 +71,12 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: win.revealed ? 12 : -height - 6
-            Behavior on anchors.bottomMargin { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 0.9 } }
+            Behavior on anchors.bottomMargin { NumberAnimation { duration: Theme.d(320); easing.type: Easing.OutBack; easing.overshoot: 0.9 } }
             width: row.implicitWidth + 28; height: 72; radius: 24
             color: Qt.alpha(Theme.surface_container, 0.82)
             border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
             opacity: win.revealed ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
+            Behavior on opacity { NumberAnimation { duration: Theme.d(200) } }
 
             RowLayout {
                 id: row
@@ -97,10 +97,10 @@ PanelWindow {
                             source: tile.modelData.icon.indexOf("/") === 0 ? "file://" + tile.modelData.icon : Quickshell.iconPath(tile.modelData.icon, "application-x-executable")
                             transformOrigin: Item.Bottom
                             scale: ma.pressed ? 0.9 : (ma.containsMouse ? 1.25 : 1)
-                            Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                            Behavior on scale { NumberAnimation { duration: Theme.d(240); easing.type: Easing.OutBack; easing.overshoot: 2 } }
                             SequentialAnimation { id: bounce
-                                NumberAnimation { target: ic; property: "y"; to: -10; duration: 140; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: ic; property: "y"; to: 2; duration: 260; easing.type: Easing.OutBounce } }
+                                NumberAnimation { target: ic; property: "y"; to: -10; duration: Theme.d(140); easing.type: Easing.OutCubic }
+                                NumberAnimation { target: ic; property: "y"; to: 2; duration: Theme.d(260); easing.type: Easing.OutBounce } }
                         }
                         Rectangle {   // running / focused marker
                             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
@@ -108,15 +108,15 @@ PanelWindow {
                             width: win.active(tile.modelData.cls) ? 16 : 5
                             color: Theme.accent
                             opacity: tile.on ? 1 : 0
-                            Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                            Behavior on opacity { NumberAnimation { duration: 200 } }
+                            Behavior on width { NumberAnimation { duration: Theme.d(200); easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: Theme.d(200) } }
                         }
                         Rectangle {   // name above the icon while hovered
                             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.top; bottomMargin: 14 }
                             width: tip.implicitWidth + 16; height: 24; radius: 8
                             color: Qt.alpha(Theme.surface_container_high, 0.95)
                             opacity: ma.containsMouse ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: 140 } }
+                            Behavior on opacity { NumberAnimation { duration: Theme.d(140) } }
                             Text { id: tip; anchors.centerIn: parent; textFormat: Text.PlainText; text: tile.modelData.name
                                    color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11 }
                         }

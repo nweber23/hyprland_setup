@@ -47,6 +47,13 @@ PanelWindow {
     readonly property var battery: UPower.displayDevice
     // UPower reports 0..100 on D-Bus; guard in case a build exposes 0..1.
     readonly property real batteryPct: battery ? (battery.percentage > 1 ? battery.percentage : battery.percentage * 100) : 0
+    readonly property string eta: {   // time to empty / full, shown while the battery chip is hovered
+        if (!battery) return ""
+        const s = charging ? battery.timeToFull : battery.timeToEmpty
+        if (!(s > 0)) return ""
+        const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60)
+        return h > 0 ? h + "h " + m + "m" : m + "m"
+    }
     readonly property bool charging: battery && (battery.state === UPowerDeviceState.Charging || battery.state === UPowerDeviceState.FullyCharged)
 
     SystemClock { id: clock; precision: SystemClock.Seconds }
@@ -315,7 +322,7 @@ PanelWindow {
                 active: Popups.current === "power" && Popups.screenName === bar.screen.name
                 onClicked: bar.openPanel("power", batChip)
                 Icon { name: bar.batteryIcon(); size: 16; fill: 1; color: bar.charging ? Theme.accent : bar.batteryPct <= 15 ? Theme.error : Theme.on_surface }
-                Text { textFormat: Text.PlainText; text: Math.round(bar.batteryPct); color: Theme.on_surface; font: bar.textFont }
+                Text { textFormat: Text.PlainText; text: Math.round(bar.batteryPct) + (batChip.hovered && bar.eta !== "" ? " \u00b7 " + bar.eta : ""); color: Theme.on_surface; font: bar.textFont }
             }
         }
     }

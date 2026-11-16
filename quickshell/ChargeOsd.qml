@@ -29,25 +29,25 @@ Scope {
     property real ripple: 0      // 0..1 for the outgoing rings
     ParallelAnimation {
         id: inAnim
-        NumberAnimation { target: root; property: "intro"; from: 0; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+        NumberAnimation { target: root; property: "intro"; from: 0; to: 1; duration: Theme.d(520); easing.type: Easing.OutBack; easing.overshoot: 1.5 }
         SequentialAnimation {
-            PauseAnimation { duration: 180 }
+            PauseAnimation { duration: Theme.d(180) }
             ParallelAnimation {
                 NumberAnimation { target: root; property: "fill"; from: 0; to: 1; duration: 1000; easing.type: Easing.OutCubic }
                 NumberAnimation { target: root; property: "shownPct"; from: 0; to: root.pct; duration: 1000; easing.type: Easing.OutCubic }
             }
         }
         SequentialAnimation {
-            PauseAnimation { duration: 140 }
-            NumberAnimation { target: root; property: "flash"; from: 0; to: 1; duration: 220; easing.type: Easing.OutQuad }
-            NumberAnimation { target: root; property: "flash"; to: 0.35; duration: 520; easing.type: Easing.OutCubic }
+            PauseAnimation { duration: Theme.d(140) }
+            NumberAnimation { target: root; property: "flash"; from: 0; to: 1; duration: Theme.d(220); easing.type: Easing.OutQuad }
+            NumberAnimation { target: root; property: "flash"; to: 0.35; duration: Theme.d(520); easing.type: Easing.OutCubic }
         }
         NumberAnimation { target: root; property: "ripple"; from: 0; to: 1; duration: 1500; easing.type: Easing.OutCubic }
     }
     Timer { id: hideTimer; interval: 2600; onTriggered: outAnim.start() }
     SequentialAnimation {
         id: outAnim
-        NumberAnimation { target: root; property: "intro"; to: 0; duration: 320; easing.type: Easing.InBack; easing.overshoot: 1.2 }
+        NumberAnimation { target: root; property: "intro"; to: 0; duration: Theme.d(320); easing.type: Easing.InBack; easing.overshoot: 1.2 }
         ScriptAction { script: root.shown = false }
     }
 

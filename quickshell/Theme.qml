@@ -37,6 +37,11 @@ Singleton {
     readonly property string mono: "JetBrains Mono"
     readonly property real radius: 14
 
+    // Motion scale: every animation duration goes through d(). Reduced in game mode, on request, and on a low battery.
+    readonly property bool reduceMotion: Settings.reduceMotion || Popups.gameMode
+    readonly property real motion: reduceMotion ? 0.3 : 1
+    function d(ms) { return Math.round(ms * motion) }
+
     // Fade between palettes instead of snapping when the wallpaper changes.
     Behavior on primary                { ColorAnimation { duration: 600 } }
     Behavior on on_primary             { ColorAnimation { duration: 600 } }

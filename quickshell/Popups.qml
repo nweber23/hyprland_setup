@@ -52,6 +52,11 @@ Singleton {
     }
 
     // Focus mode on: silence notifications and start a 25 minute countdown; off: bring back what was there before.
+    // Snooze: do not disturb that ends by itself.
+    property double dndUntil: 0
+    function snooze(minutes) { dnd = true; dndUntil = Date.now() + minutes * 60000 }
+    onDndChanged: if (!dnd) dndUntil = 0
+    Timer { interval: 20000; repeat: true; running: root.dndUntil > 0; onTriggered: if (Date.now() >= root.dndUntil) root.dnd = false }
     property bool dndBefore: false
     function setFocus(on) {
         if (on === focusMode) return

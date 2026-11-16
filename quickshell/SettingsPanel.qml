@@ -104,11 +104,7 @@ Panel {
             // ---------- sidebar ----------
             Item {
                 Layout.preferredWidth: 200; Layout.preferredHeight: root.pages.length * 44; Layout.alignment: Qt.AlignTop
-                Rectangle {
-                    width: parent.width; height: 40; radius: 11; color: Theme.accent
-                    y: root.page * 44
-                    Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 1.0 } }
-                }
+                ElasticPill { vertical: true; crossSize: parent.width; radius: 11; target: root.page * 44; extent: 40 }
                 Repeater {
                     model: root.pages
                     delegate: Item {
@@ -164,6 +160,9 @@ Panel {
                     SettingRow { title: "Desktop widgets"; hint: "Clock, battery and the playing track on the bare desktop"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.widgets; onPicked: v => Settings.set("widgets", v) } }
+                    SettingRow { title: "Auto-hide widgets"; hint: "To-do and pomodoro hide while the launcher is open or a window covers the desktop"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.autoHideWidgets; onPicked: v => Settings.set("autoHideWidgets", v) } }
                     SettingRow { title: "Music bars"; hint: "Live audio bars above the music widget while something plays"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.visualizer; onPicked: v => Settings.set("visualizer", v) } }
@@ -173,6 +172,9 @@ Panel {
                     SettingRow { title: "Click effect"; hint: "A ring at every left click, handy for screen recordings"
                         SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
                                        current: Settings.clickEffect; onPicked: v => Settings.set("clickEffect", v) } }
+                    SettingRow { title: "Reduce motion"; hint: "Much shorter animations; always on in game mode"
+                        SettingChips { chipW: 66; model: [{ label: "Off", value: false }, { label: "On", value: true }]
+                                       current: Settings.reduceMotion; onPicked: v => Settings.set("reduceMotion", v) } }
                     SettingRow { title: "Bar position"; hint: "Panels still open from the top"
                         SettingChips { chipW: 66; model: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
                                        current: Settings.barPosition; onPicked: v => Settings.set("barPosition", v) } }

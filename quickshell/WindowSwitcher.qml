@@ -128,7 +128,7 @@ PanelWindow {
         anchors.fill: parent
         color: Qt.alpha(Theme.surface, 0.62)
         opacity: win.active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.d(220); easing.type: Easing.OutCubic } }
         MouseArea { anchors.fill: parent; onClicked: Popups.close() }
     }
 
@@ -156,7 +156,7 @@ PanelWindow {
             textFormat: Text.PlainText
             text: win.count + (win.count === 1 ? " window" : " windows") + "   ·   Tab to move   ·   Enter or release to switch   ·   Del to close"
             color: Qt.alpha(Theme.on_surface, 0.6); font.family: Theme.mono; font.pixelSize: 12
-            opacity: win.shown ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 300 } }
+            opacity: win.shown ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.d(300) } }
         }
         Text {
             visible: win.count === 0; anchors.centerIn: parent; textFormat: Text.PlainText
@@ -180,7 +180,7 @@ PanelWindow {
                 else if (top + win.cellH > y + height) y = top + win.cellH - height
                 scroll.to = y; scroll.restart()
             }
-            NumberAnimation { id: scroll; target: grid; property: "contentY"; duration: 300; easing.type: Easing.OutCubic }
+            NumberAnimation { id: scroll; target: grid; property: "contentY"; duration: Theme.d(300); easing.type: Easing.OutCubic }
 
             delegate: Item {
                 id: cell
@@ -211,8 +211,8 @@ PanelWindow {
                             cell.s0 = Math.max(0.1, b.w / tile.width)
                         } } }
                     ParallelAnimation {
-                        NumberAnimation { target: cell; property: "reveal"; to: 1; duration: 380; easing.type: Easing.OutCubic }
-                        NumberAnimation { target: cell; property: "fly"; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 0.9 }
+                        NumberAnimation { target: cell; property: "reveal"; to: 1; duration: Theme.d(380); easing.type: Easing.OutCubic }
+                        NumberAnimation { target: cell; property: "fly"; to: 1; duration: Theme.d(520); easing.type: Easing.OutBack; easing.overshoot: 0.9 }
                     }
                 }
 
@@ -221,9 +221,9 @@ PanelWindow {
                     x: 12; y: 6; width: parent.width - 24; height: width / 1.6
                     radius: 16; color: Theme.card
                     border.width: cell.current ? 3 : 1; border.color: cell.current ? Theme.accent : Qt.alpha(Theme.outline_variant, 0.7)
-                    Behavior on border.color { ColorAnimation { duration: 160 } }
+                    Behavior on border.color { ColorAnimation { duration: Theme.d(160) } }
                     scale: (cell.current ? 1.035 : (hover.containsMouse ? 1.015 : 1)) * (cell.flies ? 1 : 0.94 + 0.06 * cell.reveal)
-                    Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                    Behavior on scale { NumberAnimation { duration: Theme.d(260); easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
 
                     Image {   // shown until the first frame arrives
                         anchors.centerIn: parent; width: 56; height: 56; visible: !shot.hasContent
@@ -242,7 +242,7 @@ PanelWindow {
                         width: 28; height: 28; radius: 14
                         color: closeMa.containsMouse ? Theme.error : Qt.alpha(Theme.surface, 0.8)
                         opacity: hover.containsMouse || cell.current ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 140 } }
+                        Behavior on opacity { NumberAnimation { duration: Theme.d(140) } }
                         Icon { anchors.centerIn: parent; name: "close"; size: 16; color: closeMa.containsMouse ? Theme.panelBg : Theme.on_surface }
                         MouseArea { id: closeMa; anchors.fill: parent; hoverEnabled: true
                                     onClicked: { grid.currentIndex = cell.index; win.closeWindow() } }
@@ -254,7 +254,7 @@ PanelWindow {
                             source: Quickshell.iconPath(cell.modelData.cls.toLowerCase(), "application-x-executable") }
                     Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: cell.modelData.title
                            color: cell.current ? Theme.on_surface : Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 12; font.bold: cell.current
-                           Behavior on color { ColorAnimation { duration: 160 } } }
+                           Behavior on color { ColorAnimation { duration: Theme.d(160) } } }
                     Text { textFormat: Text.PlainText; color: Theme.outline; font.family: Theme.mono; font.pixelSize: 11
                            text: cell.modelData.ws + (win.manyScreens && cell.modelData.mon !== "" ? " · " + cell.modelData.mon : "") }
                 }

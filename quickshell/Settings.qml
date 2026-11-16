@@ -14,8 +14,10 @@ Singleton {
     property bool autoSaver: true        // switch to the power-saver profile at 20 % and below
     property bool dock: true             // app dock at the bottom edge
     property bool widgets: true          // clock, battery and music on the bare desktop
+    property bool autoHideWidgets: true  // to-do and pomodoro fade out while the launcher is open or a window covers the desktop
     property bool visualizer: true       // the music widget shows live audio bars while something plays
     property string wallpaperEffect: "circle"   // how a new wallpaper arrives: circle | fade | wipe | zoom | random
+    property bool reduceMotion: false    // shorter, calmer animations everywhere (also automatic in game mode)
     property bool clickEffect: false     // a ring at every left click (for screen recordings)
     property string barPosition: "top"   // "top" | "bottom"
     property bool barAutohide: false     // the bar slides away and comes back when the pointer touches the screen edge
@@ -41,7 +43,7 @@ Singleton {
     property int repeatRate: 25          // key repeats per second
     property int repeatDelay: 600        // ms before a held key repeats
 
-    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets", "visualizer", "wallpaperEffect", "clickEffect", "barPosition", "barAutohide", "barHidden", "dockApps", "widgetLayout",
+    readonly property var keys: ["lockMinutes", "screenOffMinutes", "popupSeconds", "themeMode", "suspendMinutes", "autoSaver", "dock", "widgets", "autoHideWidgets", "visualizer", "wallpaperEffect", "clickEffect", "reduceMotion", "barPosition", "barAutohide", "barHidden", "dockApps", "widgetLayout",
                                  "liveOnBattery", "noiseSuppression", "mutedApps", "naturalScroll", "tapToClick", "disableTyping", "pointerSpeed", "scrollSpeed", "accelProfile",
                                  "repeatRate", "repeatDelay"]
     readonly property var allowed: ({ themeMode: ["dark", "light"], accelProfile: ["adaptive", "flat"], wallpaperEffect: ["circle", "fade", "wipe", "zoom", "random"], barPosition: ["top", "bottom"] })
