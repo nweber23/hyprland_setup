@@ -541,11 +541,44 @@ function qsUndock()
     end, { timeout = 1500, type = "oneshot" })
 end
 
+-- Unplugging the external monitor (lid open) strands its workspaces (11+) on the laptop, where nothing reaches them. Its windows come
+-- over to the matching laptop workspace (11 -> 1 ...), and go back to where they were when a monitor returns. A window you moved
+-- in the meantime stays where you put it.
+qsFolded = {}   -- window address -> { from = its workspace on the external, to = the laptop workspace it was folded onto }
+
+local function qsFold()
+    for _, w in ipairs(hl.get_windows()) do
+        local id = w.workspace and w.workspace.id
+        if w.mapped and id and id > 10 then
+            local to = (id - 1) % 10 + 1
+            qsFolded[w.address] = { from = id, to = to }
+            hl.dispatch(hl.dsp.window.move({ workspace = to, window = "address:" .. w.address }))
+        end
+    end
+end
+
+local function qsUnfold()
+    local back = qsFolded
+    qsFolded = {}
+    for _, w in ipairs(hl.get_windows()) do
+        local f = back[w.address]
+        if f and w.workspace and w.workspace.id == f.to then
+            hl.dispatch(hl.dsp.window.move({ workspace = f.from, window = "address:" .. w.address }))
+        end
+    end
+end
+
 local function settleMonitors()   -- after a monitor came or went (debounced: a cable often reports several events)
     local _, others = panelAndOthers()
     if qsLidClosed and #others > 0 and next(qsDocked) == nil then qsDock()
     elseif not qsLidClosed or #others == 0 then
-        if next(qsDocked) ~= nil or qsLidClosed then qsUndock() elseif #others > 0 then qsProjector("extend") end
+        if next(qsDocked) ~= nil or qsLidClosed then qsUndock()
+        elseif #others > 0 then
+            qsProjector("extend")   -- workspaces back on their own monitors first, then the windows return to them
+            if next(qsFolded) ~= nil then
+                hl.timer(function() qsUnfold(); qsProjector("extend") end, { timeout = 800, type = "oneshot" })
+            end
+        else qsFold() end
     end
 end
 local settleTimer
