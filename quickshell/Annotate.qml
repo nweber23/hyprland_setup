@@ -80,7 +80,7 @@ PanelWindow {
             opacity: win.shown && canvas.loaded ? 1 : 0
             scale: win.shown && canvas.loaded ? 1 : 0.94
             Behavior on opacity { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+            Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
             Rectangle { anchors { fill: parent; margins: -1 } color: "transparent"; border.width: 1; border.color: Qt.alpha(Theme.outline, 0.6) }
             AnnotateCanvas {
                 id: canvas
@@ -95,7 +95,7 @@ PanelWindow {
             implicitWidth: row.implicitWidth + 28; implicitHeight: 56; radius: 28
             color: Theme.panelBg; border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.7)
             opacity: win.shown ? 1 : 0
-            transform: Translate { y: win.shown ? 0 : 24; Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.OutBack; easing.overshoot: 1.1 } } }
+            transform: Translate { y: win.shown ? 0 : 24; Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } } }
             Behavior on opacity { NumberAnimation { duration: 260 } }
             RowLayout {
                 id: row
@@ -122,7 +122,7 @@ PanelWindow {
                         implicitWidth: 26; implicitHeight: 26; radius: 13; color: modelData
                         border.width: on ? 3 : 1; border.color: on ? Theme.on_surface : Qt.alpha("white", 0.3)
                         scale: on ? 1.15 : 1
-                        Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                        Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                         MouseArea { anchors.fill: parent; onClicked: canvas.color = modelData }
                     }
                 }
@@ -148,7 +148,7 @@ PanelWindow {
                 Rectangle {   // save and copy
                     implicitWidth: 40; implicitHeight: 40; radius: 20; color: Theme.primary
                     scale: sm.containsMouse ? 1.1 : 1
-                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                     Icon { anchors.centerIn: parent; name: "check"; size: 24; color: Theme.on_primary }
                     MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; onClicked: win.save() }
                 }

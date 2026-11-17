@@ -74,7 +74,7 @@ Scope {
             opacity: root.shown ? 1 : 0
             scale: root.shown ? 1 : 0.9
             Behavior on opacity { NumberAnimation { duration: Theme.d(160) } }
-            Behavior on scale { NumberAnimation { duration: Theme.d(220); easing.type: Easing.OutBack } }
+            Behavior on scale { NumberAnimation { duration: Theme.d(220); easing.type: Easing.OutCubic } }
             RowLayout {
                 anchors { fill: parent; leftMargin: 18; rightMargin: 18 }
                 spacing: 12

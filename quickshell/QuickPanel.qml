@@ -7,7 +7,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "quick"
-    backdrop: "Dots"
+    backdrop: "Toggles"
     panelWidth: 430
 
     function open(name) { Popups.toggle(name, Popups.screenName, Popups.anchorX) }

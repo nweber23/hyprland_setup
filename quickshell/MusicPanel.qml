@@ -8,7 +8,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "music"
-    backdrop: "Waves"
+    backdrop: "Vinyl"
     panelWidth: 540
 
     readonly property var player: {

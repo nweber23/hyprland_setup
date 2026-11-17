@@ -212,7 +212,7 @@ PanelWindow {
                         } } }
                     ParallelAnimation {
                         NumberAnimation { target: cell; property: "reveal"; to: 1; duration: Theme.d(380); easing.type: Easing.OutCubic }
-                        NumberAnimation { target: cell; property: "fly"; to: 1; duration: Theme.d(520); easing.type: Easing.OutBack; easing.overshoot: 0.9 }
+                        NumberAnimation { target: cell; property: "fly"; to: 1; duration: Theme.d(520); easing.type: Easing.OutCubic }
                     }
                 }
 
@@ -223,7 +223,7 @@ PanelWindow {
                     border.width: cell.current ? 3 : 1; border.color: cell.current ? Theme.accent : Qt.alpha(Theme.outline_variant, 0.7)
                     Behavior on border.color { ColorAnimation { duration: Theme.d(160) } }
                     scale: (cell.current ? 1.035 : (hover.containsMouse ? 1.015 : 1)) * (cell.flies ? 1 : 0.94 + 0.06 * cell.reveal)
-                    Behavior on scale { NumberAnimation { duration: Theme.d(260); easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                    Behavior on scale { NumberAnimation { duration: Theme.d(260); easing.type: Easing.OutCubic } }
 
                     Image {   // shown until the first frame arrives
                         anchors.centerIn: parent; width: 56; height: 56; visible: !shot.hasContent

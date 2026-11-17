@@ -11,7 +11,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "settings"
-    backdrop: "Orbits"
+    backdrop: "Gears"
     panelWidth: 920
     centered: true
     pad: 18

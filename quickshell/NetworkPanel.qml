@@ -10,7 +10,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "network"
-    backdrop: "Rings"
+    backdrop: "Mesh"
     panelWidth: 760
     pad: 24
 
@@ -177,7 +177,7 @@ Panel {
                 Rectangle {   // sliding highlight
                     y: 4; height: 38; width: 154; radius: 11; color: Theme.accent
                     x: 4 + (root.isBt ? 158 : 0)
-                    Behavior on x { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                    Behavior on x { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
                 }
                 Row {
                     anchors.fill: parent; anchors.margins: 4; spacing: 4
@@ -211,10 +211,10 @@ Panel {
                     color: on ? Theme.accent : Theme.card
                     scale: pArea.pressed ? 0.9 : (pArea.containsMouse ? 1.08 : 1)
                     Behavior on color { ColorAnimation { duration: 300 } }
-                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                     Icon { anchors.centerIn: parent; name: "power_settings_new"; size: 22; color: power.on ? Theme.panelBg : Theme.on_surface_variant
                            rotation: power.on ? 0 : -90
-                           Behavior on rotation { NumberAnimation { duration: 400; easing.type: Easing.OutBack } } }
+                           Behavior on rotation { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } } }
                     MouseArea {
                         id: pArea; anchors.fill: parent; hoverEnabled: true
                         onClicked: { if (root.isBt) { if (root.adapter) root.adapter.enabled = !root.adapter.enabled } else Networking.wifiEnabled = !Networking.wifiEnabled }

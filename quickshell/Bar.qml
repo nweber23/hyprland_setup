@@ -21,8 +21,8 @@ PanelWindow {
     readonly property bool tucked: Settings.barAutohide && !edgeHover.hovered && Popups.current === ""
     readonly property real edge: !entered ? -40 : (tucked ? -30 : 6)
     margins { top: Settings.barPosition === "top" ? bar.edge : 0; bottom: Settings.barPosition === "bottom" ? bar.edge : 0; left: 8; right: 8 }
-    Behavior on margins.top { NumberAnimation { duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
-    Behavior on margins.bottom { NumberAnimation { duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+    Behavior on margins.top { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
+    Behavior on margins.bottom { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
     exclusionMode: Settings.barAutohide ? ExclusionMode.Ignore : ExclusionMode.Auto
     function shows(id) { return Settings.barHidden.indexOf(id) < 0 }
     Item { anchors.fill: parent; HoverHandler { id: edgeHover } }

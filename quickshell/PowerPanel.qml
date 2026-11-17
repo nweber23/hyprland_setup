@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "power"
-    backdrop: "Bubbles"
+    backdrop: "Power"
     panelWidth: 380
 
     readonly property var battery: UPower.displayDevice

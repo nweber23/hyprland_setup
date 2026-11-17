@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "sysmon"
-    backdrop: "Grid"
+    backdrop: "Pulse"
     panelWidth: 640
     centered: false
     fixedH: 640

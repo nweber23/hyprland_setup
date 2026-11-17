@@ -29,7 +29,7 @@ Scope {
     property real ripple: 0      // 0..1 for the outgoing rings
     ParallelAnimation {
         id: inAnim
-        NumberAnimation { target: root; property: "intro"; from: 0; to: 1; duration: Theme.d(520); easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+        NumberAnimation { target: root; property: "intro"; from: 0; to: 1; duration: Theme.d(520); easing.type: Easing.OutCubic }
         SequentialAnimation {
             PauseAnimation { duration: Theme.d(180) }
             ParallelAnimation {
@@ -47,7 +47,7 @@ Scope {
     Timer { id: hideTimer; interval: 2600; onTriggered: outAnim.start() }
     SequentialAnimation {
         id: outAnim
-        NumberAnimation { target: root; property: "intro"; to: 0; duration: Theme.d(320); easing.type: Easing.InBack; easing.overshoot: 1.2 }
+        NumberAnimation { target: root; property: "intro"; to: 0; duration: Theme.d(320); easing.type: Easing.InCubic; easing.overshoot: 1.2 }
         ScriptAction { script: root.shown = false }
     }
 

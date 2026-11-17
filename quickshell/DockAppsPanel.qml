@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "dockapps"
-    backdrop: "Dots"
+    backdrop: "Tiles"
     panelWidth: 460
 
     property string query: ""

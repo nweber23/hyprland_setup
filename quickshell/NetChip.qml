@@ -17,7 +17,7 @@ Rectangle {
     Component.onCompleted: if (shown) pop.restart()   // created while already open (e.g. the data changed)
     SequentialAnimation { id: pop
         PauseAnimation { duration: c.delay }
-        NumberAnimation { target: c; property: "appear"; from: 0; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+        NumberAnimation { target: c; property: "appear"; from: 0; to: 1; duration: 520; easing.type: Easing.OutCubic } }
     opacity: Math.min(1, appear * 1.8)
     scale: 0.7 + 0.3 * appear
 

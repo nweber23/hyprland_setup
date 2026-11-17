@@ -13,7 +13,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: 18; height: 18; radius: 9
         color: root.checked ? Theme.on_primary : Theme.outline
-        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
     }
     MouseArea { anchors.fill: parent; onClicked: root.toggled() }
 }

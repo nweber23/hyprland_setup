@@ -136,7 +136,7 @@ PanelWindow {
                         scale: card.selected ? 1.02 : 1
                         Behavior on color { ColorAnimation { duration: 140 } }
                         Behavior on border.color { ColorAnimation { duration: 140 } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
                         MouseArea {
                             anchors.fill: parent; hoverEnabled: true
                             onEntered: win.sel = card.index

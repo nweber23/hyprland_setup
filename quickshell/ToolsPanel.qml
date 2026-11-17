@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "tools"
-    backdrop: "Orbits"
+    backdrop: "Hourglass"
     panelWidth: 400
     fixedH: 430
     animateHeight: false

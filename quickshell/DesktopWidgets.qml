@@ -413,7 +413,7 @@ PanelWindow {
         color: Qt.alpha(Theme.surface_container, 0.92)
         border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.7)
         Behavior on opacity { NumberAnimation { duration: 140 } }
-        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
         Column {
             id: col
             x: 8; y: 8; width: parent.width - 16; spacing: 2

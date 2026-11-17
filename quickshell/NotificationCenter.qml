@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "notifications"
-    backdrop: "Particles"
+    backdrop: "Bell"
     panelWidth: 420
     centered: false
     fixedH: 560       // the list grows and shrinks; the window keeps one size
@@ -48,14 +48,14 @@ Panel {
         p: root; index: 0; dy: 8
         RowLayout {
             Layout.fillWidth: true; spacing: 10
-            Text { Layout.fillWidth: true; textFormat: Text.PlainText; text: "Notifications"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
+            Text { Layout.fillWidth: true; elide: Text.ElideRight; textFormat: Text.PlainText; text: "Notifications"; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
             Rectangle {   // do not disturb
                 implicitHeight: 30; implicitWidth: dndRow.implicitWidth + 22; radius: 10
                 color: Popups.dnd ? Theme.accent : (dArea.containsMouse ? Theme.cardHigh : Theme.card)
                 Behavior on color { ColorAnimation { duration: 160 } }
                 RowLayout { id: dndRow; anchors.centerIn: parent; spacing: 6
                     Icon { name: Popups.dnd ? "notifications_off" : "notifications_active"; size: 16; color: Popups.dnd ? Theme.panelBg : Theme.on_surface }
-                    Text { textFormat: Text.PlainText; text: "Do not disturb"; font.family: Theme.mono; font.pixelSize: 11; font.bold: true; color: Popups.dnd ? Theme.panelBg : Theme.on_surface } }
+                }
                 MouseArea { id: dArea; anchors.fill: parent; hoverEnabled: true; onClicked: Popups.dnd = !Popups.dnd }
             }
             Rectangle {   // snooze: do not disturb for an hour, click again to end it

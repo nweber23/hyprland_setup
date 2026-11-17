@@ -7,7 +7,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "volume"
-    backdrop: "Bars"
+    backdrop: "Speaker"
     panelWidth: 440
 
     // everything that has volume controls; the tracker makes node.audio available
@@ -95,7 +95,7 @@ Panel {
                 color: Mic.enabled ? Theme.accent2 : Theme.cardHigh
                 Behavior on color { ColorAnimation { duration: 180 } }
                 Rectangle { width: 20; height: 20; radius: 10; y: 4; x: Mic.enabled ? 28 : 4; color: Mic.enabled ? Theme.panelBg : Theme.on_surface_variant
-                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutBack } } }
+                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } } }
                 MouseArea { anchors.fill: parent; onClicked: Mic.set(!Mic.enabled) }
             }
         }

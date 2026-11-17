@@ -26,10 +26,10 @@ Item {
     property real appear: 0
     onShownChanged: if (shown) popIn.restart(); else appear = 0
     Component.onCompleted: if (shown) popIn.restart()   // created while already open
-    NumberAnimation { id: popIn; target: n; property: "appear"; from: 0; to: 1; duration: 650; easing.type: Easing.OutBack; easing.overshoot: 1.3 }
+    NumberAnimation { id: popIn; target: n; property: "appear"; from: 0; to: 1; duration: 650; easing.type: Easing.OutCubic }
     property real bump: 1
     SequentialAnimation { id: bumpAnim
-        NumberAnimation { target: n; property: "bump"; to: 1.15; duration: 250; easing.type: Easing.OutBack }
+        NumberAnimation { target: n; property: "bump"; to: 1.15; duration: 250; easing.type: Easing.OutCubic }
         NumberAnimation { target: n; property: "bump"; to: 1.0; duration: 600; easing.type: Easing.OutQuint } }
     onOnlineChanged: if (appear > 0.5) bumpAnim.restart()
     opacity: Math.min(1, appear * 1.6)

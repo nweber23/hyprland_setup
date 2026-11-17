@@ -60,7 +60,7 @@ Item {
         anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: parent.height * 0.14 }
         spacing: 2
         opacity: view.up ? 1 : 0
-        transform: Translate { y: view.up ? 0 : -24; Behavior on y { NumberAnimation { duration: 700; easing.type: Easing.OutQuart } } }
+        transform: Translate { y: view.up ? 0 : -24; Behavior on y { NumberAnimation { duration: Theme.d(520); easing.type: Easing.OutQuint } } }
         Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
         Text { Layout.alignment: Qt.AlignHCenter; textFormat: Text.PlainText
                text: Qt.formatTime(clock.date, "HH:mm"); color: "white"
@@ -74,8 +74,8 @@ Item {
         anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: parent.height * 0.14 }
         spacing: 14
         opacity: view.up ? 1 : 0
-        transform: Translate { y: view.up ? 0 : 30; Behavior on y { NumberAnimation { duration: 800; easing.type: Easing.OutQuart } } }
-        Behavior on opacity { NumberAnimation { duration: 800; easing.type: Easing.OutCubic } }
+        transform: Translate { y: view.up ? 0 : 30; Behavior on y { NumberAnimation { duration: Theme.d(600); easing.type: Easing.OutQuint } } }
+        Behavior on opacity { NumberAnimation { duration: Theme.d(600); easing.type: Easing.OutCubic } }
 
         Rectangle {   // avatar: first letter on the accent colour
             Layout.alignment: Qt.AlignHCenter
@@ -145,7 +145,7 @@ Item {
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 36 }
         spacing: 10
         opacity: view.up ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.d(650); easing.type: Easing.OutCubic } }
         Repeater {
             model: [
                 { icon: "keyboard", text: Keyboard.layout },

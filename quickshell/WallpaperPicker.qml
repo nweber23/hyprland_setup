@@ -30,8 +30,8 @@ PanelWindow {
 
     // intro: filter bar drops in, cards rise one after the other starting at the middle
     property real intro: 0
-    NumberAnimation { id: introAnim; target: win; property: "intro"; to: 1; duration: 900; easing.type: Easing.OutQuart }
-    SequentialAnimation { id: outAnim; NumberAnimation { target: win; property: "intro"; to: 0; duration: 200; easing.type: Easing.InQuart } }
+    NumberAnimation { id: introAnim; target: win; property: "intro"; to: 1; duration: Theme.d(520); easing.type: Easing.OutQuint }
+    SequentialAnimation { id: outAnim; NumberAnimation { target: win; property: "intro"; to: 0; duration: Theme.d(160); easing.type: Easing.InQuart } }
 
     visible: shown || intro > 0.004
     anchors { left: true; right: true }
@@ -126,7 +126,7 @@ PanelWindow {
                             color: modelData.c
                             border.width: on ? 2 : 0; border.color: Theme.on_surface
                             scale: dotArea.containsMouse ? 1.15 : 1
-                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                             Behavior on scale { NumberAnimation { duration: 120 } }
                         }
                         MouseArea { id: dotArea; anchors.fill: parent; hoverEnabled: true; onClicked: win.filter = on ? "all" : modelData.tag }

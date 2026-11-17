@@ -8,13 +8,13 @@ ColumnLayout {
     id: r
     property var p                  // the Panel this section belongs to
     property int index: 0
-    property real step: 70          // delay between sections in ms
-    property real base: 300         // first section starts while the card is still growing
+    property real step: 45          // delay between sections in ms
+    property real base: 140         // first section starts while the card is still growing
     property real dx: 0             // slide-in offset in px
     property real dy: 10
     property bool back: false       // slight overshoot (OutBack), used for covers, controls and preset buttons
-    property int easing_: Easing.OutQuart
-    property int duration_: 760
+    property int easing_: Easing.OutQuint
+    property int duration_: 480
     property real progress: 0
     Layout.fillWidth: true
     spacing: 8
@@ -30,11 +30,11 @@ ColumnLayout {
         id: inAnim
         PauseAnimation { duration: Theme.d(r.base + r.index * r.step) }
         NumberAnimation { target: r; property: "progress"; to: 1; duration: Theme.d(r.duration_)
-                          easing.type: r.back ? Easing.OutBack : r.easing_; easing.overshoot: 0.9 }
+                          easing.type: r.back ? Easing.OutBack : r.easing_; easing.overshoot: 0.5 }
     }
     SequentialAnimation {
         id: outAnim
-        PauseAnimation { duration: Math.max(0, 8 - r.index) * 12 }
+        PauseAnimation { duration: Math.max(0, 8 - r.index) * 6 }
         NumberAnimation { target: r; property: "progress"; to: 0; duration: Theme.d(150); easing.type: r.back ? Easing.InBack : Easing.InCubic }
     }
 }

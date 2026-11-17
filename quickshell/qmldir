@@ -82,16 +82,6 @@ singleton Shortcuts 1.0 Shortcuts.qml
 ToolChip 1.0 ToolChip.qml
 singleton Mic 1.0 Mic.qml
 singleton Audio Audio.qml
-BackWaves 1.0 BackWaves.qml
-BackRings 1.0 BackRings.qml
-BackDots 1.0 BackDots.qml
-BackGrid 1.0 BackGrid.qml
-BackBars 1.0 BackBars.qml
-BackBubbles 1.0 BackBubbles.qml
-BackParticles 1.0 BackParticles.qml
-BackOrbits 1.0 BackOrbits.qml
-BackViewfinder 1.0 BackViewfinder.qml
-BackAurora 1.0 BackAurora.qml
 singleton Spectrum 1.0 Spectrum.qml
 AnnotateCanvas 1.0 AnnotateCanvas.qml
 Annotate 1.0 Annotate.qml
@@ -100,3 +90,22 @@ Ripple 1.0 Ripple.qml
 DockAppsPanel 1.0 DockAppsPanel.qml
 singleton Todo Todo.qml
 ElasticPill 1.0 ElasticPill.qml
+BackBase 1.0 BackBase.qml
+BackDots 1.0 BackDots.qml
+BackSky 1.0 BackSky.qml
+BackVinyl 1.0 BackVinyl.qml
+BackSpeaker 1.0 BackSpeaker.qml
+BackMesh 1.0 BackMesh.qml
+BackPower 1.0 BackPower.qml
+BackBell 1.0 BackBell.qml
+BackToggles 1.0 BackToggles.qml
+BackTiles 1.0 BackTiles.qml
+BackKeys 1.0 BackKeys.qml
+BackPulse 1.0 BackPulse.qml
+BackClock 1.0 BackClock.qml
+BackLock 1.0 BackLock.qml
+BackMonitor 1.0 BackMonitor.qml
+BackBeam 1.0 BackBeam.qml
+BackLens 1.0 BackLens.qml
+BackGears 1.0 BackGears.qml
+BackHourglass 1.0 BackHourglass.qml

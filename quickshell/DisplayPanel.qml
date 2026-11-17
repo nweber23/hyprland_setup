@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "display"
-    backdrop: "Aurora"
+    backdrop: "Monitor"
     panelWidth: 700
     centered: true
 
@@ -246,7 +246,7 @@ Panel {
                             for (let x = 4; x < width; x += 14) for (let y = 4; y < height; y += 14) c.fillRect(x, y, 2, 2)
                         }
                     }
-                    Behavior on width { NumberAnimation { duration: 450; easing.type: Easing.OutBack; easing.overshoot: 0.8 } }
+                    Behavior on width { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
                     Behavior on y { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
                     ColumnLayout {
                         anchors.centerIn: parent; spacing: 4
@@ -296,7 +296,7 @@ Panel {
                                 border.width: 2; border.color: Theme.accent
                                 opacity: tile.on ? 1 : 0; scale: tile.on ? 1 : 0.9
                                 Behavior on opacity { NumberAnimation { duration: 200 } }
-                                Behavior on scale { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
+                                Behavior on scale { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                             }
                             RowLayout {
                                 anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
@@ -332,7 +332,7 @@ Panel {
                         width: 24; height: 24; radius: 12; color: Theme.on_surface; y: 0
                         x: 11 + rateSlider.posFor(root.rateIndex) - 12
                         scale: sliderArea.pressed ? 1.2 : 1
-                        Behavior on x { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+                        Behavior on x { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
                         Behavior on scale { NumberAnimation { duration: 120 } }
                     }
                     Repeater {
@@ -371,7 +371,7 @@ Panel {
                         Rectangle {
                             width: 52; height: 30; radius: 8; color: Theme.accent2; y: 4
                             x: 4 + Math.max(0, root.scales.findIndex(v => Math.abs(v - root.pscale) < 0.01)) * 56
-                            Behavior on x { NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                            Behavior on x { NumberAnimation { duration: 340; easing.type: Easing.OutCubic } }
                         }
                         Row {
                             x: 4; y: 4; spacing: 4
@@ -400,11 +400,11 @@ Panel {
                                                     shadowBlur: 1.0; shadowVerticalOffset: 4
                                                     Behavior on shadowOpacity { NumberAnimation { duration: 200 } } }
                         Behavior on color { ColorAnimation { duration: 250 } }
-                        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
+                        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                         RowLayout {
                             anchors.centerIn: parent; spacing: 6
                             Icon { name: root.applied ? "check" : "tune"; size: 18; color: Theme.panelBg
-                                   Behavior on rotation { NumberAnimation { duration: 400; easing.type: Easing.OutBack } } }
+                                   Behavior on rotation { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } } }
                             Text { textFormat: Text.PlainText; text: root.applied ? "Applied" : "Apply"; color: Theme.panelBg; font.family: Theme.mono; font.pixelSize: 13; font.bold: true }
                         }
                         MouseArea {

@@ -19,7 +19,7 @@ Reveal {
     Rectangle {
         Layout.fillWidth: true; implicitHeight: col.implicitHeight + 22; radius: 12; color: Theme.card
         scale: area.containsMouse ? 1.015 : 1
-        Behavior on scale { NumberAnimation { duration: Theme.d(200); easing.type: Easing.OutBack; easing.overshoot: 2 } }
+        Behavior on scale { NumberAnimation { duration: Theme.d(200); easing.type: Easing.OutCubic } }
         RowLayout {
             id: col
             x: 12; y: 11; width: parent.width - 24; spacing: 10
@@ -44,7 +44,7 @@ Reveal {
                    MouseArea { id: muteArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; onClicked: root.muteRequested() } }
             Icon { Layout.alignment: Qt.AlignTop; name: "close"; size: 16; color: closeArea.containsMouse ? Theme.error : Theme.on_surface_variant
                    opacity: area.containsMouse ? 1 : 0.35; rotation: closeArea.containsMouse ? 90 : 0
-                   Behavior on rotation { NumberAnimation { duration: Theme.d(260); easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                   Behavior on rotation { NumberAnimation { duration: Theme.d(220); easing.type: Easing.OutCubic } }
                    Behavior on color { ColorAnimation { duration: Theme.d(150) } }
                    MouseArea { id: closeArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; onClicked: root.removeRequested() } }
         }

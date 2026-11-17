@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "shortcuts"
-    backdrop: "Dots"
+    backdrop: "Keys"
     panelWidth: 1260
     centered: true
 

@@ -8,7 +8,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "screentime"
-    backdrop: "Grid"
+    backdrop: "Clock"
     panelWidth: 780
     centered: true
     pad: 22
@@ -88,7 +88,7 @@ Panel {
                 implicitWidth: 34; implicitHeight: 34; radius: 10; color: swArea.containsMouse ? Theme.cardHigh : Theme.card
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Icon { anchors.centerIn: parent; name: root.mode === "day" ? "calendar_view_week" : "today"; size: 18; color: Theme.accent
-                       rotation: root.mode === "day" ? 0 : 360; Behavior on rotation { NumberAnimation { duration: 450; easing.type: Easing.OutBack } } }
+                       rotation: root.mode === "day" ? 0 : 360; Behavior on rotation { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } } }
                 MouseArea { id: swArea; anchors.fill: parent; hoverEnabled: true; onClicked: root.mode = root.mode === "day" ? "week" : "day" }
             }
             Arrow { act: () => root.offset += (root.mode === "week" ? 7 : 1); name: "chevron_left" }

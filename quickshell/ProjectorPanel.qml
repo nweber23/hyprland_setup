@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "projector"
-    backdrop: "Aurora"
+    backdrop: "Beam"
     panelWidth: 640
     centered: true
 

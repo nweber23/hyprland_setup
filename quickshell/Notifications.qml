@@ -36,8 +36,10 @@ Scope {
         screen: root.targetScreen
         // Always mapped, 1 px tall while empty. Binding this to the list made the window never map.
         visible: !Popups.dnd
-        anchors { top: true; right: true }
-        margins { top: 8 + 34 + 8; right: 12 }
+        // sits below the bar (top) or above it (bottom), following Settings.barPosition
+        readonly property bool atBottom: Settings.barPosition === "bottom"
+        anchors { top: !atBottom; bottom: atBottom; right: true }
+        margins { top: atBottom ? 0 : 8 + 34 + 8; bottom: atBottom ? 8 + 34 + 8 : 0; right: 12 }
         implicitWidth: 380
         implicitHeight: Math.max(1, list.contentHeight)
         color: "transparent"
@@ -52,12 +54,12 @@ Scope {
             interactive: false
             cacheBuffer: 4000   // build every card even while the window is still 1 px tall (its height follows contentHeight)
             add: Transition { ParallelAnimation {
-                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.d(220); easing.type: Easing.OutCubic }
-                NumberAnimation { property: "x"; from: 60; to: 0; duration: Theme.d(280); easing.type: Easing.OutCubic } } }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.d(200); easing.type: Easing.OutCubic }
+                NumberAnimation { property: "x"; from: 60; to: 0; duration: Theme.d(320); easing.type: Easing.OutQuint } } }
             remove: Transition { ParallelAnimation {
                 NumberAnimation { property: "opacity"; to: 0; duration: Theme.d(180) }
-                NumberAnimation { property: "x"; to: 60; duration: Theme.d(220); easing.type: Easing.InCubic } } }
-            displaced: Transition { NumberAnimation { property: "y"; duration: Theme.d(220); easing.type: Easing.OutCubic } }
+                NumberAnimation { property: "x"; to: 60; duration: Theme.d(200); easing.type: Easing.InCubic } } }
+            displaced: Transition { NumberAnimation { property: "y"; duration: Theme.d(280); easing.type: Easing.OutQuint } }
 
             delegate: Rectangle {
                 id: card

@@ -44,11 +44,11 @@ PanelWindow {
     ParallelAnimation {
         id: inAnim
         NumberAnimation { target: win; property: "intro"; to: 1; duration: Theme.d(200); easing.type: Easing.OutCubic }
-        NumberAnimation { target: win; property: "grow"; to: 1; duration: Theme.d(620); easing.type: Easing.OutQuart }
-        NumberAnimation { target: win; property: "resolve"; to: 1; duration: Theme.d(480); easing.type: Easing.OutCubic }
+        NumberAnimation { target: win; property: "grow"; to: 1; duration: Theme.d(440); easing.type: Easing.OutQuint }
+        NumberAnimation { target: win; property: "resolve"; to: 1; duration: Theme.d(320); easing.type: Easing.OutCubic }
         SequentialAnimation {
-            PauseAnimation { duration: Theme.d(420) }
-            NumberAnimation { target: win; property: "draw"; to: 1; duration: Theme.d(900); easing.type: Easing.InOutCubic }
+            PauseAnimation { duration: Theme.d(260) }
+            NumberAnimation { target: win; property: "draw"; to: 1; duration: Theme.d(700); easing.type: Easing.InOutCubic }
         }
     }
     SequentialAnimation {
@@ -121,12 +121,15 @@ PanelWindow {
             x: (card.width - width) / 2
             // blur resolves to sharp while opening (light mode / game mode: no blur)
             layer.enabled: win.resolve < 0.99 && !Popups.gameMode
-            layer.effect: MultiEffect { blurEnabled: true; blurMax: 40; blur: 1 - win.resolve }
+            layer.effect: MultiEffect { blurEnabled: true; blurMax: 24; blur: 1 - win.resolve }
             Loader {
                 anchors.fill: parent
                 active: win.visible
                 source: win.backdrop === "" ? "Decor.qml" : "Back" + win.backdrop + ".qml"
-                onLoaded: item.shown = Qt.binding(() => win.shown)
+                // drifts in once the card has mostly grown and fades out with it; frozen in reduce-motion / game mode
+                opacity: win.shown ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: win.shown ? Theme.d(700) : Theme.d(160); easing.type: Easing.OutCubic } }
+                onLoaded: item.shown = Qt.binding(() => win.shown && !Theme.reduceMotion)
             }
             ColumnLayout {
                 id: body

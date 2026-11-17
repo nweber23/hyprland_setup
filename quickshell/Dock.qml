@@ -71,7 +71,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: win.revealed ? 12 : -height - 6
-            Behavior on anchors.bottomMargin { NumberAnimation { duration: Theme.d(320); easing.type: Easing.OutBack; easing.overshoot: 0.9 } }
+            Behavior on anchors.bottomMargin { NumberAnimation { duration: Theme.d(320); easing.type: Easing.OutCubic } }
             width: row.implicitWidth + 28; height: 72; radius: 24
             color: Qt.alpha(Theme.surface_container, 0.82)
             border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
@@ -97,7 +97,7 @@ PanelWindow {
                             source: tile.modelData.icon.indexOf("/") === 0 ? "file://" + tile.modelData.icon : Quickshell.iconPath(tile.modelData.icon, "application-x-executable")
                             transformOrigin: Item.Bottom
                             scale: ma.pressed ? 0.9 : (ma.containsMouse ? 1.25 : 1)
-                            Behavior on scale { NumberAnimation { duration: Theme.d(240); easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                            Behavior on scale { NumberAnimation { duration: Theme.d(240); easing.type: Easing.OutCubic } }
                             SequentialAnimation { id: bounce
                                 NumberAnimation { target: ic; property: "y"; to: -10; duration: Theme.d(140); easing.type: Easing.OutCubic }
                                 NumberAnimation { target: ic; property: "y"; to: 2; duration: Theme.d(260); easing.type: Easing.OutBounce } }

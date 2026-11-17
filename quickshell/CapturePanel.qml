@@ -7,7 +7,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "capture"
-    backdrop: "Viewfinder"
+    backdrop: "Lens"
     panelWidth: 420
 
     property int delay: 0              // seconds before the shot is taken
@@ -47,7 +47,7 @@ Panel {
                 Rectangle {
                     width: 54; height: 26; radius: 8; color: Theme.accent; y: 4
                     x: 4 + [0, 3, 5, 10].indexOf(root.delay) * 58
-                    Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                    Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                 }
                 Row {
                     x: 4; y: 4; spacing: 4

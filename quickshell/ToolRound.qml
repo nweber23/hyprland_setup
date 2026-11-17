@@ -10,7 +10,7 @@ Rectangle {
     color: accent ? Theme.accent : (ma.containsMouse ? Theme.cardHigh : Theme.card)
     scale: ma.pressed ? 0.9 : (ma.containsMouse ? 1.07 : 1)
     Behavior on color { ColorAnimation { duration: 150 } }
-    Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+    Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
     Icon { anchors.centerIn: parent; name: b.icon; size: 26; fill: 1; color: b.accent ? Theme.panelBg : Theme.on_surface }
     MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: b.clicked() }
 }

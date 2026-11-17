@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Panel {
     id: root
     name: "vault"
-    backdrop: "Grid"
+    backdrop: "Lock"
     panelWidth: 580
     centered: true
     fixedH: 560

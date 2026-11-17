@@ -9,7 +9,7 @@ import QtQuick.Shapes
 Panel {
     id: root
     name: "calendar"
-    backdrop: "Dots"
+    backdrop: "Sky"
     panelWidth: 1080
     centered: true
     pad: 22
@@ -30,7 +30,7 @@ Panel {
         const n = Math.max(0, Math.min(Weather.days.length - 1, weatherView + d)); if (n === weatherView) return
         weatherView = n; spinAnim.restart(); tempFlash.restart()
     }
-    NumberAnimation { id: spinAnim; target: root; property: "spin"; from: 140; to: 0; duration: 800; easing.type: Easing.OutCubic }
+    NumberAnimation { id: spinAnim; target: root; property: "spin"; from: 140; to: 0; duration: Theme.d(650); easing.type: Easing.OutQuint }
     // the orbit of the other days turns once a minute, today's slots only sway a little
     NumberAnimation on orbitAngle { from: 0; to: -360; duration: 60000; loops: Animation.Infinite; running: root.shown }
     NumberAnimation on osc { from: 0; to: Math.PI * 2; duration: 9000; loops: Animation.Infinite; running: root.shown }
@@ -43,10 +43,10 @@ Panel {
 
     // the big temperature counts to its value, the gauges sweep
     property real tempShown: isToday ? Weather.tempNum : (day ? day.max : 0)
-    Behavior on tempShown { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+    Behavior on tempShown { NumberAnimation { duration: Theme.d(500); easing.type: Easing.OutQuint } }
     property real tempFlashV: 1
-    SequentialAnimation { id: tempFlash; NumberAnimation { target: root; property: "tempFlashV"; to: 0.2; duration: 90 }
-                                         NumberAnimation { target: root; property: "tempFlashV"; to: 1; duration: 420; easing.type: Easing.OutCubic } }
+    SequentialAnimation { id: tempFlash; NumberAnimation { target: root; property: "tempFlashV"; to: 0.2; duration: Theme.d(80) }
+                                         NumberAnimation { target: root; property: "tempFlashV"; to: 1; duration: Theme.d(320); easing.type: Easing.OutCubic } }
 
     RowLayout {
         Layout.fillWidth: true
@@ -95,7 +95,7 @@ Panel {
                                 SequentialAnimation { id: re
                                     ScriptAction { script: cell.a = 0 }
                                     PauseAnimation { duration: cell.index * 9 }
-                                    NumberAnimation { target: cell; property: "a"; to: 1; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
+                                    NumberAnimation { target: cell; property: "a"; to: 1; duration: Theme.d(300); easing.type: Easing.OutCubic } }
                                 Rectangle {
                                     anchors.centerIn: parent; width: 30; height: 30; radius: 9
                                     color: cell.today ? Theme.accent : (dayArea.containsMouse ? Theme.cardHigh : "transparent")
@@ -113,7 +113,7 @@ Panel {
 
         // ================= clock + orbit =================
         Reveal {
-            p: root; index: 0; dy: 0; back: true; duration_: 900
+            p: root; index: 0; dy: 0; back: true; duration_: 620
             Item {
                 Layout.fillWidth: true; Layout.preferredHeight: 376
                 id: stage
@@ -166,7 +166,7 @@ Panel {
                         scale: active ? 0.8 + 0.55 * depth : 0.66 + 0.42 * depth
                         opacity: (active ? 0.78 + 0.22 * depth : 0.5 + 0.5 * depth) * root.tempFlashV
                         color: active ? Theme.accent2 : Qt.alpha(Theme.card, 0.9)
-                        Behavior on color { ColorAnimation { duration: 300 } }
+                        Behavior on color { ColorAnimation { duration: Theme.d(240) } }
                         Column {
                             anchors.centerIn: parent; spacing: 3
                             Text { anchors.horizontalCenter: parent.horizontalCenter; textFormat: Text.PlainText; text: slot.modelData.label
@@ -215,7 +215,7 @@ Panel {
                             Item {
                                 Layout.alignment: Qt.AlignHCenter; implicitWidth: 56; implicitHeight: 56
                                 Gauge { anchors.fill: parent; value: root.shown ? modelData.v : 0; thickness: 4; color: Theme.accent
-                                        Behavior on value { NumberAnimation { duration: 1100; easing.type: Easing.OutCubic } } }
+                                        Behavior on value { NumberAnimation { duration: Theme.d(700); easing.type: Easing.OutQuint } } }
                                 Text { x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
                                        renderType: Text.NativeRendering; textFormat: Text.PlainText; text: modelData.t; color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
                             }
