@@ -4,7 +4,7 @@ import QtQuick
 Text { textFormat: Text.PlainText;
     property string name
     property real size: 20
-    property real fill: 0
+    property real fill: 1
     text: name
     color: Theme.on_surface
     font.family: "Material Symbols Rounded"
