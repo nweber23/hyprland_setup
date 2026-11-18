@@ -33,14 +33,20 @@ Panel {
         Reveal {
             p: root; index: 0; dx: -35; dy: 9; back: true; Layout.fillWidth: false
             Item {
+            readonly property bool playing: root.player !== null && root.player.isPlaying
             Layout.preferredWidth: 150; Layout.preferredHeight: 150
-            Rectangle { anchors.centerIn: parent; width: 164; height: 164; radius: 82; color: Qt.alpha(Theme.accent2, 0.16) }   // soft glow
+            Rectangle { anchors.centerIn: parent; width: 150; height: 150; radius: 20; color: Qt.alpha(Theme.accent2, 0.22)   // soft glow, breathes while playing
+                scale: playing ? 1.1 : 1.04; opacity: playing ? 1 : 0.5
+                Behavior on scale { NumberAnimation { duration: Theme.d(600); easing.type: Easing.OutQuint } }
+                Behavior on opacity { NumberAnimation { duration: Theme.d(400) } } }
             ClippingRectangle {
                 id: cover
                 anchors.fill: parent
-                radius: width / 2
+                radius: 20
                 color: Theme.card
-                border.width: 3; border.color: Theme.accent2
+                border.width: 2; border.color: Qt.alpha(Theme.accent2, 0.6)
+                scale: playing ? 1 : 0.94
+                Behavior on scale { NumberAnimation { duration: Theme.d(500); easing.type: Easing.OutQuint } }
                 Icon { anchors.centerIn: parent; name: "music_note"; size: 44; color: Theme.on_surface_variant }
                 Image {
                     anchors.fill: parent
@@ -49,12 +55,6 @@ Panel {
                     asynchronous: true
                     opacity: status === Image.Ready ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 300 } }
-                }
-                Rectangle { anchors.centerIn: parent; width: parent.width * 0.14; height: width; radius: width / 2; color: Theme.panelBg }   // vinyl hole
-                // Spins while playing; stopping keeps the current angle.
-                RotationAnimator on rotation {
-                    from: 0; to: 360; duration: 14000; loops: Animation.Infinite
-                    running: root.shown && root.player !== null && root.player.isPlaying
                 }
             }
             }
