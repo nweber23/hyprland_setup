@@ -78,7 +78,8 @@ Scope {
             RowLayout {
                 anchors { fill: parent; leftMargin: 18; rightMargin: 18 }
                 spacing: 12
-                Icon { name: root.icon; size: 26; color: Theme.primary }   // fill 1 garbles some glyphs (light_mode)
+                WeatherIcon { visible: root.icon === "light_mode"; name: "sunny"; size: 26; color: Theme.primary }   // font light_mode garbles when filled
+                Icon { visible: root.icon !== "light_mode"; name: root.icon; size: 26; color: Theme.primary }
                 Text { visible: root.label !== ""; Layout.fillWidth: true; textFormat: Text.PlainText; text: root.label
                        color: Theme.on_surface; font.family: Theme.mono; font.pixelSize: 15; font.bold: true }
                 Rectangle {

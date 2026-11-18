@@ -111,7 +111,7 @@ PanelWindow {
                     width: 28; height: 28; radius: 8; anchors.verticalCenter: parent.verticalCenter
                     color: win.filter === "animated" ? Theme.accent : Theme.card
                     Behavior on color { ColorAnimation { duration: 160 } }
-                    Icon { anchors.centerIn: parent; name: "play_arrow"; size: 18; fill: 1; color: win.filter === "animated" ? Theme.panelBg : Theme.on_surface }
+                    PlayIcon { anchors.centerIn: parent; size: 18; color: win.filter === "animated" ? Theme.panelBg : Theme.on_surface }
                     MouseArea { anchors.fill: parent; onClicked: win.filter = win.filter === "animated" ? "all" : "animated" }
                 }
                 Repeater {

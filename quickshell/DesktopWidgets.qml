@@ -122,10 +122,10 @@ PanelWindow {
                     Icon { anchors.centerIn: parent; name: "restart_alt"; size: 22 }
                     MouseArea { id: rb; anchors.fill: parent; hoverEnabled: true; onClicked: Tools.reset() } }
                 Rectangle { implicitWidth: 56; implicitHeight: 56; radius: 28; color: Theme.accent
-                    Icon { anchors.centerIn: parent; name: Tools.running ? "pause" : "play_arrow"; size: 30; fill: 1; color: Theme.on_primary }
+                    PlayIcon { anchors.centerIn: parent; playing: Tools.running; size: 30; color: Theme.on_primary }
                     MouseArea { anchors.fill: parent; onClicked: Tools.toggle() } }
                 Rectangle { implicitWidth: 40; implicitHeight: 40; radius: 20; color: sb.containsMouse ? Theme.cardHigh : Theme.card
-                    Icon { anchors.centerIn: parent; name: "skip_next"; size: 22 }
+                    SkipIcon { anchors.centerIn: parent; next: true; size: 22 }
                     MouseArea { id: sb; anchors.fill: parent; hoverEnabled: true; onClicked: if (Tools.pomodoro) Tools.finish() } }
             }
             GridLayout {   // "- 25 min +"
@@ -315,8 +315,8 @@ PanelWindow {
                     required property var modelData
                     Layout.preferredWidth: 34; Layout.preferredHeight: 34; radius: 17
                     color: bm.containsMouse ? Theme.cardHigh : "transparent"
-                    Icon { anchors.centerIn: parent; size: 22; fill: 1; color: Theme.on_surface
-                           name: modelData.a === 1 ? (win.player && win.player.isPlaying ? "pause" : "play_arrow") : modelData.i }
+                    PlayIcon { visible: modelData.a === 1; anchors.centerIn: parent; size: 22; playing: win.player !== null && win.player.isPlaying }
+                    SkipIcon { visible: modelData.a !== 1; anchors.centerIn: parent; size: 22; next: modelData.a === 2 }
                     MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true
                                 onClicked: { if (!win.player) return; if (modelData.a === 0) win.player.previous(); else if (modelData.a === 1) win.player.togglePlaying(); else win.player.next() } }
                 }

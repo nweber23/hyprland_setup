@@ -112,7 +112,7 @@ Panel {
             Row { anchors.centerIn: parent; spacing: 6; visible: root.player && root.player.isPlaying
                 Rectangle { width: 10; height: 32; radius: 2; color: Theme.accent2 }
                 Rectangle { width: 10; height: 32; radius: 2; color: Theme.accent2 } }
-            Icon { anchors.centerIn: parent; visible: !(root.player && root.player.isPlaying); name: "play_arrow"; size: 44; fill: 1; color: Theme.accent2 }
+            PlayIcon { anchors.centerIn: parent; visible: !(root.player && root.player.isPlaying); size: 44; color: Theme.accent2 }
             MouseArea { anchors.fill: parent; onClicked: root.player.togglePlaying() }
         }
         SkipIcon { next: true; size: 30; MouseArea { anchors.fill: parent; onClicked: root.player.next() } }
