@@ -94,6 +94,7 @@ BackBase 1.0 BackBase.qml
 BackDots 1.0 BackDots.qml
 BackSky 1.0 BackSky.qml
 BackVinyl 1.0 BackVinyl.qml
+SkipIcon 1.0 SkipIcon.qml
 BackSpeaker 1.0 BackSpeaker.qml
 BackMesh 1.0 BackMesh.qml
 BackPower 1.0 BackPower.qml
