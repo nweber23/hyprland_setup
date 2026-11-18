@@ -95,6 +95,8 @@ BackDots 1.0 BackDots.qml
 BackSky 1.0 BackSky.qml
 BackVinyl 1.0 BackVinyl.qml
 SkipIcon 1.0 SkipIcon.qml
+PlayIcon 1.0 PlayIcon.qml
+WeatherIcon 1.0 WeatherIcon.qml
 BackSpeaker 1.0 BackSpeaker.qml
 BackMesh 1.0 BackMesh.qml
 BackPower 1.0 BackPower.qml

@@ -171,7 +171,7 @@ Panel {
                             anchors.centerIn: parent; spacing: 3
                             Text { anchors.horizontalCenter: parent.horizontalCenter; textFormat: Text.PlainText; text: slot.modelData.label
                                    color: slot.active ? Theme.panelBg : Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 }
-                            Icon { anchors.horizontalCenter: parent.horizontalCenter; name: slot.modelData.icon; size: 24; color: slot.active ? Theme.panelBg : Theme.on_surface }
+                            WeatherIcon { anchors.horizontalCenter: parent.horizontalCenter; name: slot.modelData.icon; size: 24; color: slot.active ? Theme.panelBg : Theme.on_surface }
                             Text { anchors.horizontalCenter: parent.horizontalCenter; textFormat: Text.PlainText; text: slot.modelData.temp
                                    color: slot.active ? Theme.panelBg : Theme.on_surface; font.family: Theme.mono; font.pixelSize: 11; font.bold: true }
                         }

@@ -225,7 +225,7 @@ PanelWindow {
                font.family: Theme.mono; font.pixelSize: 20 }
         RowLayout {
             visible: Weather.temp !== ""; Layout.topMargin: 6; spacing: 8
-            Icon { name: Weather.icon; size: 22; color: "white" }
+            WeatherIcon { name: Weather.icon; size: 22; color: "white" }
             Text { textFormat: Text.PlainText; text: Weather.temp + (Weather.desc !== "" ? "  ·  " + Weather.desc : ""); color: Qt.alpha("white", 0.85)
                    font.family: Theme.mono; font.pixelSize: 15 }
         }

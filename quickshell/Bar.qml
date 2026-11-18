@@ -149,7 +149,7 @@ PanelWindow {
             }
             Item { Layout.preferredWidth: 4 }
             SkipIcon { next: false; size: 18; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
-            Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 20; fill: 1
+            PlayIcon { playing: bar.player !== null && bar.player.isPlaying; size: 20
                    MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
             SkipIcon { next: true; size: 18; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
             Item { Layout.preferredWidth: 2 }
@@ -179,7 +179,7 @@ PanelWindow {
             visible: bar.shows("weather") && Weather.temp !== ""
             padding: 10; spacing: 6
             onClicked: bar.openPanel("calendar", clockGroup)
-            Icon { name: Weather.icon; size: 18; fill: 1; color: Theme.on_surface }
+            WeatherIcon { name: Weather.icon; size: 18 }
             Text { textFormat: Text.PlainText; text: Weather.temp; color: Theme.on_surface; font: bar.textFont }
         }
     }
