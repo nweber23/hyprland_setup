@@ -5,10 +5,11 @@ Text { textFormat: Text.PlainText;
     property string name
     property real size: 20
     property real fill: 1
+    property real weight: 400
     text: name
     color: Theme.on_surface
     font.family: "Material Symbols Rounded"
     font.pixelSize: size
-    font.variableAxes: ({ "FILL": fill, "wght": 400 })
+    font.variableAxes: ({ "FILL": fill, "wght": weight })
     verticalAlignment: Text.AlignVCenter
 }

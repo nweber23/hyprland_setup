@@ -148,10 +148,10 @@ PanelWindow {
                        color: Theme.on_surface_variant; font.family: Theme.mono; font.pixelSize: 9 }
             }
             Item { Layout.preferredWidth: 4 }
-            Icon { name: "skip_previous"; size: 18; fill: 1; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
+            Icon { name: "skip_previous"; size: 18; fill: 1; weight: 700; MouseArea { anchors.fill: parent; onClicked: bar.player.previous() } }
             Icon { name: bar.player && bar.player.isPlaying ? "pause" : "play_arrow"; size: 20; fill: 1
                    MouseArea { anchors.fill: parent; onClicked: bar.player.togglePlaying() } }
-            Icon { name: "skip_next"; size: 18; fill: 1; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
+            Icon { name: "skip_next"; size: 18; fill: 1; weight: 700; MouseArea { anchors.fill: parent; onClicked: bar.player.next() } }
             Item { Layout.preferredWidth: 2 }
         }
     }

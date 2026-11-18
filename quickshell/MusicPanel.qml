@@ -106,7 +106,7 @@ Panel {
         Layout.alignment: Qt.AlignHCenter; Layout.leftMargin: 150
         spacing: 34
         visible: root.player !== null
-        Icon { name: "skip_previous"; size: 30; fill: 1; MouseArea { anchors.fill: parent; onClicked: root.player.previous() } }
+        Icon { name: "skip_previous"; size: 30; fill: 1; weight: 700; MouseArea { anchors.fill: parent; onClicked: root.player.previous() } }
         Item {   // pause drawn as two bars (the filled circle glyphs render with artifacts)
             implicitWidth: 34; implicitHeight: 38
             Row { anchors.centerIn: parent; spacing: 6; visible: root.player && root.player.isPlaying
@@ -115,7 +115,7 @@ Panel {
             Icon { anchors.centerIn: parent; visible: !(root.player && root.player.isPlaying); name: "play_arrow"; size: 44; fill: 1; color: Theme.accent2 }
             MouseArea { anchors.fill: parent; onClicked: root.player.togglePlaying() }
         }
-        Icon { name: "skip_next"; size: 30; fill: 1; MouseArea { anchors.fill: parent; onClicked: root.player.next() } }
+        Icon { name: "skip_next"; size: 30; fill: 1; weight: 700; MouseArea { anchors.fill: parent; onClicked: root.player.next() } }
     }
     }
 
