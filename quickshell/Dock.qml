@@ -40,9 +40,21 @@ PanelWindow {
         id: menu
         property var app: null
         readonly property var acts: app ? (win.entryOf(app)?.actions ?? []) : []
+        readonly property var wins: app ? ToplevelManager.toplevels.values.filter(t => t.appId === app.cls) : []
+        // open windows (click = bring to front), the app's own actions, then the dock's own entries
+        readonly property var items: {
+            if (!app) return []
+            let l = wins.map(t => ({ name: t.title || app.name, icon: "web_asset", run: () => t.activate() }))
+            l = l.concat(acts.length ? acts.map(a => ({ name: a.name, icon: "add", run: () => a.execute() }))
+                                     : [{ name: "New window", icon: "add", run: () => win.launch(app) }])
+            if (wins.length) l.push({ name: wins.length > 1 ? "Close all windows" : "Close window", icon: "close", run: () => wins.forEach(t => t.close()) })
+            l.push({ name: "Remove from dock", icon: "keep_off", run: () => Settings.set("dockApps", Settings.dockApps.filter(a => a.id !== app.id)) })
+            l.push({ name: "Edit dock…", icon: "edit", run: () => Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) })
+            return l
+        }
         function openFor(tile, a) { app = a; anchor.item = tile; visible = true }
         anchor.edges: Edges.Top; anchor.gravity: Edges.Top; anchor.margins.bottom: 10
-        implicitWidth: 230; implicitHeight: col.implicitHeight + 12
+        implicitWidth: 280; implicitHeight: col.implicitHeight + 12
         color: "transparent"
         HyprlandFocusGrab { windows: [menu]; active: menu.visible; onCleared: menu.visible = false }
         Rectangle {
@@ -53,15 +65,15 @@ PanelWindow {
                 id: col
                 anchors { left: parent.left; right: parent.right; top: parent.top; margins: 6 }
                 Repeater {
-                    model: [{ name: "New window", run: () => win.launch(menu.app) }]
-                        .concat(menu.acts.map(a => ({ name: a.name, run: () => a.execute() })))
-                        .concat([{ name: "Edit dock…", run: () => Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) }])
+                    model: menu.items
                     delegate: Rectangle {
                         required property var modelData
                         width: col.width; height: 34; radius: 8
                         color: mi.containsMouse ? Theme.cardHigh : "transparent"
-                        Text { anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 10 }
-                               textFormat: Text.PlainText; text: parent.modelData.name; color: Theme.on_surface
+                        Icon { id: mic; anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 10 }
+                               name: parent.modelData.icon; size: 16; color: Theme.on_surface_variant }
+                        Text { anchors { verticalCenter: parent.verticalCenter; left: mic.right; leftMargin: 10; right: parent.right; rightMargin: 10 }
+                               elide: Text.ElideRight; textFormat: Text.PlainText; text: parent.modelData.name; color: Theme.on_surface
                                font.family: Theme.mono; font.pixelSize: 12 }
                         MouseArea { id: mi; anchors.fill: parent; hoverEnabled: true
                                     onClicked: { menu.visible = false; win.touched = false; parent.modelData.run() } }
