@@ -65,6 +65,7 @@ Singleton {
 
     // Overheating: checked every 20 s even when no panel is open; one warning, re-armed once it has cooled down.
     property bool hot: false
+    property double lastWarn: 0   // at most one warning per 10 minutes, even if the temperature keeps crossing the limits
     function init() {}   // referencing the singleton starts the watcher
     Process {
         id: heatCheck
@@ -73,6 +74,8 @@ Singleton {
             const t = (+text.trim() || 0) / 1000
             if (t >= 90 && !root.hot) {
                 root.hot = true
+                if (Date.now() - root.lastWarn < 600000) return
+                root.lastWarn = Date.now()
                 Quickshell.execDetached(["notify-send", "-u", "critical", "-a", "System", "-i", "dialog-warning", "The CPU is very hot: " + Math.round(t) + " \u00b0C",
                                          "Close heavy programs or check that the vents are free."])
             } else if (t < 82) root.hot = false
