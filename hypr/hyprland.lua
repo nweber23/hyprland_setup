@@ -328,6 +328,12 @@ hl.device({
     sensitivity = -0.5,
 })
 
+-- The pen belongs to the laptop panel, like the touchscreen above (else it spans every monitor and the cursor lands off).
+hl.device({
+    name   = "elan2514:00-04f3:2b05-stylus",
+    output = "eDP-1",
+})
+
 
 ---------------------
 ---- KEYBINDINGS ----
