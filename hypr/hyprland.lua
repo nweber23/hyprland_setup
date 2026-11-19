@@ -479,7 +479,7 @@ function qsProjector(mode)
     if not main or #others == 0 then return end
     -- start from a clean slate: every monitor on, side by side, then the saved arrangement on top
     for _, m in ipairs(hl.get_monitors({ all = true })) do
-        hl.monitor({ output = monitorRef(m), mode = "preferred", position = "auto", scale = 1, disabled = false })
+        hl.monitor({ output = monitorRef(m), mode = "preferred", position = "auto", scale = 1, disabled = false, mirror = "none" })
     end
     pcall(dofile, os.getenv("HOME") .. "/.config/hypr/monitors-local.lua")
     if mode == "mirror" then
