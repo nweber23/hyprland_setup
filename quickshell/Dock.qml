@@ -52,10 +52,13 @@ PanelWindow {
             l.push({ name: "Edit dock…", icon: "edit", run: () => Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) })
             return l
         }
-        function openFor(tile, a) { app = a; anchor.item = tile; visible = true }
+        function openFor(tile, a) { app = a; anchor.item = tile; visible = true; away.restart() }
         anchor.edges: Edges.Top; anchor.gravity: Edges.Top; anchor.margins.bottom: 10
         implicitWidth: 280; implicitHeight: col.implicitHeight + 12
         color: "transparent"
+        // closes when the pointer leaves it (or never reaches it), since the focus grab alone did not dismiss it on outside clicks
+        Timer { id: away; interval: 1200; onTriggered: menu.visible = false }
+        HoverHandler { onHoveredChanged: if (hovered) away.stop(); else if (menu.visible) away.restart() }
         HyprlandFocusGrab { windows: [menu]; active: menu.visible; onCleared: menu.visible = false }
         Rectangle {
             anchors.fill: parent; radius: 14
