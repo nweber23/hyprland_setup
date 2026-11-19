@@ -91,8 +91,9 @@ PanelWindow {
             rate.command = ["curl", "-sL", "-m", "6", "https://api.frankfurter.dev/v1/latest?amount=" + cv.amount + "&base=" + cv.from + "&symbols=" + cv.to]
             rate.running = true
         }
-        const f = /^f\s+(.+)$/.exec(t)
+        const f = /^f\s+(.+)$/.exec(t) || (win.plain(input.text) && t.length >= 2 ? [0, t] : null)   // "f name", or any plain query
         if (f) {   // the name goes in as an argument, never into the shell string
+            fileSearch.running = false
             fileSearch.command = ["sh", "-c", 'find "$HOME" -maxdepth 7 \\( -name ".*" -o -name node_modules -o -name snap \\) -prune -o -iname "*$1*" -print 2>/dev/null | head -40', "sh", f[1]]
             fileSearch.running = true
         }
@@ -103,9 +104,10 @@ PanelWindow {
         const t = input.text
         if (t.startsWith(":")) { emojis = []; emojiDelay.restart() }
         currencyText = ""
-        if (/^f\s+\S/.test(t)) fileHits = []
-        if (/^[a-z]{3}\s*\d|^\d/.test(t.trim()) || /^f\s+\S/.test(t) || /^r\s/.test(t)) lookupDelay.restart()
+        if (/^f\s+\S/.test(t) || plain(t)) fileHits = []
+        if (/^[a-z]{3}\s*\d|^\d/.test(t.trim()) || /^f\s+\S/.test(t) || /^r\s/.test(t) || (plain(t) && t.trim().length >= 2)) lookupDelay.restart()
     }
+    function plain(t) { return !/^\s*[:;>]|^r\s/.test(t) }
     function refresh() {
         const raw = input.text.trim(), q = raw.toLowerCase()
         if (raw.startsWith(";")) {
@@ -152,6 +154,7 @@ PanelWindow {
         const secs = timerSpec(raw)
         if (secs > 0) list_.unshift({ name: "Start a " + Tools.fmt(secs) + " timer", comment: "Enter starts it, it shows in the bar", icon: "alarm-clock",
                                       execute: () => { if (Tools.running) Tools.reset(); Tools.setTotal(secs); Tools.start() } })
+        if (plain(raw)) list_ = list_.concat(fileHits.slice(0, 5))   // files in $HOME, after the apps
         if (raw !== "")
             list_.push({ name: "Search the web for \u201c" + raw + "\u201d", comment: "DuckDuckGo", icon: "web-browser",
                          execute: () => Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(raw)]) })
@@ -230,7 +233,7 @@ PanelWindow {
                     Text {
                         visible: input.text === ""
                         textFormat: Text.PlainText
-                        text: "Search apps…  ( > actions )"
+                        text: "Search apps and files…  ( > actions )"
                         color: Theme.outline
                         font: input.font
                     }
