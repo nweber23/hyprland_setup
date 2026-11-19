@@ -471,7 +471,9 @@ end
 
 -- Projection mode (Super+P menu): "extend" (the saved layout), "mirror", "first" (laptop only), "second" (external only).
 -- Global: the projector panel calls it through `hyprctl eval`.
+qsProjMode = "extend"   -- first/second must survive the monitor events their own disable rules fire
 function qsProjector(mode)
+    qsProjMode = mode
     local main, others = nil, {}
     for _, m in ipairs(hl.get_monitors({ all = true })) do
         if m.name:sub(1, 3) == "eDP" then main = m else others[#others + 1] = m end
@@ -576,6 +578,7 @@ end
 
 local function settleMonitors()   -- after a monitor came or went (debounced: a cable often reports several events)
     local _, others = panelAndOthers()
+    if (qsProjMode == "first" or qsProjMode == "second") and #others > 0 and not qsLidClosed then return end
     if qsLidClosed and #others > 0 and next(qsDocked) == nil then qsDock()
     elseif not qsLidClosed or #others == 0 then
         if next(qsDocked) ~= nil or qsLidClosed then qsUndock()
