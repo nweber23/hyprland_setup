@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -10,7 +11,7 @@ PanelWindow {
     id: win
     readonly property var apps: Settings.dockApps   // edited in the dock panel (the "+" at the end, or a right click)
     property bool touched: false      // opened by tapping the handle
-    readonly property bool revealed: hv.hovered || touched || Popups.dockPinned
+    readonly property bool revealed: hv.hovered || touched || menu.visible || Popups.dockPinned
 
     visible: Settings.dock && !Popups.locked
     anchors { bottom: true }
@@ -31,7 +32,44 @@ PanelWindow {
     // a running app: focus its newest window on any monitor; otherwise start it
     property var pending: null
     function open(app) { pending = app; clients.running = true }
-    function launch(app) { const e = DesktopEntries.byId(app.id) ?? DesktopEntries.heuristicLookup(app.name); if (e) e.execute() }
+    function entryOf(app) { return DesktopEntries.byId(app.id) ?? DesktopEntries.heuristicLookup(app.name) }
+    function launch(app) { const e = entryOf(app); if (e) e.execute() }
+
+    // right click on an app: its desktop actions (new window, incognito, ...)
+    PopupWindow {
+        id: menu
+        property var app: null
+        readonly property var acts: app ? (win.entryOf(app)?.actions ?? []) : []
+        function openFor(tile, a) { app = a; anchor.item = tile; visible = true }
+        anchor.edges: Edges.Top; anchor.gravity: Edges.Top; anchor.margins.bottom: 10
+        implicitWidth: 230; implicitHeight: col.implicitHeight + 12
+        color: "transparent"
+        HyprlandFocusGrab { windows: [menu]; active: menu.visible; onCleared: menu.visible = false }
+        Rectangle {
+            anchors.fill: parent; radius: 14
+            color: Qt.alpha(Theme.surface_container, 0.95)
+            border.width: 1; border.color: Qt.alpha(Theme.outline_variant, 0.6)
+            Column {
+                id: col
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 6 }
+                Repeater {
+                    model: [{ name: "New window", run: () => win.launch(menu.app) }]
+                        .concat(menu.acts.map(a => ({ name: a.name, run: () => a.execute() })))
+                        .concat([{ name: "Edit dock…", run: () => Popups.toggle("dockapps", win.screen.name, win.screen.width / 2) }])
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: col.width; height: 34; radius: 8
+                        color: mi.containsMouse ? Theme.cardHigh : "transparent"
+                        Text { anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 10 }
+                               textFormat: Text.PlainText; text: parent.modelData.name; color: Theme.on_surface
+                               font.family: Theme.mono; font.pixelSize: 12 }
+                        MouseArea { id: mi; anchors.fill: parent; hoverEnabled: true
+                                    onClicked: { menu.visible = false; win.touched = false; parent.modelData.run() } }
+                    }
+                }
+            }
+        }
+    }
     Process {
         id: clients
         command: ["hyprctl", "-j", "clients"]
@@ -122,8 +160,8 @@ PanelWindow {
                         }
                         MouseArea {
                             id: ma
-                            anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                            onClicked: mouse => { bounce.restart(); if (mouse.button === Qt.MiddleButton) win.launch(tile.modelData); else win.open(tile.modelData) }
+                            anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                            onClicked: mouse => { if (mouse.button === Qt.RightButton) { menu.openFor(tile, tile.modelData); return } bounce.restart(); if (mouse.button === Qt.MiddleButton) win.launch(tile.modelData); else win.open(tile.modelData) }
                         }
                     }
                 }
