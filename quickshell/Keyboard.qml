@@ -39,6 +39,13 @@ Singleton {
             }
         }
     }
+    // The layout silently falls back to the first one around a screen lock; remember it and put it back.
+    property int beforeLock: 0
+    Timer { id: restore; interval: 400; onTriggered: Quickshell.execDetached(["hyprctl", "switchxkblayout", "all", String(root.beforeLock)]) }
+    Connections {
+        target: Popups
+        function onLockedChanged() { if (Popups.locked) root.beforeLock = root.index; restore.restart() }
+    }
     Connections {
         target: Hyprland
         function onRawEvent(e) {
